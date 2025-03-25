@@ -1,0 +1,10 @@
+{% load django_bootstrap5 %}
+
+<form action="/url/to/submit/" method="post" class="form">
+    {% csrf_token %}
+
+    {% bootstrap_form form %}
+
+    {% bootstrap_button button_type="submit" content="OK" %}
+    {% bootstrap_button button_type="reset" content="Cancel" %}
+</form>
