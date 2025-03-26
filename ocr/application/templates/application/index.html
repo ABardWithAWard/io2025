@@ -1,10 +1,22 @@
 {% load django_bootstrap5 %}
 
-<form action="/url/to/submit/" method="post" class="form">
-    {% csrf_token %}
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
 
-    {% bootstrap_form form %}
+{# Display django.contrib.messages as Bootstrap alerts #}
+{% bootstrap_messages %}
 
-    {% bootstrap_button button_type="submit" content="OK" %}
-    {% bootstrap_button button_type="reset" content="Cancel" %}
-</form>
+{% block bootstrap5_content %}
+    <div class="container">
+        <h1>{% block title %}(no title){% endblock %}</h1>
+
+        <ul class="nav nav-pills">
+        </ul>
+
+        {% autoescape off %}{% bootstrap_messages %}{% endautoescape %}
+
+        {% block content %}(no content){% endblock %}
+    </div>
+
+{% endblock %}

@@ -1,3 +1,8 @@
+from django.urls import include
+from django.views.generic import RedirectView
+from django.conf import settings
+from django.conf.urls.static import static
+
 """
 URL configuration for ocr project.
 
@@ -19,4 +24,12 @@ from django.urls import path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
 ]
+
+urlpatterns += [
+    path('application/', include('application.urls')),
+    path('', RedirectView.as_view(url='application/', permanent=True)),
+]
+
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
