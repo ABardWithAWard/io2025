@@ -8,7 +8,12 @@
 {% bootstrap_messages %}
 
 {% block bootstrap5_content %}
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+<html>
+<head>
+    <title>File Upload</title>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <div class="container-fluid">
         <a class="navbar-brand" href="#">Aplikacja OCR</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -29,4 +34,19 @@
         </div>
       </div>
     </nav>
+    <h2>Upload a File</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Upload</button>
+    </form>
+    <h3>Uploaded Files</h3>
+    <ul>
+        {% for file in files %}
+            <li><a href="{{ file.file.url }}">{{ file.file.name }}</a></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
+
 {% endblock %}
