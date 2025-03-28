@@ -40,12 +40,35 @@
         {{ form.as_p }}
         <button type="submit">Upload</button>
     </form>
-    <h3>Uploaded Files</h3>
-    <ul>
-        {% for file in files %}
-            <li><a href="{{ file.file.url }}">{{ file.file.name }}</a></li>
-        {% endfor %}
-    </ul>
+    <div class="container mt-4">
+        <h2 class="mb-3">Uploaded Files</h2>
+        <ul class="list-group" id="file-list">
+            
+        </ul>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch("api/files") // Fetch files from Django API
+                .then(response => response.json())
+                .then(files => {
+                    const fileList = document.getElementById("file-list");
+                    files.forEach(file => {
+                        const listItem = document.createElement("li");
+                        listItem.className = "list-group-item";
+                        
+                        // Create a download link for each file
+                        const fileLink = document.createElement("a");
+                        fileLink.href = `/media/${file}`; 
+                        fileLink.textContent = file;
+                        fileLink.setAttribute("download", file);
+
+                        listItem.appendChild(fileLink);
+                        fileList.appendChild(listItem);
+                    });
+                })
+                .catch(error => console.error("Error fetching files:", error));
+        });
+    </script>
 </body>
 </html>
 
