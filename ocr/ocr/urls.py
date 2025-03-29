@@ -23,12 +23,13 @@ from django.contrib import admin
 from django.urls import path
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('application/admin/', admin.site.urls),
 
 ]
 
 urlpatterns += [
     path('application/', include('application.urls')),
+
     path('', RedirectView.as_view(url='application/', permanent=True)),
 ]
 
