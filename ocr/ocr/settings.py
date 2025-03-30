@@ -47,7 +47,7 @@ ROOT_URLCONF = 'ocr.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-         'DIRS': [BASE_DIR / 'application/templates'],
+        'DIRS': [BASE_DIR / 'application/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
