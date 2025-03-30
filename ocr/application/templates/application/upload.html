@@ -1,20 +1,6 @@
-{% load django_bootstrap5 %}
-
-{# Load CSS and JavaScript #}
-{% bootstrap_css %}
-{% bootstrap_javascript %}
-
-{# Display django.contrib.messages as Bootstrap alerts #}
-{% bootstrap_messages %}
-
-{% block bootstrap5_content %}
-<html>
-<head>
-    <title>File Upload</title>
-</head>
-<body>
-    {% block nav %}{% include 'navbar.html' %}{% endblock nav %}
-    <h2>Upload a File</h2>
+{% extends "application/base.html" %}
+{% block specific_content %}
+<h2>Upload a File</h2>
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form.as_p }}
@@ -23,7 +9,7 @@
     <div class="container mt-4">
         <h2 class="mb-3">Uploaded Files</h2>
         <ul class="list-group" id="file-list">
-            
+
         </ul>
     </div>
     <script>
@@ -35,10 +21,10 @@
                     files.forEach(file => {
                         const listItem = document.createElement("li");
                         listItem.className = "list-group-item";
-                        
+
                         // Create a download link for each file
                         const fileLink = document.createElement("a");
-                        fileLink.href = `/media/${file}`; 
+                        fileLink.href = `/media/${file}`;
                         fileLink.textContent = file;
                         fileLink.setAttribute("download", file);
 
@@ -49,7 +35,4 @@
                 .catch(error => console.error("Error fetching files:", error));
         });
     </script>
-</body>
-</html>
-
-{% endblock %}
+{% endblock specific_content %}
