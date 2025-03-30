@@ -1,0 +1,20 @@
+{% load django_bootstrap5 %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{# Display django.contrib.messages as Bootstrap alerts #}
+{% bootstrap_messages %}
+
+{% block bootstrap5_content %}
+<html>
+<head>
+    <title>File Upload</title>
+</head>
+<body>
+    {% block nav %}{% include 'application/navbar.html' %}{% endblock nav %}
+    {% block specific_content %}{% endblock specific_content %}
+</body>
+</html>
+{% endblock bootstrap5_content %}

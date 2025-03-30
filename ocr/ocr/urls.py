@@ -21,13 +21,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from application.admin import admin_site
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-
-]
-
-urlpatterns += [
+    path('application/admin/', admin_site.urls),
     path('application/', include('application.urls')),
     path('', RedirectView.as_view(url='application/', permanent=True)),
 ]
