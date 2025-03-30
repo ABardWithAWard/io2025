@@ -10,15 +10,12 @@ class dataLimit(models.Model):
     def __str__(self):
         return f"Data limit: {self.value}"
 
-
-
 # Model fileLimit
 class fileLimit(models.Model):
     value = models.IntegerField(default=0, help_text="Wartość limitu plików")
 
     def __str__(self):
         return f"File limit: {self.value}"
-
 
 # Model blockList
 class blockList(models.Model):
@@ -32,7 +29,6 @@ class blockList(models.Model):
 
     def __str__(self):
         return f"Zablokowany IP: {self.ip_address}"
-
 
 # Model to store uploaded files
 class UploadedFile(models.Model):
