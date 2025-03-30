@@ -18,12 +18,12 @@ def upload_file(request):
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
             in_memory_file_obj = request.FILES["file"]
-            #before starting to upload files make sure you set up .env variable correctly
+            # before starting to upload files make sure you set up .env variable correctly
             FileSystemStorage(location=os.environ['UPLOADED_FILES']).save(in_memory_file_obj.name, in_memory_file_obj)
-            return render(request, "index.html", {"form": form})
+            return render(request, "application/upload.html", {"form": form})
     else:
         form = UploadFileForm()
-    return render(request, "index.html", {"form": form})
+    return render(request, "application/upload.html", {"form": form})
 
 
 def get_files(request):
