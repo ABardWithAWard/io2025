@@ -1,9 +1,18 @@
 {% extends "application/base.html" %}
 {% block specific_content %}
 <h2>Upload a File</h2>
-    <form method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data" onsubmit="return validateFile()">
         {% csrf_token %}
         {{ form.as_p }}
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        {{ error }}
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        {% endif %}
         <button type="submit">Upload</button>
     </form>
     <div class="container mt-4">
@@ -13,6 +22,22 @@
         </ul>
     </div>
     <script>
+        function validateFile() {
+            const fileInput = document.querySelector('input[type="file"]');
+            const file = fileInput.files[0];
+            const allowedExtensions = ['.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff', '.webp'];
+            
+            if (file) {
+                const fileName = file.name.toLowerCase();
+                if (!allowedExtensions.some(ext => fileName.endsWith(ext))) {
+                    alert('Only image files are allowed.');
+                    fileInput.value = ''; // Clear the file input
+                    return false;
+                }
+            }
+            return true;
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
             fetch("api/files") // Fetch files from Django API
                 .then(response => response.json())
