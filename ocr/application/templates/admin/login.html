@@ -1,2 +1,16 @@
 {% extends "admin/login.html" %}
-{% block nav-global %}{% include 'application/navbar.html' %}{% endblock %}
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  /* Just the positioning styles for content */
+  #content {
+    margin-top: 60px; /* Adjust based on navbar height */
+  }
+</style>
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} with-navbar{% endblock %}
+
+{% block usertools %}
+  {% include 'application/navbar.html' %}
+{% endblock %}
