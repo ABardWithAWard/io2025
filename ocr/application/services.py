@@ -1,7 +1,46 @@
-from PIL import Image
-import sys
 import os
-from pathlib import Path
+import time
+from PIL import Image
+from PIL.ImagePath import Path
+from django.core.files.storage import FileSystemStorage
+
+
+def handle_uploaded_file(file):
+    # Get the absolute path from environment variable
+    upload_dir = os.path.abspath(os.environ['UPLOADED_FILES'])
+    print(f"Upload directory: {upload_dir}")
+
+    # Save the uploaded file first
+    storage = FileSystemStorage(location=upload_dir)
+    file_path = storage.save(file.name, file)
+    full_path = storage.path(file_path)
+    print(f"Saved file to: {full_path}")
+
+    # Wait for file to be fully written
+    while not os.path.exists(full_path):
+        print("Not yet!")
+        time.sleep(0.1)
+
+    time.sleep(0.5)
+
+    # Create reversed_images directory if it doesn't exist
+    reversed_dir = os.path.join(upload_dir, 'reversed_images')
+    os.makedirs(reversed_dir, exist_ok=True)
+    print(f"Created reversed images directory: {reversed_dir}")
+
+    try:
+        # Create output filename
+        output_filename = f"{os.path.splitext(file.name)[0]}_reversed{os.path.splitext(file.name)[1]}"
+        output_path = os.path.join(reversed_dir, output_filename)
+
+        # Process the single uploaded file
+        if reverse_colors(full_path, output_path):
+            print("Image processing completed successfully")
+        else:
+            print("Failed to process image")
+
+    except Exception as e:
+        print(f"Unexpected error: {e}")
 
 
 def reverse_colors(input_path, output_path=None):
@@ -45,23 +84,3 @@ def process_directory(input_dir, output_dir):
                 print("Success")
             else:
                 print("Failed")
-
-
-# Prevents misuse by running it via import
-if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Usage: python color_reverse.py input_directory output_directory")
-        sys.exit(1)
-
-    input_dir = sys.argv[1]
-    output_dir = sys.argv[2]
-
-    if not os.path.isdir(input_dir):
-        print(f"Error: {input_dir} is not a valid directory")
-        sys.exit(1)
-
-    if not os.path.isdir(output_dir):
-        print(f"Error: {output_dir} is not a valid directory")
-        sys.exit(1)
-
-    process_directory(input_dir, output_dir)
