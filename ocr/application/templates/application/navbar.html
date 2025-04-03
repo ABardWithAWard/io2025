@@ -1,21 +1,36 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="#">Aplikacja OCR</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href={% url "index" %}>Strona główna</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">Kontakt</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="admin/">Admin panel</a>
-        </li>
-      </ul>
-    </div>
-  </div>
-</nav>
+{% load static %}
+<!-- Navbar CSS -->
+<style>
+  .navbar-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+  }
+
+  /* Explicitly set text colors for all navbar elements */
+  .navbar-container a,
+  .navbar-container span,
+  .navbar-container div {
+    color: #333333 !important;
+    text-decoration: none;
+  }
+
+  .navbar-container a:hover {
+    color: #0056b3 !important;
+    text-decoration: underline;
+  }
+</style>
+
+<!-- Navbar HTML -->
+<div class="navbar-container">
+  <nav style="display: flex; padding: 1rem; align-items: center;">
+    <a href="/" style="margin-right: 1rem; font-weight: bold;">Aplikacja OCR</a>
+    <a href="/" style="margin-right: 1rem;">Strona główna</a>
+    <a href="#" style="margin-right: 1rem;">Kontakt</a>
+    <a href="admin/" style="">Admin panel</a>
+  </nav>
+</div>

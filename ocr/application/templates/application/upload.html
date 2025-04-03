@@ -1,7 +1,20 @@
 {% extends "application/base.html" %}
 {% block specific_content %}
-<h2>Upload a File</h2>
-    <form method="post" enctype="multipart/form-data" onsubmit="return validateFile()">
+<style>
+    .upload-container {
+    margin: auto;
+    margin-top: 100px;
+    width: 50%;
+    }
+
+    .container.mt-4 {
+    margin: auto;
+    width: 50%;
+    }
+</style>
+<div class="upload-container">
+<h2 style="margin: auto; width: 50%">Upload a File</h2>
+    <form style="margin: auto; width: 50%" method="post" enctype="multipart/form-data" onsubmit="return validateFile()">
         {% csrf_token %}
         {{ form.as_p }}
         {% if form.errors %}
@@ -44,20 +57,20 @@
                 .then(files => {
                     const fileList = document.getElementById("file-list");
                     files.forEach(file => {
-                        const listItem = document.createElement("li");
-                        listItem.className = "list-group-item";
+                    const listItem = document.createElement("li");
+                    listItem.className = "list-group-item";
+                    // Create a download link for each file
+                    const fileLink = document.createElement("a");
+                    fileLink.href = `/media/${file}`;
+                    fileLink.textContent = file;
+                    fileLink.setAttribute("download", file);
 
-                        // Create a download link for each file
-                        const fileLink = document.createElement("a");
-                        fileLink.href = `/media/${file}`;
-                        fileLink.textContent = file;
-                        fileLink.setAttribute("download", file);
-
-                        listItem.appendChild(fileLink);
-                        fileList.appendChild(listItem);
-                    });
-                })
-                .catch(error => console.error("Error fetching files:", error));
-        });
-    </script>
+                    listItem.appendChild(fileLink);
+                    fileList.appendChild(listItem);
+                });
+            })
+            .catch(error => console.error("Error fetching files:", error));
+    });
+</script>
+</div>
 {% endblock specific_content %}
