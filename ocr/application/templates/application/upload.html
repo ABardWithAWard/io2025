@@ -14,26 +14,51 @@
 </style>
 <div class="upload-container">
 <h2 style="margin: auto; width: 50%">Upload a File</h2>
-<form style="margin: auto; width: 50%" method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Upload</button>
-</form>
-<div class="container mt-4">
-    <h2 class="mb-3">Uploaded Files</h2>
-    <ul class="list-group" id="file-list">
-    </ul>
-</div>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        fetch("api/files") // Fetch files from Django API
-            .then(response => response.json())
-            .then(files => {
-                const fileList = document.getElementById("file-list");
-                files.forEach(file => {
+    <form style="margin: auto; width: 50%" method="post" enctype="multipart/form-data" onsubmit="return validateFile()">
+        {% csrf_token %}
+        {{ form.as_p }}
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        {{ error }}
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        {% endif %}
+        <button type="submit">Upload</button>
+    </form>
+    <div class="container mt-4">
+        <h2 class="mb-3">Uploaded Files</h2>
+        <ul class="list-group" id="file-list">
+
+        </ul>
+    </div>
+    <script>
+        function validateFile() {
+            const fileInput = document.querySelector('input[type="file"]');
+            const file = fileInput.files[0];
+            const allowedExtensions = ['.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff', '.webp'];
+            
+            if (file) {
+                const fileName = file.name.toLowerCase();
+                if (!allowedExtensions.some(ext => fileName.endsWith(ext))) {
+                    alert('Only image files are allowed.');
+                    fileInput.value = ''; // Clear the file input
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch("api/files") // Fetch files from Django API
+                .then(response => response.json())
+                .then(files => {
+                    const fileList = document.getElementById("file-list");
+                    files.forEach(file => {
                     const listItem = document.createElement("li");
                     listItem.className = "list-group-item";
-
                     // Create a download link for each file
                     const fileLink = document.createElement("a");
                     fileLink.href = `/media/${file}`;
