@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 import dotenv
+from django.contrib.auth.decorators import login_required
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -116,3 +117,13 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 ADMIN_SITE_URL = "/application/admin/"
+
+GRAPH_MODELS = {
+  'all_applications': True,
+  'group_models': True,
+}
+
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = True
+
+MIDDLEWARE.append('application.middleware.AdminSessionTimeoutMiddleware')
