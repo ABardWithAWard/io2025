@@ -37,6 +37,14 @@ Czyli plik .gitignore powinien na którejś linijce zawierać:
 ```
 #### 4. (conda) Zmień interpreter swojego projektu w PyCharmie na django_test:
 ![Ustawienia interpretera](interpreter.png)
+
+#### 5. Dane do modelu
+```bash
+https://www.kaggle.com/datasets/ngkinwang/iam-dataset
+https://www.kaggle.com/datasets/westedcrean/phcd-polish-handwritten-characters-database
+```
+Rozpakować tak, żeby miały następującą strukturę
+![Struktura datasetów](dir_structure.png)
 ### Instrukcje tworzenia od zera
 ```bash
 conda create -n django_test python
