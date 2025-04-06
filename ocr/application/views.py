@@ -25,3 +25,6 @@ def get_files(request):
         files = []
 
     return JsonResponse(files, safe=False)
+
+def contact(request):
+    return render(request, 'application/contact.html')
