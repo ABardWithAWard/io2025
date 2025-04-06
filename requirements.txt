@@ -1,3 +1,12 @@
 django
 django-bootstrap5
 python-dotenv
+transformers
+datasets
+evaluate
+jiwer
+pandas
+scikit-learn
+torch
+pillow
+tqdm
