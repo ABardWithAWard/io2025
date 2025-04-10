@@ -1,7 +1,11 @@
 import os
 import time
 from django.core.files.storage import FileSystemStorage
-from model.predict import run_inference
+
+from application.model.trocr import TrOCR
+from model import trocr
+
+model = TrOCR()
 
 def handle_uploaded_file(file):
     # Get the absolute path from environment variable
@@ -28,7 +32,7 @@ def handle_uploaded_file(file):
         output_path = os.path.join(reversed_dir, output_filename)
 
         # Process the single uploaded file
-        if run_inference(full_path, output_path):
+        if model.perform_ocr(full_path, output_path):
             print("Image processing completed successfully")
         else:
             print("Failed to process image")
