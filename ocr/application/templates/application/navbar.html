@@ -158,17 +158,18 @@
     </div>
 
     <div id="loginTab" class="tabcontent" style="display: block;">
-      <form>
+      <form action="{% url 'application:handle_login' %}" method="POST">
+        {% csrf_token %}
         <div class="form-group">
           <label for="loginEmail">Email</label>
-          <input type="email" id="loginEmail" required>
+          <input type="email" id="loginEmail" name="email" required>
         </div>
         <div class="form-group">
           <label for="loginPassword">Password</label>
-          <input type="password" id="loginPassword" required>
+          <input type="password" id="loginPassword" name="password" required>
         </div>
         <button type="submit" class="submit-btn">Login</button>
-        <button type="button" class="google-btn">
+        <button type="button" class="google-btn" onclick="window.location.href='{% url 'application:handle_google_auth' %}'">
           <img src="https://www.google.com/favicon.ico" alt="Google" width="18">
           Login with Google
         </button>
@@ -176,21 +177,22 @@
     </div>
 
     <div id="registerTab" class="tabcontent">
-      <form>
+      <form action="{% url 'application:handle_register' %}" method="POST">
+        {% csrf_token %}
         <div class="form-group">
           <label for="registerEmail">Email</label>
-          <input type="email" id="registerEmail" required>
+          <input type="email" id="registerEmail" name="email" required>
         </div>
         <div class="form-group">
           <label for="registerPassword">Password</label>
-          <input type="password" id="registerPassword" required>
+          <input type="password" id="registerPassword" name="password" required>
         </div>
         <div class="form-group">
           <label for="registerConfirmPassword">Confirm Password</label>
-          <input type="password" id="registerConfirmPassword" required>
+          <input type="password" id="registerConfirmPassword" name="confirm_password" required>
         </div>
         <button type="submit" class="submit-btn">Register</button>
-        <button type="button" class="google-btn">
+        <button type="button" class="google-btn" onclick="window.location.href='{% url 'application:handle_google_auth' %}'">
           <img src="https://www.google.com/favicon.ico" alt="Google" width="18">
           Register with Google
         </button>
