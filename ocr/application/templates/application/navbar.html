@@ -23,6 +23,117 @@
     color: #0056b3 !important;
     text-decoration: underline;
   }
+
+  /* Login button styles */
+  .login-btn {
+    background-color: white;
+    border: 1px solid #ddd;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: auto;
+  }
+
+  /* Modal styles */
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 1001;
+  }
+
+  .modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 15px;
+    width: 350px;
+    border-radius: 8px;
+    position: relative;
+  }
+
+  .close {
+    position: absolute;
+    right: 20px;
+    top: 10px;
+    font-size: 24px;
+    cursor: pointer;
+  }
+
+  /* Tab styles */
+  .tab {
+    overflow: hidden;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 20px;
+  }
+
+  .tab button {
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+  }
+
+  .tab button.active {
+    border-bottom: 2px solid #0056b3;
+    color: #0056b3;
+  }
+
+  .tabcontent {
+    display: none;
+    padding: 6px 12px;
+  }
+
+  /* Form styles */
+  .form-group {
+    margin-bottom: 12px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 6px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 8px;
+    background-color: #0056b3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 12px;
+  }
+
+  .google-btn {
+    width: 100%;
+    padding: 8px;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  body.modal-open {
+    overflow: hidden;
+  }
 </style>
 
 <!-- Navbar HTML -->
@@ -31,6 +142,94 @@
     <a href="{% url 'application:index' %}" style="margin-right: 1rem; font-weight: bold;">Aplikacja OCR</a>
     <a href="{% url 'application:index' %}" style="margin-right: 1rem;">Strona główna</a>
     <a href="{% url 'application:contact' %}" style="margin-right: 1rem;">Kontakt</a>
-    <a href="{% url 'admin:index' %}" style="">Admin panel</a>
+    <a href="{% url 'admin:index' %}" style="margin-right: 1rem;">Admin panel</a>
+    <button class="login-btn" onclick="openModal()">Login</button>
   </nav>
 </div>
+
+<!-- Modal -->
+<div id="loginModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal()">&times;</span>
+    
+    <div class="tab">
+      <button class="tablinks active" onclick="openTab(event, 'loginTab')">Login</button>
+      <button class="tablinks" onclick="openTab(event, 'registerTab')">Register</button>
+    </div>
+
+    <div id="loginTab" class="tabcontent" style="display: block;">
+      <form>
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" required>
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" required>
+        </div>
+        <button type="submit" class="submit-btn">Login</button>
+        <button type="button" class="google-btn">
+          <img src="https://www.google.com/favicon.ico" alt="Google" width="18">
+          Login with Google
+        </button>
+      </form>
+    </div>
+
+    <div id="registerTab" class="tabcontent">
+      <form>
+        <div class="form-group">
+          <label for="registerEmail">Email</label>
+          <input type="email" id="registerEmail" required>
+        </div>
+        <div class="form-group">
+          <label for="registerPassword">Password</label>
+          <input type="password" id="registerPassword" required>
+        </div>
+        <div class="form-group">
+          <label for="registerConfirmPassword">Confirm Password</label>
+          <input type="password" id="registerConfirmPassword" required>
+        </div>
+        <button type="submit" class="submit-btn">Register</button>
+        <button type="button" class="google-btn">
+          <img src="https://www.google.com/favicon.ico" alt="Google" width="18">
+          Register with Google
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function openModal() {
+  document.getElementById('loginModal').style.display = 'block';
+  document.body.classList.add('modal-open');
+}
+
+function closeModal() {
+  document.getElementById('loginModal').style.display = 'none';
+  document.body.classList.remove('modal-open');
+}
+
+function openTab(evt, tabName) {
+  var tabcontent = document.getElementsByClassName("tabcontent");
+  for (var i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+
+  var tablinks = document.getElementsByClassName("tablinks");
+  for (var i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+
+  document.getElementById(tabName).style.display = "block";
+  evt.currentTarget.className += " active";
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+  var modal = document.getElementById('loginModal');
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+</script>
