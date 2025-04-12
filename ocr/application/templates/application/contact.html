@@ -1,0 +1,18 @@
+{% load django_bootstrap5 %}
+
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{# Display django.contrib.messages as Bootstrap alerts #}
+{% bootstrap_messages %}
+
+{% block bootstrap5_content %}
+<html>
+<head>
+    <title>Contact Panel</title>
+</head>
+<body>
+    {% block nav %}{% include 'application/navbar.html' %}{% endblock nav %}
+</body>
+</html>
+{% endblock bootstrap5_content %}

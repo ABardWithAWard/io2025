@@ -1,27 +1,3 @@
-{% load i18n static %}<!DOCTYPE html>
-{% get_current_language as LANGUAGE_CODE %}{% get_current_language_bidi as LANGUAGE_BIDI %}
-<html lang="{{ LANGUAGE_CODE|default:"en-us" }}" dir="{{ LANGUAGE_BIDI|yesno:'rtl,ltr,auto' }}">
-<head>
-{#<title>{% block title %}{% endblock %}</title>#}
-{#<link rel="stylesheet" href="{% block stylesheet %}{% static "admin/css/base.css" %}{% endblock %}">#}
-{#{% block dark-mode-vars %}#}
-{#  <link rel="stylesheet" href="{% static "admin/css/dark_mode.css" %}">#}
-{#  <script src="{% static "admin/js/theme.js" %}"></script>#}
-{#{% endblock %}#}
-{#{% if not is_popup and is_nav_sidebar_enabled %}#}
-{#  <link rel="stylesheet" href="{% static "admin/css/nav_sidebar.css" %}">#}
-{#  <script src="{% static 'admin/js/nav_sidebar.js' %}" defer></script>#}
-{#{% endif %}#}
-{#{% block extrastyle %}{% endblock %}#}
-{#{% if LANGUAGE_BIDI %}<link rel="stylesheet" href="{% block stylesheet_rtl %}{% static "admin/css/rtl.css" %}{% endblock %}">{% endif %}#}
-{#{% block extrahead %}{% endblock %}#}
-{#{% block responsive %}#}
-{#    <meta name="viewport" content="width=device-width, initial-scale=1.0">#}
-{#    <link rel="stylesheet" href="{% static "admin/css/responsive.css" %}">#}
-{#    {% if LANGUAGE_BIDI %}<link rel="stylesheet" href="{% static "admin/css/responsive_rtl.css" %}">{% endif %}#}
-{#{% endblock %}#}
-{% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE">{% endblock %}
-</head>
 {% load django_bootstrap5 %}
 
 {# Load CSS and JavaScript #}
@@ -32,6 +8,10 @@
 {% bootstrap_messages %}
 
 {% block bootstrap5_content %}
+    <!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:"en-us" }}" dir="{{ LANGUAGE_BIDI|yesno:'rtl,ltr,auto' }}">
+<head>
+</head>
 
 <body>
 
@@ -39,58 +19,6 @@
 
 <!-- Container -->
 <div id="container">
-
-{#    {% if not is_popup %}#}
-{#    <!-- Header -->#}
-{#    {% block header %}#}
-{#      <header id="header">#}
-{#        <div id="branding">#}
-{#        {% block branding %}{% endblock %}#}
-{#        </div>#}
-{#        {% block usertools %}#}
-{#        {% if has_permission %}#}
-{#        <div id="user-tools">#}
-{#            {% block welcome-msg %}#}
-{#                {% translate 'Welcome,' %}#}
-{#                <strong>{% firstof user.get_short_name user.get_username %}</strong>.#}
-{#            {% endblock %}#}
-{#            {% block userlinks %}#}
-{#                {% if site_url %}#}
-{#                    <a href="{{ site_url }}">{% translate 'View site' %}</a> /#}
-{#                {% endif %}#}
-{#                {% if user.is_active and user.is_staff %}#}
-{#                    {% url 'django-admindocs-docroot' as docsroot %}#}
-{#                    {% if docsroot %}#}
-{#                        <a href="{{ docsroot }}">{% translate 'Documentation' %}</a> /#}
-{#                    {% endif %}#}
-{#                {% endif %}#}
-{#                {% if user.has_usable_password %}#}
-{#                <a href="{% url 'admin:password_change' %}">{% translate 'Change password' %}</a> /#}
-{#                {% endif %}#}
-{#                <form id="logout-form" method="post" action="{% url 'admin:logout' %}">#}
-{#                    {% csrf_token %}#}
-{#                    <button type="submit">{% translate 'Log out' %}</button>#}
-{#                </form>#}
-{#                {% include "admin/color_theme_toggle.html" %}#}
-{#            {% endblock %}#}
-{#        </div>#}
-{#        {% endif %}#}
-{#        {% endblock %}#}
-{#        {% block nav-global %}{% endblock %}#}
-{#      </header>#}
-{#    {% endblock %}#}
-{#    <!-- END Header -->#}
-{#    {% block nav-breadcrumbs %}#}
-{#      <nav aria-label="{% translate 'Breadcrumbs' %}">#}
-{#        {% block breadcrumbs %}#}
-{#          <div class="breadcrumbs">#}
-{#            <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>#}
-{#            {% if title %} &rsaquo; {{ title }}{% endif %}#}
-{#          </div>#}
-{#        {% endblock %}#}
-{#      </nav>#}
-{#    {% endblock %}#}
-{#    {% endif %}#}
 
     <div class="main" id="main">
       {% if not is_popup and is_nav_sidebar_enabled %}
@@ -135,5 +63,5 @@
 </svg>
 <!-- END SVGs -->
 </body>
-{% endblock %}
 </html>
+{% endblock %}
