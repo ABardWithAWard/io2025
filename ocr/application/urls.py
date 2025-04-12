@@ -1,5 +1,6 @@
 from django.urls import path
-from . import views, login
+from . import views
+from . import login
 
 app_name = 'application'
 
@@ -7,8 +8,11 @@ urlpatterns = [
     path('', views.upload_file, name='index'),
     path("api/files", views.get_files, name="get_files"),
     path('contact/', views.contact, name="contact"),
-    path('handle-login/', login.handle_login, name='handle_login'),
-    path('handle-register/', login.handle_register, name='handle_register'),
-    path('handle-google-auth/', login.handle_google_auth, name='handle_google_auth'),
+    # Login-related URLs
+    path('auth/login/', login.handle_login, name='handle_login'),
+    path('auth/register/', login.handle_register, name='handle_register'),
+    path('auth/logout/', login.handle_logout, name='logout'),
+    path('auth/google/', login.google_auth, name='handle_google_auth'),
+    path('auth/google/callback/', login.google_auth_callback, name='google_auth_callback'),
 ]
 

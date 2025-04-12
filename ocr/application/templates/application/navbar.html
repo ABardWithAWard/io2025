@@ -34,6 +34,19 @@
     margin-left: auto;
   }
 
+  /* Google button styles */
+  .google-btn {
+    background-color: white;
+    border: 1px solid #ddd;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
   /* Modal styles */
   .modal {
     display: none;
@@ -118,23 +131,36 @@
     margin-bottom: 12px;
   }
 
-  .google-btn {
-    width: 100%;
-    padding: 8px;
-    background-color: white;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
   body.modal-open {
     overflow: hidden;
   }
+
+  /* Messages styles */
+  .messages {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    z-index: 1002;
+  }
+
+  .message {
+    padding: 10px 20px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
 </style>
+
+<!-- Messages -->
+{% if messages %}
+<div class="messages">
+  {% for message in messages %}
+    <div class="message">{{ message }}</div>
+  {% endfor %}
+</div>
+{% endif %}
 
 <!-- Navbar HTML -->
 <div class="navbar-container">
@@ -143,7 +169,12 @@
     <a href="{% url 'application:index' %}" style="margin-right: 1rem;">Strona główna</a>
     <a href="{% url 'application:contact' %}" style="margin-right: 1rem;">Kontakt</a>
     <a href="{% url 'admin:index' %}" style="margin-right: 1rem;">Admin panel</a>
-    <button class="login-btn" onclick="openModal()">Login</button>
+    {% if user.is_authenticated %}
+      <span style="margin-right: 1rem;">{{ user.email }}</span>
+      <a href="{% url 'application:logout' %}" class="login-btn">Logout</a>
+    {% else %}
+      <button class="login-btn" onclick="openModal()">Login</button>
+    {% endif %}
   </nav>
 </div>
 
@@ -169,10 +200,10 @@
           <input type="password" id="loginPassword" name="password" required>
         </div>
         <button type="submit" class="submit-btn">Login</button>
-        <button type="button" class="google-btn" onclick="window.location.href='{% url 'application:handle_google_auth' %}'">
+        <a href="{% url 'application:handle_google_auth' %}" class="google-btn" style="width: 100%; justify-content: center; margin-left: 0;">
           <img src="https://www.google.com/favicon.ico" alt="Google" width="18">
           Login with Google
-        </button>
+        </a>
       </form>
     </div>
 
@@ -192,10 +223,10 @@
           <input type="password" id="registerConfirmPassword" name="confirm_password" required>
         </div>
         <button type="submit" class="submit-btn">Register</button>
-        <button type="button" class="google-btn" onclick="window.location.href='{% url 'application:handle_google_auth' %}'">
+        <a href="{% url 'application:handle_google_auth' %}" class="google-btn" style="width: 100%; justify-content: center; margin-left: 0;">
           <img src="https://www.google.com/favicon.ico" alt="Google" width="18">
           Register with Google
-        </button>
+        </a>
       </form>
     </div>
   </div>
@@ -234,4 +265,14 @@ window.onclick = function(event) {
     modal.style.display = "none";
   }
 }
+
+// Auto-hide messages after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    var messages = document.querySelector('.messages');
+    if (messages) {
+      messages.style.display = 'none';
+    }
+  }, 5000);
+});
 </script>
