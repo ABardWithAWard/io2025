@@ -28,9 +28,9 @@
 <!-- Navbar HTML -->
 <div class="navbar-container">
   <nav style="display: flex; padding: 1rem; align-items: center;">
-    <a href="/" style="margin-right: 1rem; font-weight: bold;">Aplikacja OCR</a>
-    <a href="/" style="margin-right: 1rem;">Strona główna</a>
-    <a href="/application/contact/" style="margin-right: 1rem;">Kontakt</a>
-    <a href="/application/admin/" style="">Admin panel</a>
+    <a href="{% url 'application:index' %}" style="margin-right: 1rem; font-weight: bold;">Aplikacja OCR</a>
+    <a href="{% url 'application:index' %}" style="margin-right: 1rem;">Strona główna</a>
+    <a href="{% url 'application:contact' %}" style="margin-right: 1rem;">Kontakt</a>
+    <a href="{% url 'admin:index' %}" style="">Admin panel</a>
   </nav>
 </div>
