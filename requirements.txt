@@ -2,3 +2,6 @@ django
 django-bootstrap5
 python-dotenv
 Pillow>=10.0.0
+social-auth-app-django
+python-jose
+requests

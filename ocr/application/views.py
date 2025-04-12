@@ -4,7 +4,6 @@ from django.shortcuts import render
 from .forms import UploadFileForm
 from .services import handle_uploaded_file
 
-
 def upload_file(request):
     if request.method == "POST":
         form = UploadFileForm(request.POST, request.FILES)
