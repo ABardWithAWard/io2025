@@ -44,7 +44,8 @@ def handle_register(request):
         
         # Create new user
         user = User.objects.create_user(username=email, email=email, password=password)
-        auth_login(request, user)
+        # Specify the backend when logging in
+        auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
         return HttpResponseRedirect('/application/')
     
     return HttpResponseRedirect('/application/')
