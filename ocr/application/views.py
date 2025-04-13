@@ -1,7 +1,8 @@
 import os
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
-from .forms import UploadFileForm
+from .forms import UploadFileForm, SubmitTicketForm
+from .models import SupportTicket
 from .services import handle_uploaded_file
 
 def upload_file(request):
@@ -25,5 +26,16 @@ def get_files(request):
 
     return JsonResponse(files, safe=False)
 
-def contact(request):
-    return render(request, 'application/contact.html')
+def enter_contact_ticket(request):
+    if request.method == "POST":
+        form = SubmitTicketForm(request.POST)
+        if form.is_valid():
+            name = form.cleaned_data["name"]
+            email = form.cleaned_data["email"]
+            message = form.cleaned_data["message"]
+            ticket = SupportTicket(name=name, email=email, message=message)
+            ticket.save()
+            return HttpResponseRedirect(request.path)
+    else:
+        form = SubmitTicketForm()
+    return render(request, "application/contact.html", {"form": form})
