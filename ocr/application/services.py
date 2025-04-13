@@ -5,7 +5,6 @@ from PIL.ImagePath import Path
 from django.core.files.storage import FileSystemStorage
 
 from application.model.trocr import TrOCR
-from model import trocr
 
 model = TrOCR()
 

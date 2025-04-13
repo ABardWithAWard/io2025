@@ -9,7 +9,8 @@ from evaluate import load
 from torch.utils.data import DataLoader, Dataset
 from PIL import Image
 
-from modelbase import ModelBase
+from application.model.modelbase import ModelBase
+
 
 # Needed for PyTorch, from NielsRogge's tutorial
 class IAMDataset(Dataset):
