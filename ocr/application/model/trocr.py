@@ -121,6 +121,7 @@ class TrOCR(ModelBase):
         label_str = processor.batch_decode(labels, skip_special_tokens=True)
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(device)
 
         model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-handwritten")
         model.to(device)
@@ -146,11 +147,24 @@ class TrOCR(ModelBase):
         final_score = cer.compute()
         print(final_score)
 
-    def perform_ocr(self, dataset_dir, output_dir):
+    def perform_ocr(self, input_path, output_path):
         """
-        [WIP] Function which runs inference on an image and outputs a text file.
+        Function which runs inference on an image and outputs a text file.
         """
-
         # Test if everything works using _evaluate().
-        self._evaluate(dataset_dir, output_dir)
-        return True
+        #self._evaluate(dataset_dir, output_dir)
+        try:
+            image = Image.open(input_path).convert("RGB")
+            processor = TrOCRProcessor.from_pretrained("microsoft/trocr-base-handwritten")
+            pixel_values = processor(image, return_tensors="pt").pixel_values
+            model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-handwritten")
+
+            generated_ids = model.generate(pixel_values)
+            generated_text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
+
+            with open(output_path, "w") as f:
+                f.write(generated_text)
+
+            return True
+        except Exception:
+            return False

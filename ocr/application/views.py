@@ -5,6 +5,7 @@ from .forms import UploadFileForm, SubmitTicketForm
 from .models import SupportTicket
 from .services import handle_uploaded_file
 
+
 def upload_file(request):
     if request.method == "POST":
         form = UploadFileForm(request.POST, request.FILES)
