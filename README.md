@@ -1,7 +1,7 @@
-# io2025
+# System OCR
 
-### Instrukcje postawienia lokalnej wersji
-#### 1. Załóż środowisko lokalne
+## Instrukcje postawienia lokalnej wersji
+### 1. Załóż środowisko lokalne
 Tutaj zastosowano condę, można też użyć venv:
 ```bash
 conda create -n django_test python
@@ -13,7 +13,7 @@ cd <nazwa_folderu_docelowego>
 
 pip install -r requirements.txt
 ```
-#### 2. Utwórz plik .env i dodaj tam odpowiednie zmienne środowiskowe
+### 2. Utwórz plik .env i dodaj tam odpowiednie zmienne środowiskowe
 ```bash
 nano .env
 ############## ZAWARTOŚĆ .env ##############
@@ -28,15 +28,39 @@ to mój plik .env będzie miał następującą treść:
 SECRET_KEY=django-insecure-c-!bac#($x2etc
 UPLOADED_FILES=/home/janek/PycharmProjects/ocr/media
 ```
-#### 3. Dodaj .env do swojego .gitignore
+### 3. Dodaj .env do swojego .gitignore
 Czyli plik .gitignore powinien na którejś linijce zawierać:
 ```angular2html
 (...)
 .env
 (...)
 ```
-#### 4. (conda) Zmień interpreter swojego projektu w PyCharmie na django_test:
+### 4. (conda) Zmień interpreter swojego projektu w PyCharmie na django_test:
 ![Ustawienia interpretera](interpreter.png)
+
+### 5. Dane do modelu
+Na ten moment interesują nas pierwsze dwa datasety.
+```bash
+#IAM dataset do walidacji i testowania (oba linki wymagają logowania)
+https://www.kaggle.com/datasets/ngkinwang/iam-dataset
+https://fki.tic.heia-fr.ch/DBs/iamDB/data/lines.tgz
+```
+```bash
+#Polish handwritten letters dataset do fine-tuning
+https://www.kaggle.com/datasets/westedcrean/phcd-polish-handwritten-characters-database
+```
+Umiejscowić archiwa tak, żeby miały następującą strukturę
+```bash
+model/
+├── modelbase.py
+├── trocr.py
+├── (...)
+├── archive.zip #Kaggle
+├── lines.tgz #FKI
+└── setup_datasets.sh
+```
+A następnie uruchomić z poziomu katalogu model/ skrypt ./setup_datasets.sh.
+
 ### Instrukcje tworzenia od zera
 ```bash
 conda create -n django_test python

@@ -4,6 +4,8 @@ from . import login
 
 app_name = 'application'
 
+app_name = 'application'
+
 urlpatterns = [
     path('', views.upload_file, name='index'),
     path("api/files", views.get_files, name="get_files"),
