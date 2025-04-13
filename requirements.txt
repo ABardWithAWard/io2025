@@ -2,3 +2,12 @@ django
 django-bootstrap5
 python-dotenv
 Pillow>=10.0.0
+transformers
+datasets
+evaluate
+jiwer
+pandas
+scikit-learn
+torch
+pillow
+tqdm
