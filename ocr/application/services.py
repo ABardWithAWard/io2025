@@ -30,11 +30,14 @@ def handle_uploaded_file(file):
     reversed_dir = os.path.join(upload_dir, 'reversed_images')
     os.makedirs(reversed_dir, exist_ok=True)
     print(f"Created reversed images directory: {reversed_dir}")
+    # Create output directory if it doesn't exist
+    output_dir = os.path.join(upload_dir, 'processed_text')
+    os.makedirs(output_dir, exist_ok=True)
 
     try:
         # Create output filename
-        output_filename = f"{os.path.splitext(file.name)[0]}_reversed{os.path.splitext(file.name)[1]}"
-        output_path = os.path.join(reversed_dir, output_filename)
+        output_filename = f"{os.path.splitext(file.name)[0]}_out.txt"
+        output_path = os.path.join(output_dir, output_filename)
 
         # Process the single uploaded file
         if model.perform_ocr(full_path, output_path):
