@@ -1,13 +1,11 @@
 import os
-from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
-from django.shortcuts import render
+from django.http import HttpResponseRedirect
 from django.conf import settings
 from django.contrib.auth import login as auth_login, authenticate, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
 import requests
 from urllib.parse import urlencode
-import json
 
 def handle_login(request):
     """Handle regular email/password login"""
