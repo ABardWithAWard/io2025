@@ -5,3 +5,12 @@ Pillow>=10.0.0
 social-auth-app-django
 python-jose
 requests
+transformers
+datasets
+evaluate
+jiwer
+pandas
+scikit-learn
+torch
+pillow
+tqdm
