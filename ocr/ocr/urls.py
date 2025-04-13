@@ -25,7 +25,7 @@ Including another URLconf
 
 urlpatterns = [
     path('application/admin/', admin_site.urls),
-    path('application/', include('application.urls')),
+    path('application/', include('application.urls', namespace='application')),
     path('', RedirectView.as_view(url='application/', permanent=True)),
     path('social-auth/', include('social_django.urls', namespace='social')),
 ]
