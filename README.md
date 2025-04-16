@@ -19,6 +19,10 @@ nano .env
 ############## ZAWARTOŚĆ .env ##############
 # SECRET_KEY=<klucz_prywatny>
 # UPLOADED_FILES=<katalog_plikow_lokalnych>
+# FIREBASE_KEY=<adres_lokalny_jsona_wygenerowanego_w_firebase>
+# GOOGLE_OAUTH2_CLIENT_ID=<id_klienta_google_auth>
+# GOOGLE_OAUTH2_CLIENT_SECRET=<klucz_prywatny_google_auth>
+# GOOGLE_OAUTH2_REDIRECT_URI=<link_powrotny_google_auth>
 ############## ZAWARTOŚĆ .env ##############
 ```
 Czyli przykładowo, jeśli mój klucz prywatny to django-insecure-c-!bac#($x2etc, a katalog w którym
@@ -27,18 +31,22 @@ to mój plik .env będzie miał następującą treść:
 ```bash
 SECRET_KEY=django-insecure-c-!bac#($x2etc
 UPLOADED_FILES=/home/janek/PycharmProjects/ocr/media
+FIREBASE_KEY=<adres_lokalny_jsona_wygenerowanego_w_firebase>
+GOOGLE_OAUTH2_CLIENT_ID=<id_klienta_google_auth>
+GOOGLE_OAUTH2_CLIENT_SECRET=<klucz_prywatny_google_auth>
+GOOGLE_OAUTH2_REDIRECT_URI=<link_powrotny_google_auth>
 ```
-### 3. Dodaj .env do swojego .gitignore
-Czyli plik .gitignore powinien na którejś linijce zawierać:
-```angular2html
-(...)
-.env
-(...)
-```
-### 4. (conda) Zmień interpreter swojego projektu w PyCharmie na django_test:
+
+Gotowy plik .env oraz json z firebase znajduje się na #mati-keygen, ale swoje klucze można wygenerować.
+Json z firebase znajduje się w:
+Project settings -> Service accounts -> Generate new private key
+Zmienne googlowe można znaleźć w:
+Google cloud services -> Google auth platform (najlepiej wyszukać w wyszukiwarce na górze strony) -> Clients
+Tam możemy wybrać klienta i dodawać oraz edytować rzeczy takie jak redirect uri
+### 3. (conda) Zmień interpreter swojego projektu w PyCharmie na django_test:
 ![Ustawienia interpretera](interpreter.png)
 
-### 5. Dane do modelu
+### 4. Dane do modelu
 Na ten moment interesują nas pierwsze dwa datasety.
 ```bash
 #IAM dataset do walidacji i testowania (oba linki wymagają logowania)

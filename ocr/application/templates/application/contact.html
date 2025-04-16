@@ -1,0 +1,28 @@
+{% extends "application/base.html" %}
+{% block specific_content %}
+<style>
+    .upload-container {
+    margin: auto;
+    margin-top: 100px;
+    width: 50%;
+    }
+
+    .container.mt-4 {
+    margin: auto;
+    width: 50%;
+    }
+</style>
+<div class="upload-container">
+<h2 style="margin: auto; width: 50%">Submit your contact ticket</h2>
+    <form style="margin: auto; width: 50%" method="post" enctype="multipart/form-data" action="/application/contact/">
+    {% csrf_token %}
+        {% for field in form %}
+              <div class="fieldWrapper">
+                  {{ field.errors }}
+                  {{ field.label_tag }} {{ field }}
+              </div>
+          {% endfor %}
+        <input type="submit" value="Submit">
+    </form>
+</div>
+{% endblock specific_content %}
