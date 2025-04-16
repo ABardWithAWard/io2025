@@ -1,39 +1,90 @@
 {% extends "application/base.html" %}
 {% block specific_content %}
-<style>
-    .upload-container {
-    margin: auto;
-    margin-top: 100px;
-    width: 50%;
-    }
-
-    .container.mt-4 {
-    margin: auto;
-    width: 50%;
-    }
-</style>
 <div class="upload-container">
-<h2 style="margin: auto; width: 50%">Upload a File</h2>
-<form style="margin: auto; width: 50%" method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Upload</button>
-</form>
-<div class="container mt-4">
-    <h2 class="mb-3">Uploaded Files</h2>
-    <ul class="list-group" id="file-list">
-    </ul>
-</div>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        fetch("api/files") // Fetch files from Django API
-            .then(response => response.json())
-            .then(files => {
-                const fileList = document.getElementById("file-list");
-                files.forEach(file => {
+<!-- Simple styling because adding anything made everything shift like in Microsoft Word -->
+<h2 style="margin: 100px auto auto; width: 50%">Upload a File</h2>
+    <form style="margin: auto; width: 50%" method="post" enctype="multipart/form-data" onsubmit="return validateFile()" id="uploadForm">
+        {% csrf_token %}
+        {{ form.as_p }}
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        {{ error }}
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        {% endif %}
+        <button type="submit" id="uploadButton">Upload</button>
+    </form>
+    <div class="container mt-4">
+        <h2 class="mb-3">Uploaded Files</h2>
+        <ul class="list-group" id="file-list"></ul>
+    </div>
+
+    <dialog id="privacyDialog">
+        <h3>Privacy Warning</h3>
+        <p>Please do not upload any private or sensitive information.</p>
+        <div>
+            <button id="continueButton">Continue</button>
+            <button id="cancelButton">Cancel</button>
+        </div>
+    </dialog>
+    
+    <script>    
+        function validateFile() {
+            const fileInput = document.querySelector('input[type="file"]');
+            const file = fileInput.files[0];
+            const allowedExtensions = ['.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff', '.webp'];
+
+            if (file) {
+                const fileName = file.name.toLowerCase();
+                if (!allowedExtensions.some(ext => fileName.endsWith(ext))) {
+                    alert('Only image files are allowed.');
+                    fileInput.value = ''; // Clear the file input
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // Dialog elements
+            const dialog = document.getElementById("privacyDialog");
+            const uploadButton = document.getElementById("uploadButton");
+            const continueButton = document.getElementById("continueButton");
+            const cancelButton = document.getElementById("cancelButton");
+            const uploadForm = document.getElementById("uploadForm");
+            
+            let hasShownPrivacyWarning = false;
+            
+            // Show dialog on first upload attempt
+            // When we refresh it we refresh the "attempt"
+            uploadButton.addEventListener("click", function(e) {
+                if (!hasShownPrivacyWarning) {
+                    e.preventDefault();
+                    dialog.showModal();
+                }
+            });
+
+            continueButton.addEventListener("click", function() {
+                hasShownPrivacyWarning = true; //Might add that to cancel as well
+                // Currently it makes warning show up each time we upload
+                dialog.close();
+                uploadForm.submit();
+            });
+
+            cancelButton.addEventListener("click", function() {
+                dialog.close();
+            });
+
+            fetch("api/files") // Fetch files from Django API
+                .then(response => response.json())
+                .then(files => {
+                    const fileList = document.getElementById("file-list");
+                    files.forEach(file => {
                     const listItem = document.createElement("li");
                     listItem.className = "list-group-item";
-
                     // Create a download link for each file
                     const fileLink = document.createElement("a");
                     fileLink.href = `/media/${file}`;

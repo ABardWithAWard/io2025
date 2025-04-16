@@ -89,3 +89,6 @@ local_settings.py
 db.sqlite3
 
 .idea
+
+ocr/UploadedFiles/*
+ocr/application/model/datasets
