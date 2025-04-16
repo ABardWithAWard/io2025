@@ -9,8 +9,16 @@ from evaluate import load
 from torch.utils.data import DataLoader, Dataset
 from PIL import Image
 
+# Modified version of Craft from harshanck
+# https://github.com/harshanck/trocr-multiline
+from application.model.craft_text_detector import Craft
 from application.model.modelbase import ModelBase
 
+
+def get_contour_precedence(box, cols):
+    tolerance_factor = 10
+    x, y = box[0][0], box[0][1]
+    return ((y // tolerance_factor) * tolerance_factor) * cols + x
 
 # Needed for PyTorch, from NielsRogge's tutorial
 class IAMDataset(Dataset):
@@ -50,6 +58,9 @@ class IAMDataset(Dataset):
 class TrOCR(ModelBase):
     def __init__(self):
         super().__init__("TrOCR")
+        self.text_detector = Craft(output_dir=None, crop_type="box", cuda=True)
+        self.processor = TrOCRProcessor.from_pretrained("microsoft/trocr-base-handwritten")
+        self.model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-handwritten")
 
     def _preprocess(self, dataset_dir):
         """
@@ -153,17 +164,31 @@ class TrOCR(ModelBase):
         """
         # Test if everything works using _evaluate().
         #self._evaluate(dataset_dir, output_dir)
+
         try:
             image = Image.open(input_path).convert("RGB")
-            processor = TrOCRProcessor.from_pretrained("microsoft/trocr-base-handwritten")
-            pixel_values = processor(image, return_tensors="pt").pixel_values
-            model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-handwritten")
+            result = self.text_detector.detect_text(input_path)
+            boxes = result["boxes"]
+            boxes = sorted(boxes, key=lambda x: get_contour_precedence(x, image.width))
+            texts = []
+            for box in boxes:
+                crop = image.crop((box[0][0], box[0][1], box[2][0], box[2][1]))
+                pixel_values = self.processor(crop, return_tensors="pt").pixel_values
+                with torch.no_grad():
+                    generated_ids = self.model.generate(pixel_values)
+                text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
+                texts.append(text)
 
-            generated_ids = model.generate(pixel_values)
-            generated_text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
-
+            chars_in_current_line = 0
+            max_line_width = 80
             with open(output_path, "w") as f:
-                f.write(generated_text)
+                for seq in texts:
+                    chars_in_current_line += len(seq)
+                    if chars_in_current_line > max_line_width:
+                        f.writelines(f"{seq}\n")
+                        chars_in_current_line = 0
+                    else:
+                        f.writelines(f"{seq} ")
 
             return True
         except Exception:
