@@ -207,20 +207,29 @@ def train_model():
     """Training loop for OCR model"""
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Initialize data components
+    # Initialize tokenizer and dataset
     tokenizer = CharTokenizer()
     dataset = OCRDataset(
-        txt_file=r"...",  # Path to training annotations
-        img_root=r"...",  # Path to image directory
+        txt_file=r"C:\Users\Mika\PycharmProjects\io2025\ocr\application\model\datasets\iam\iam_dataset\train_gt.txt",
+        img_root=r"C:\Users\Mika\PycharmProjects\io2025\ocr\application\model\datasets\iam\iam_dataset",
         tokenizer=tokenizer
     )
     dataloader = DataLoader(dataset, batch_size=16, shuffle=True, collate_fn=collate_fn)
 
-    # Initialize model and optimizer
+    # Model & optimizer
     model = OCRTransformer(vocab_size=tokenizer.vocab_size()).to(device)
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
-    # Loss function ignoring padding tokens
+    # Load existing checkpoint if exists
+    checkpoint_path = r"C:\Users\Mika\PycharmProjects\io2025\ocr\application\model\modelMatthew\model.pth"
+    if os.path.exists(checkpoint_path):
+        print(f"Loading model from checkpoint: {checkpoint_path}")
+        checkpoint = torch.load(checkpoint_path, map_location=device)
+        model.load_state_dict(checkpoint)
+        # Optional: load optimizer state if previously saved
+        # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+
+    # Loss function
     loss_fn = nn.CrossEntropyLoss(ignore_index=tokenizer.char2idx[tokenizer.pad_token])
 
     # Training loop
@@ -229,40 +238,30 @@ def train_model():
         total_loss = 0
 
         for images, targets, lengths in dataloader:
-            # Move data to device
             images, targets = images.to(device), targets.to(device)
+            tgt_input = targets[:, :-1]
+            tgt_output = targets[:, 1:]
 
-            # Create shifted version for teacher forcing
-            tgt_input = targets[:, :-1]  # Input to decoder
-            tgt_output = targets[:, 1:]  # Expected output
-
-            # Forward pass
             logits = model(images, tgt_input)
+            logits = logits.reshape(-1, logits.shape[-1])
+            tgt_output = tgt_output.reshape(-1)
 
-            # Reshape for loss calculation
-            logits = logits.reshape(-1, logits.shape[-1])  # [batch*seq_len, vocab]
-            tgt_output = tgt_output.reshape(-1)  # [batch*seq_len]
-
-            # Calculate loss
             loss = loss_fn(logits, tgt_output)
-
-            # Backpropagation
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
             total_loss += loss.item()
 
-        # Print epoch statistics
         print(f"Epoch {epoch + 1}, Loss: {total_loss / len(dataloader):.4f}")
 
-        # Save model checkpoint
-        save_path = r"..."
-        torch.save(model.state_dict(), save_path)
-        print(f"Model saved to {save_path}")
+        # Save model
+        torch.save(model.state_dict(), checkpoint_path)
+        print(f"Model saved to {checkpoint_path}")
 
 
-def infer_image(filepath: str, model_path: str = "...") -> str:
+
+def infer_image(filepath: str, model_path: str = r"C:\Users\Mika\PycharmProjects\io2025\ocr\application\model\modelMatthew\model.pth") -> str:
     """Perform inference on a single image"""
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using {device} device")
