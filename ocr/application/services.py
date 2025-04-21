@@ -4,6 +4,7 @@ from PIL import Image
 from PIL.ImagePath import Path
 from django.core.files.storage import FileSystemStorage
 
+from application.model.modelMatthew.textSectors import preprocess
 from application.model.trocr import TrOCR
 
 model = TrOCR()
@@ -33,6 +34,8 @@ def handle_uploaded_file(file):
     # Create output directory if it doesn't exist
     output_dir = os.path.join(upload_dir, 'processed_text')
     os.makedirs(output_dir, exist_ok=True)
+
+    preprocess(full_path)
 
     try:
         # Create output filename
@@ -75,7 +78,6 @@ def reverse_colors(input_path, output_path=None):
         print(f"Error processing image {input_path}: {str(e)}")
         return False
     return True
-
 
 def process_directory(input_dir, output_dir):
     image_extensions = {'.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff', '.webp'}
