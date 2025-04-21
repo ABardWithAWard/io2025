@@ -4,7 +4,7 @@ from PIL import Image
 from PIL.ImagePath import Path
 from django.core.files.storage import FileSystemStorage
 
-from application.model.modelMatthew.boxDrawing import preprocess
+from application.model.modelMatthew.textSectors import preprocess
 from application.model.trocr import TrOCR
 
 model = TrOCR()
