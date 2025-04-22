@@ -12,6 +12,10 @@ git clone <link_do_repo> <nazwa_folderu_docelowego>
 cd <nazwa_folderu_docelowego>
 
 pip install -r requirements.txt
+
+# For ReactJS
+conda install conda-forge::nodejs
+npm install react react-dom
 ```
 ### 2. Utwórz plik .env i dodaj tam odpowiednie zmienne środowiskowe
 ```bash
