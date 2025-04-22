@@ -51,9 +51,13 @@ w powłokę, którą przed chwilą uruchomiliśmy, aby uzyskać nowy klucz prywa
 Gotowy plik .env oraz json z firebase znajduje się na #mati-keygen, ale swoje klucze można wygenerować.
 Json z firebase znajduje się w:
 Project settings -> Service accounts -> Generate new private key
+Pod linkiem:
+https://console.firebase.google.com/u/0/project/io2025-d859f/overview
 Zmienne googlowe można znaleźć w:
 Google cloud services -> Google auth platform (najlepiej wyszukać w wyszukiwarce na górze strony) -> Clients
 Tam możemy wybrać klienta i dodawać oraz edytować rzeczy takie jak redirect uri
+Zmienne te są pod linkiem:
+https://console.cloud.google.com/welcome?project=io2025-d859f
 ### 3. (conda) Zmień interpreter swojego projektu w PyCharmie na django_test:
 ![Ustawienia interpretera](interpreter.png)
 
