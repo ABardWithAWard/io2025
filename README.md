@@ -36,6 +36,16 @@ GOOGLE_OAUTH2_CLIENT_ID=<id_klienta_google_auth>
 GOOGLE_OAUTH2_CLIENT_SECRET=<klucz_prywatny_google_auth>
 GOOGLE_OAUTH2_REDIRECT_URI=<link_powrotny_google_auth>
 ```
+Nowy SECRET_KEY można wygenerować za pomocą polecenia
+```bash
+django-admin shell
+```
+uruchomionego w środowisku, gdzie jest zainstalowane django (patrz oficjalny tutorial). Wpisujemy
+```bash
+from django.core.management.utils import get_random_secret_key  
+get_random_secret_key()
+```
+w powłokę, którą przed chwilą uruchomiliśmy, aby uzyskać nowy klucz prywatny dla Django.
 
 Gotowy plik .env oraz json z firebase znajduje się na #mati-keygen, ale swoje klucze można wygenerować.
 Json z firebase znajduje się w:
