@@ -15,6 +15,7 @@ pip install -r requirements.txt
 ```
 ### 2. Utwórz plik .env i dodaj tam odpowiednie zmienne środowiskowe
 ```bash
+cd ocr
 nano .env
 ############## ZAWARTOŚĆ .env ##############
 # SECRET_KEY=<klucz_prywatny>
