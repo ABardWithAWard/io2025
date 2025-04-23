@@ -1,29 +1,7 @@
+{# Załaduj to, co jest w settings.py pod STATIC_URL #}
 {% load static %}
-<!-- Navbar CSS -->
+<!-- User Login CSS -->
 <style>
-  .navbar-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1000;
-    background-color: #f8f9fa;
-    box-shadow: 0 2px 4px rgba(0,0,0,.1);
-  }
-
-  /* Explicitly set text colors for all navbar elements */
-  .navbar-container a,
-  .navbar-container span,
-  .navbar-container div {
-    color: #333333 !important;
-    text-decoration: none;
-  }
-
-  .navbar-container a:hover {
-    color: #0056b3 !important;
-    text-decoration: underline;
-  }
-
   /* Login button styles */
   .login-btn {
     background-color: white;
@@ -163,20 +141,30 @@
 {% endif %}
 
 <!-- Navbar HTML -->
-<div class="navbar-container">
-  <nav style="display: flex; padding: 1rem; align-items: center;">
-    <a href="{% url 'application:index' %}" style="margin-right: 1rem; font-weight: bold;">Aplikacja OCR</a>
-    <a href="{% url 'application:index' %}" style="margin-right: 1rem;">Strona główna</a>
-    <a href="{% url 'application:contact' %}" style="margin-right: 1rem;">Kontakt</a>
-    <a href="{% url 'admin:index' %}" style="margin-right: 1rem;">Admin panel</a>
-    {% if user.is_authenticated %}
-      <span style="margin-right: 1rem;">{{ user.email }}</span>
-      <a href="{% url 'application:logout' %}" class="login-btn">Logout</a>
-    {% else %}
-      <button class="login-btn" onclick="openModal()">Login</button>
-    {% endif %}
-  </nav>
-</div>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="{% url 'application:index' %}">Aplikacja OCR</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'application:contact' %}">Kontakt</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'admin:index' %}">Panel administracji</a>
+        </li>
+      </ul>
+      {% if user.is_authenticated %}
+          <span style="margin-right: 1rem;">{{ user.email }}</span>
+          <a href="{% url 'application:logout' %}"><button class="btn btn-outline-primary">Logout</button></a>
+        {% else %}
+          <button class="btn btn-outline-primary" onclick="openModal()">Login</button>
+      {% endif %}
+    </div>
+  </div>
+</nav>
 
 <!-- Modal -->
 <div id="loginModal" class="modal">
