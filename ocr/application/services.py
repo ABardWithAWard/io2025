@@ -1,16 +1,12 @@
 import os
-import time
-from PIL import Image
-from PIL.ImagePath import Path
 from django.core.files.storage import FileSystemStorage
-
 from application.model.modelMatthew.textSectors import preprocess
 from application.model.trocr import TrOCR
 
 model = TrOCR()
 
-def handle_uploaded_file(file):
-    # Get the absolute path from environment variable
+def prepare_file_hierarchy (file):
+    """Takes uploaded file and returns directory where it is saved and its detected content"""
     upload_dir = os.path.abspath(os.environ['UPLOADED_FILES'])
     print(f"Upload directory: {upload_dir}")
 
@@ -20,75 +16,21 @@ def handle_uploaded_file(file):
     full_path = storage.path(file_path)
     print(f"Saved file to: {full_path}")
 
-    # Wait for file to be fully written
-    while not os.path.exists(full_path):
-        print("Not yet!")
-        time.sleep(0.1)
+    # Possibly legacy?
+    # output_dir = os.path.join(upload_dir, 'processed_text')
+    # os.makedirs(output_dir, exist_ok=True)
 
-    time.sleep(0.5)
+    return full_path
 
-    # Create reversed_images directory if it doesn't exist
-    reversed_dir = os.path.join(upload_dir, 'reversed_images')
-    os.makedirs(reversed_dir, exist_ok=True)
-    print(f"Created reversed images directory: {reversed_dir}")
-    # Create output directory if it doesn't exist
-    output_dir = os.path.join(upload_dir, 'processed_text')
-    os.makedirs(output_dir, exist_ok=True)
+def handle_uploaded_file(file):
+    """Takes file uploaded in form and calls helper function to manage file and its contents"""
+    full_path = prepare_file_hierarchy(file)
 
     preprocess(full_path)
+    # function used in different model than trocr, for more details go to implementation
 
-    try:
-        # Create output filename
-        output_filename = f"{os.path.splitext(file.name)[0]}_out.txt"
-        output_path = os.path.join(output_dir, output_filename)
+    # Process the single uploaded file
+    # Now, we catch errors in trocr.py file since we did it anyway, no need for doing this twice
+    print(model.perform_ocr(full_path))
 
-        # Process the single uploaded file
-        if model.perform_ocr(full_path, output_path):
-            print("Image processing completed successfully")
-        else:
-            print("Failed to process image")
-
-    except Exception as e:
-        print(f"Unexpected error: {e}")
-
-
-def reverse_colors(input_path, output_path=None):
-    try:
-        with Image.open(input_path) as img:
-            if img.mode != 'RGB':
-                img = img.convert('RGB')
-
-            width, height = img.size
-            pixels = img.load()
-            reversed_img = Image.new('RGB', (width, height))
-            reversed_pixels = reversed_img.load()
-
-            for x in range(width):
-                for y in range(height):
-                    r, g, b = pixels[x, y]
-                    reversed_pixels[x, y] = (255 - r, 255 - g, 255 - b)
-
-            # Ensure the output directory exists
-            os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
-            reversed_img.save(output_path)
-            print(f"Successfully saved reversed image to: {output_path}")
-
-    except Exception as e:
-        print(f"Error processing image {input_path}: {str(e)}")
-        return False
-    return True
-
-def process_directory(input_dir, output_dir):
-    image_extensions = {'.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff', '.webp'}
-
-    for file in os.listdir(input_dir):
-        if Path(file).suffix.lower() in image_extensions:
-            input_path = os.path.join(input_dir, file)
-            output_filename = f"{Path(file).stem}_reversed{Path(file).suffix}"
-            output_path = os.path.join(output_dir, output_filename)
-
-            if reverse_colors(input_path, output_path):
-                print("Success")
-            else:
-                print("Failed")
+    #TODO: Somehow save to cloud user input and model input (or just user input? Depends on pricing)
