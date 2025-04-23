@@ -158,7 +158,7 @@
       </ul>
       {% if user.is_authenticated %}
           <span style="margin-right: 1rem;">{{ user.email }}</span>
-          <button class="btn btn-outline-primary" href="{% url 'application:logout' %}">Logout</button>
+          <a href="{% url 'application:logout' %}"><button class="btn btn-outline-primary">Logout</button></a>
         {% else %}
           <button class="btn btn-outline-primary" onclick="openModal()">Login</button>
       {% endif %}
