@@ -10,7 +10,7 @@ from application.model.modelMatthew.findingWords import preprocessWords
 # Sometimes works. Sometimes does not. Needs to be reworked as it works on my CV, but it does not in case of an old book
 # https://github.com/wjbmattingly/ocr_python_textbook/blob/main/data/index_02.JPG
 # This one ^
-# Maybe we should write unit tests to those functions?to
+# Maybe we should write unit tests to those functions?
 def split_image_on_lines(image, lines, width, height):
     horizontal_cuts = []
     vertical_cuts = []
@@ -100,6 +100,11 @@ def process_images(input_pattern='UploadedFiles/roi*.png'):
 
 
 def preprocess(image):
+    """
+    Function which detects text sectors and tries to cut them into single lines or words.
+    Argument image is path to image which will be preprocessed.
+    Does not return anything, but saves cut images to directories created by it.
+    """
     imageLoad = cv2.imread(image)
     gray = cv2.cvtColor(imageLoad, cv2.COLOR_BGR2GRAY)
     #cv2.imwrite("UploadedFiles/gray.png", gray)
@@ -113,6 +118,9 @@ def preprocess(image):
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 13))
     dilate = cv2.dilate(thresh, kernel, iterations=1)
     cv2.imwrite("UploadedFiles/dilate.png", dilate)
+
+    # Everything above this line prepares for text sectors detection,
+    # uncomment imwrite lines to see effects
 
     contours = cv2.findContours(dilate, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = contours[0] if len(contours) == 2 else contours[1]
