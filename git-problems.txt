@@ -1,0 +1,49 @@
+Did you commit api-key by accident? Did you somehow add .env file to your commit? You dont know how to switch branches properly? Here is a quick tutorial:
+
+If you want to switch to a new branch you can just use this command to do that:
+git switch <branch-name>
+
+If you had unpushed changes to previous branch you can then use:
+git checkout <previous-branch-name>
+
+This will bring commits from previous branch to current one, but if branch is ahead then it might delete them!
+If thats the case, it will be a good idea to move to a new branch then rebase!
+Moving to a new branch:
+git switch --create <new-branch-name>
+
+Then we can rebase onto the branch we wanted to commit changes to, but forgot to switch to it:
+git rebase <branch-we-commit-to-name>
+
+If you want to push newly created branch you will probably have to set upstream branch. To do it, use this command:
+git push --set-upstream main <name-of-our-branch>
+But be aware! branch main is upstream only in our project but it might change. If thats the case, then replace main with upstream branch.
+
+If you want to merge changes then create a pull request via graphical user interface on github.com. Do not merge them without permission of other collaborators.
+
+If you want to pull changes from main (for example when you are still working on something while another pull request was resolved) then try rebasing using:
+git checkout <my-branch>
+git rebase main
+
+After those commands you either already merged them or have to do it manually if conflicts arose. In second case just resolve it using your local enviroment in case of problems use:
+git rebase --abort
+And ask for help or try again.
+
+If you have commited json or any other file which shouldnt ever be on github, use:
+git filter-repo --invert-paths --path <path-to-secret-file>
+
+If the api key was just .env variable which somehow made it into a file you can do this:
+git filter-repo --replace-text replace.txt 
+replace.txt should be formatted in UTF-8 and have this content:
+<string-to-be-replaced>==><string-which-replaces>
+It might require using --force BUT BE AWARE! IT WILL REPLACE ALL OCCURENCES OF THIS STRING IN WHOLE REPO!!!
+It is probably a bad idea to do it on repo without trying it out on cloned one locally.
+After any git filter-repo commands it might be necessary to use --force flag during pushes, as it will alter hashes of every commit after altered one (unless we use --inver-paths variant, it shouldnt change them)
+Also, git filter-repo is not a command which comes with default git package. It is installed by:
+pip install git-filter-repo
+
+
+Note: This file might be incomplete or contain not fully complete solutions.
+If thats the case, make sure to add complete solutions to this file and if you encounter different problem make sure to add them here, it will make working with git easier for everyone. 
+
+
+
