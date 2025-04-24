@@ -93,3 +93,4 @@ db.sqlite3
 ocr/UploadedFiles/*
 ocr/application/model/datasets
 ocr/firebaseSecretKey.json
+replace.txt
