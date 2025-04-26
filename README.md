@@ -19,8 +19,7 @@ npm install react react-dom
 ```
 ### 2. Utwórz plik .env i dodaj tam odpowiednie zmienne środowiskowe
 ```bash
-cd ocr
-nano .env
+nano .env # wewnątrz root dir projektu
 ############## ZAWARTOŚĆ .env ##############
 # SECRET_KEY=<klucz_prywatny>
 # UPLOADED_FILES=<katalog_plikow_lokalnych>
