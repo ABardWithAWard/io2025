@@ -88,6 +88,12 @@ model/
 ```
 A następnie uruchomić z poziomu katalogu model/ skrypt ./setup_datasets.sh.
 
+### Dane do logowania administratora
+```bash
+Email:    admin@example.com
+Password: admin
+```
+
 ### Instrukcje tworzenia od zera
 ```bash
 conda create -n django_test python
