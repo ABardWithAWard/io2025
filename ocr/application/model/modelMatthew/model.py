@@ -106,6 +106,7 @@ class Model(ModelBase):
         Argument image is path to image which will be preprocessed.
         Does not return anything, but saves cut images to directories created by it.
         """
+        input_dir = os.environ['UPLOADED_FILES']
         imageLoad = cv2.imread(data_dir)
         gray = cv2.cvtColor(imageLoad, cv2.COLOR_BGR2GRAY)
         # cv2.imwrite("UploadedFiles/gray.png", gray)
@@ -118,7 +119,7 @@ class Model(ModelBase):
 
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 13))
         dilate = cv2.dilate(thresh, kernel, iterations=1)
-        cv2.imwrite("UploadedFiles/dilate.png", dilate)
+        cv2.imwrite(f"{input_dir}/dilate.png", dilate)
 
         # Everything above this line prepares for text sectors detection,
         # uncomment imwrite lines to see effects
@@ -226,10 +227,10 @@ class Model(ModelBase):
         for idx, (x, y, w, h) in enumerate(final_boxes, start=1):
             roi = imageLoad[y:y + h, x:x + w]
             color = (0, 0, 255) if is_horizontal_line((x, y, w, h)) else (36, 255, 12)
-            cv2.imwrite(f"UploadedFiles/roi{idx}.png", roi)
+            cv2.imwrite(f"{input_dir}/roi{idx}.png", roi)
             cv2.rectangle(imageLoad, (x, y), (x + w, y + h), color, 2)
 
-        cv2.imwrite("UploadedFiles/boxed.png", imageLoad)
+        cv2.imwrite(f"{input_dir}/boxed.png", imageLoad)
         process_images()
         preprocessWords()
 
@@ -386,7 +387,7 @@ class OCRTransformer(nn.Module):
         logits = self.fc_out(out.permute(1, 0, 2))  # [batch_size, seq_len, vocab_size]
         return logits
 
-
+#Temporary
 def train_model():
     """Training loop for OCR model"""
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

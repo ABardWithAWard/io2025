@@ -42,10 +42,11 @@ def find_words(line_image):
 
 def preprocessWords():
     # Create output directory
-    os.makedirs('UploadedFiles/words', exist_ok=True)
+    input_dir = os.environ['UPLOADED_FILES']
+    os.makedirs(f'{input_dir}/words', exist_ok=True)
 
     # Get and sort all input files
-    files = sorted(glob.glob('UploadedFiles/roiEdited*.png'),
+    files = sorted(glob.glob(f'{input_dir}/roiEdited*.png'),
                    key=lambda x: int(re.search(r'roiEdited(\d+)\.png$', x).group(1)))
 
     if not files:
@@ -87,7 +88,7 @@ def preprocessWords():
 
                     # Save word image
                     word_img = img[y1:y2, x1:x2]
-                    output_path = f'UploadedFiles/words/text{word_counter:04d}.png'
+                    output_path = f'{input_dir}/words/text{word_counter:04d}.png'
                     cv2.imwrite(output_path, word_img)
                     word_counter += 1
 

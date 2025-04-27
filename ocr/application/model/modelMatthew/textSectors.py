@@ -55,7 +55,7 @@ def split_image_on_lines(image, lines, width, height):
 
     return segments
 
-def process_images(input_pattern='UploadedFiles/roi*.png'):
+def process_images(input_pattern=f'{os.environ['UPLOADED_FILES']}/roi*.png'):
     files = sorted(glob.glob(input_pattern), key=lambda x: int(re.search(r'roi(\d+)', x).group(1)))
     counter = 1
     generated_files = []
