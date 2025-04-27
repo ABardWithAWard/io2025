@@ -17,19 +17,6 @@ class fileLimit(models.Model):
     def __str__(self):
         return f"File limit: {self.value}"
 
-# Model blockList
-class blockList(models.Model):
-    ip_address = models.GenericIPAddressField(unique=True, help_text="Adres IP do zablokowania")
-
-    def clean(self):
-        try:
-            ipaddress.ip_address(self.ip_address)  # Sprawdzenie poprawności adresu IP
-        except ValueError:
-            raise ValidationError(f"{self.ip_address} nie jest poprawnym adresem IP.")
-
-    def __str__(self):
-        return f"Zablokowany IP: {self.ip_address}"
-
 # Model to store uploaded files
 class UploadedFile(models.Model):
     file = models.FileField(upload_to='uploads/')
