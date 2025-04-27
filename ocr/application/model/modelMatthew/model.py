@@ -1,4 +1,6 @@
 import os  # For file path operations
+
+import cv2
 import torch  # Main deep learning framework
 from torch.utils.data import Dataset, DataLoader  # For data loading utilities
 from PIL import Image  # For image handling
@@ -6,13 +8,18 @@ from torchvision import transforms  # For image transformations
 from torch import nn, optim  # Neural network modules and optimizers
 from torchvision import models  # Pretrained computer vision models
 from torch.nn import TransformerDecoder, TransformerDecoderLayer  # Transformer components
+import string
+
+from application.model.modelMatthew.findingWords import preprocessWords
+from application.model.modelMatthew.textSectors import process_images
+from application.model.modelbase import ModelBase
 
 
-class CharTokenizer:
+class Model(ModelBase):
     """Handles text tokenization/encoding for OCR tasks"""
 
     def __init__(self):
-        import string
+        super().__init__("OCR")
         # Define character set: letters, digits, punctuation and space
         # Can expand to polish characters in near future
         chars = list(string.ascii_letters + string.digits + string.punctuation + ' ')
@@ -48,11 +55,189 @@ class CharTokenizer:
         """Total number of tokens in vocabulary"""
         return len(self.vocab)
 
+    def perform_ocr(self, input_path, output_path ) -> str:
+        """Perform inference on a single image"""
+        model_path = r"C:\Users\Mika\PycharmProjects\io2025\ocr\application\model\modelMatthew\model.pth"
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"Using {device} device")
+
+        # Initialize components
+        tokenizer = Model()
+        model = OCRTransformer(vocab_size=tokenizer.vocab_size())
+        model.load_state_dict(torch.load(model_path, map_location=device))
+        model.to(device).eval()
+
+        # Image preprocessing pipeline
+        transform = transforms.Compose([
+            transforms.Resize((128, 32)),  # Match training size
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,))
+        ])
+
+        # Load and preprocess image
+        image = Image.open(input_path).convert('RGB')
+        image_tensor = transform(image).unsqueeze(0).to(device)  # Add batch dimension
+
+        # Initialize generation with start token
+        input_seq = torch.tensor([[tokenizer.char2idx[tokenizer.sos_token]]], dtype=torch.long).to(device)
+
+        # Autoregressive generation loop
+        for _ in range(100):  # Maximum sequence length
+            # Get predictions
+            logits = model(image_tensor, input_seq)
+
+            # Greedy decoding: select most probable next token
+            next_token = logits[:, -1, :].argmax(dim=-1, keepdim=True)
+
+            # Append to input sequence
+            input_seq = torch.cat([input_seq, next_token], dim=1)
+
+            # Stop if end token generated
+            if next_token.item() == tokenizer.char2idx[tokenizer.eos_token]:
+                break
+
+        # Convert indices to text
+        decoded_text = tokenizer.decode(input_seq[0].tolist())
+        return decoded_text.strip()  # Remove whitespace
+
+    def _preprocess(self, data_dir):
+        """
+        Function which detects text sectors and tries to cut them into single lines or words.
+        Argument image is path to image which will be preprocessed.
+        Does not return anything, but saves cut images to directories created by it.
+        """
+        imageLoad = cv2.imread(data_dir)
+        gray = cv2.cvtColor(imageLoad, cv2.COLOR_BGR2GRAY)
+        # cv2.imwrite("UploadedFiles/gray.png", gray)
+
+        blur = cv2.GaussianBlur(gray, (7, 7), 0)
+        # cv2.imwrite("UploadedFiles/gray_blurred.png", blur)
+
+        thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+        # cv2.imwrite("UploadedFiles/thresh.png", thresh)
+
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 13))
+        dilate = cv2.dilate(thresh, kernel, iterations=1)
+        cv2.imwrite("UploadedFiles/dilate.png", dilate)
+
+        # Everything above this line prepares for text sectors detection,
+        # uncomment imwrite lines to see effects
+
+        contours = cv2.findContours(dilate, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = contours[0] if len(contours) == 2 else contours[1]
+
+        boxes = [cv2.boundingRect(c) for c in contours if cv2.boundingRect(c)[2] > 1 and cv2.boundingRect(c)[3] > 1]
+        img_height = imageLoad.shape[0]
+        tolerance = int(0.10 * img_height)
+
+        filtered_boxes = []
+        for i, (x1, y1, w1, h1) in enumerate(boxes):
+            inside = False
+            for j, (x2, y2, w2, h2) in enumerate(boxes):
+                if i != j:
+                    if x1 >= x2 and y1 >= y2 and x1 + w1 <= x2 + w2 and y1 + h1 <= y2 + h2:
+                        inside = True
+                        break
+            if not inside:
+                filtered_boxes.append((x1, y1, w1, h1))
+
+        def boxes_are_close(b1, b2, thresh=15):
+            x1, y1, w1, h1 = b1
+            x2, y2, w2, h2 = b2
+            return not (
+                        x1 + w1 + thresh < x2 or x2 + w2 + thresh < x1 or y1 + h1 + thresh < y2 or y2 + h2 + thresh < y1)
+
+        def merge_boxes(b1, b2):
+            x1, y1, w1, h1 = b1
+            x2, y2, w2, h2 = b2
+            x = min(x1, x2)
+            y = min(y1, y2)
+            x_max = max(x1 + w1, x2 + w2)
+            y_max = max(y1 + h1, y2 + h2)
+            return (x, y, x_max - x, y_max - y)
+
+        merged = True
+        while merged:
+            merged = False
+            new_boxes = []
+            skip = set()
+            for i in range(len(filtered_boxes)):
+                if i in skip:
+                    continue
+                box1 = filtered_boxes[i]
+                for j in range(i + 1, len(filtered_boxes)):
+                    if j in skip:
+                        continue
+                    box2 = filtered_boxes[j]
+                    if boxes_are_close(box1, box2):
+                        box1 = merge_boxes(box1, box2)
+                        skip.add(j)
+                        merged = True
+                new_boxes.append(box1)
+            filtered_boxes = new_boxes
+
+        def sort_key(box):
+            return (box[1] // tolerance, box[0])
+
+        sorted_boxes = sorted(filtered_boxes, key=sort_key)
+
+        img_w, img_h = imageLoad.shape[1], imageLoad.shape[0]
+
+        def is_horizontal_line(box):
+            x, y, w, h = box
+            aspect_ratio = w / h if h > 0 else 0
+            return h <= 15 and aspect_ratio > 10
+
+        final_boxes = [(x, y, w, h) for (x, y, w, h) in sorted_boxes if w >= 15 and h >= 15]
+
+        # Split boxes containing horizontal lines
+        line_boxes = [box for box in final_boxes if is_horizontal_line(box)]
+        other_boxes = [box for box in final_boxes if not is_horizontal_line(box)]
+        used_lines = []
+        new_other_boxes = []
+
+        for other_box in other_boxes:
+            ox, oy, ow, oh = other_box
+            split_lines = []
+            for line_box in line_boxes:
+                lx, ly, lw, lh = line_box
+                if (lx >= ox and ly >= oy and (lx + lw) <= (ox + ow) and (ly + lh) <= (oy + oh)):
+                    if lw >= 0.8 * ow:
+                        split_lines.append(line_box)
+                        used_lines.append(line_box)
+            split_lines.sort(key=lambda lb: lb[1])
+            current_y = oy
+            remaining_height = oh
+            for line in split_lines:
+                ly = line[1]
+                lh_line = line[3]
+                upper_height = ly - current_y
+                if upper_height >= 15:
+                    new_other_boxes.append((ox, current_y, ow, upper_height))
+                current_y = ly + lh_line
+                remaining_height = oh - (current_y - oy)
+            if remaining_height >= 15:
+                new_other_boxes.append((ox, current_y, ow, remaining_height))
+
+        remaining_line_boxes = [lb for lb in line_boxes if lb not in used_lines]
+        final_boxes = new_other_boxes + remaining_line_boxes
+        final_boxes = sorted(final_boxes, key=sort_key)  # Re-sort after splitting
+
+        for idx, (x, y, w, h) in enumerate(final_boxes, start=1):
+            roi = imageLoad[y:y + h, x:x + w]
+            color = (0, 0, 255) if is_horizontal_line((x, y, w, h)) else (36, 255, 12)
+            cv2.imwrite(f"UploadedFiles/roi{idx}.png", roi)
+            cv2.rectangle(imageLoad, (x, y), (x + w, y + h), color, 2)
+
+        cv2.imwrite("UploadedFiles/boxed.png", imageLoad)
+        process_images()
+        preprocessWords()
+
 
 class OCRDataset(Dataset):
     """Custom dataset for loading OCR images and labels"""
 
-    def __init__(self, txt_file: str, img_root: str, tokenizer: CharTokenizer, img_size=(128, 32)):
+    def __init__(self, txt_file: str, img_root: str, tokenizer: Model, img_size=(128, 32)):
         # Load image paths and labels from text file
         with open(txt_file, 'r') as f:
             self.samples = [line.strip().split('\t') for line in f if line.strip()]
@@ -207,7 +392,7 @@ def train_model():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Initialize tokenizer and dataset
-    tokenizer = CharTokenizer()
+    tokenizer = Model()
     dataset = OCRDataset(
         txt_file=r"C:\Users\Mika\PycharmProjects\io2025\ocr\application\model\datasets\iam\iam_dataset\train_gt.txt",
         img_root=r"C:\Users\Mika\PycharmProjects\io2025\ocr\application\model\datasets\iam\iam_dataset",
@@ -257,49 +442,3 @@ def train_model():
         # Save model
         torch.save(model.state_dict(), checkpoint_path)
         print(f"Model saved to {checkpoint_path}")
-
-
-
-def infer_image(filepath: str, model_path: str = r"C:\Users\Mika\PycharmProjects\io2025\ocr\application\model\modelMatthew\model.pth") -> str:
-    """Perform inference on a single image"""
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using {device} device")
-
-    # Initialize components
-    tokenizer = CharTokenizer()
-    model = OCRTransformer(vocab_size=tokenizer.vocab_size())
-    model.load_state_dict(torch.load(model_path, map_location=device))
-    model.to(device).eval()
-
-    # Image preprocessing pipeline
-    transform = transforms.Compose([
-        transforms.Resize((128, 32)),  # Match training size
-        transforms.ToTensor(),
-        transforms.Normalize((0.5,), (0.5,))
-    ])
-
-    # Load and preprocess image
-    image = Image.open(filepath).convert('RGB')
-    image_tensor = transform(image).unsqueeze(0).to(device)  # Add batch dimension
-
-    # Initialize generation with start token
-    input_seq = torch.tensor([[tokenizer.char2idx[tokenizer.sos_token]]], dtype=torch.long).to(device)
-
-    # Autoregressive generation loop
-    for _ in range(100):  # Maximum sequence length
-        # Get predictions
-        logits = model(image_tensor, input_seq)
-
-        # Greedy decoding: select most probable next token
-        next_token = logits[:, -1, :].argmax(dim=-1, keepdim=True)
-
-        # Append to input sequence
-        input_seq = torch.cat([input_seq, next_token], dim=1)
-
-        # Stop if end token generated
-        if next_token.item() == tokenizer.char2idx[tokenizer.eos_token]:
-            break
-
-    # Convert indices to text
-    decoded_text = tokenizer.decode(input_seq[0].tolist())
-    return decoded_text.strip()  # Remove whitespace
