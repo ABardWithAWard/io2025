@@ -172,9 +172,22 @@
         </li>
         <li class="nav-item">
             {% if user.is_authenticated %}
-              <a class="nav-link" href="{% url 'admin:index' %}">Panel administracji</a>
+                <a class="nav-link" href="{% if user.is_superuser %}{% url 'admin:index' %}{% else %}#{% endif %}" 
+                   onclick="{% if not user.is_superuser %}openPopUp(); event.preventDefault();{% endif %}">
+                    Panel administracji
+                </a>
+                
+                {% if not user.is_superuser %}
+                    <div id="accessDenied" class="access-denied" style="display:none;">
+                        <div class="modal-content">
+                            <span class="close" onclick="closePopUp()">&times;</span>
+                            <h2>Brak dostępu</h2>
+                            <p>Nie masz uprawnień do dostępu do panelu administracyjnego.</p>
+                        </div>
+                    </div>
+                {% endif %}
             {% else %}
-              <a class="nav-link admin-panel-link" onclick="openModal()">Panel administracji</a>
+                <a class="nav-link admin-panel-link" onclick="openModal()">Panel administracji</a>
             {% endif %}
         </li>
       </ul>
@@ -187,6 +200,7 @@
     </div>
   </div>
 </nav>
+
 
 <!-- Modal -->
 <div id="loginModal" class="modal">
@@ -243,6 +257,15 @@
 </div>
 
 <script>
+    
+function closePopUp() {
+    document.getElementById('accessDenied').style.display = 'none';
+}
+
+function openPopUp() {
+    document.getElementById('accessDenied').style.display = 'block';
+}
+    
 function openModal() {
   document.getElementById('loginModal').style.display = 'block';
   document.body.classList.add('modal-open');
@@ -286,3 +309,41 @@ document.addEventListener('DOMContentLoaded', function() {
   }, 5000);
 });
 </script>
+
+<style>
+    .access-denied {
+        display: none; /* Hidden by default */
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0,0,0); 
+        background-color: rgba(0,0,0,0.4); /* Black with transparency */
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 500px;
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+</style>
