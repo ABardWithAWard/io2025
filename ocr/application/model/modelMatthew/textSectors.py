@@ -4,14 +4,13 @@ import glob
 import os
 import re
 
-from application.model.modelMatthew.findingWords import preprocessWords
-
 
 # Sometimes works. Sometimes does not. Needs to be reworked as it works on my CV, but it does not in case of an old book
 # https://github.com/wjbmattingly/ocr_python_textbook/blob/main/data/index_02.JPG
 # This one ^
 # Maybe we should write unit tests to those functions?
 def split_image_on_lines(image, lines, width, height):
+    #Splits image along lines drawn
     horizontal_cuts = []
     vertical_cuts = []
 
@@ -56,12 +55,15 @@ def split_image_on_lines(image, lines, width, height):
     return segments
 
 def process_images(input_pattern=f'{os.environ['UPLOADED_FILES']}/roi*.png'):
+    #This function tries to find stray dividers if text is positioned too close to it
     files = sorted(glob.glob(input_pattern), key=lambda x: int(re.search(r'roi(\d+)', x).group(1)))
     counter = 1
     generated_files = []
 
     for file_path in files:
         print(f"Processing {file_path}...")
+        #We have a smaller file now, so we need lower blur to be able to detect lines and silence noise.
+        #It works just like model.py _preprocessing function
         image = cv2.imread(file_path)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         blur = cv2.GaussianBlur(gray, (3, 3), 0)
@@ -71,6 +73,7 @@ def process_images(input_pattern=f'{os.environ['UPLOADED_FILES']}/roi*.png'):
         dilated = cv2.dilate(edges, kernel, iterations=1)
 
         height, width = image.shape[:2]
+        #Detects long lines which should be dividers according to these parameters.
         lines = cv2.HoughLinesP(dilated, 1, np.pi / 180, 50, 10, 200)
 
         if lines is not None:
@@ -81,6 +84,7 @@ def process_images(input_pattern=f'{os.environ['UPLOADED_FILES']}/roi*.png'):
 
         base_dir = os.path.dirname(file_path)
 
+        # If we found a line we rename files in such a way that we keep sorted order
         if segments:
             for seg in segments:
                 if seg.shape[0] < 10 or seg.shape[1] < 10:
