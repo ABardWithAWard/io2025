@@ -20,8 +20,8 @@ class ApplicationConfig(AppConfig):
                 fileLimit.objects.create(value=0)
 
             User = get_user_model()
-            if not User.objects.filter(username="admin").exists():
-                User.objects.create_superuser("admin", "admin@example.com", "admin")
+            if not User.objects.filter(username="admin@example.com").exists():
+                User.objects.create_superuser("admin@example.com", "admin@example.com", "admin")
 
         except (OperationalError, ProgrammingError) as e:
             print(f"Error: {e}")
