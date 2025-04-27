@@ -129,6 +129,24 @@
     color: #721c24;
     border: 1px solid #f5c6cb;
   }
+
+  /* Weird boxes near links deleted */
+  .navbar-nav { list-style: none !important; padding-left: 0; }
+
+  .admin-panel-link {
+    cursor: pointer;
+  }
+
+  .navbar-brand{
+      font-size: 1.25rem !important; /* Zmiana font-size z użyciem !important */
+      color: rgba(0,0,0, 1) !important;    /* Zmiana koloru z użyciem !important */
+  }
+
+  .nav-link{
+      color: rgba(0,0,0, 0.65) !important;
+      text-decoration: none !important;
+      font-size: 1rem !important;
+  }
 </style>
 
 <!-- Messages -->
@@ -153,7 +171,11 @@
           <a class="nav-link" href="{% url 'application:contact' %}">Kontakt</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{% url 'admin:index' %}">Panel administracji</a>
+            {% if user.is_authenticated %}
+              <a class="nav-link" href="{% url 'admin:index' %}">Panel administracji</a>
+            {% else %}
+              <a class="nav-link admin-panel-link" onclick="openModal()">Panel administracji</a>
+            {% endif %}
         </li>
       </ul>
       {% if user.is_authenticated %}

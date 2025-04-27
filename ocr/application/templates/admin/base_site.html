@@ -1,12 +1,22 @@
 {% extends "admin/base.html" %}
+{% load i18n static django_bootstrap5 %}
 
-{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
-
-{% block branding %}
-<div id="site-name"><a href="{% url 'admin:index' %}">{{ site_header|default:_('Django administration') }}</a></div>
-{% if user.is_anonymous %}
-  {% include "admin/color_theme_toggle.html" %}
-{% endif %}
+{% block extrahead %}
+  {{ block.super }}
+  {% bootstrap_css %}
+    <style>
+    ::marker {
+      content: none;
+      display: none;
+    }
+  </style>
+  {% bootstrap_javascript %}
 {% endblock %}
 
-{% block nav-global %}{% endblock %}
+{% block header %}
+    {% include "application/navbar.html" %}
+{% endblock %}
+
+{% block content %}
+  {{ block.super }}
+{% endblock %}
