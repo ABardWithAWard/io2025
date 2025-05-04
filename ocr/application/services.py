@@ -4,7 +4,6 @@ from PIL import Image
 from PIL.ImagePath import Path
 from django.core.files.storage import FileSystemStorage
 
-from application.model.modelMatthew.textSectors import preprocess
 from application.model.trocr import TrOCR
 
 model = TrOCR()
@@ -35,7 +34,7 @@ def handle_uploaded_file(file):
     output_dir = os.path.join(upload_dir, 'processed_text')
     os.makedirs(output_dir, exist_ok=True)
 
-    preprocess(full_path)
+    #preprocess(full_path)
 
     try:
         # Create output filename
@@ -43,10 +42,12 @@ def handle_uploaded_file(file):
         output_path = os.path.join(output_dir, output_filename)
 
         # Process the single uploaded file
-        if model.perform_ocr(full_path, output_path):
+        model_output = model.perform_ocr(full_path, output_path)
+        if model_output[0]:
             print("Image processing completed successfully")
         else:
             print("Failed to process image")
+            print(model_output[1])
 
     except Exception as e:
         print(f"Unexpected error: {e}")

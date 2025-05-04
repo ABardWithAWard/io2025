@@ -8,12 +8,6 @@ class ModelBase(ABC):
         self.name = name
 
     @abstractmethod
-    def _preprocess(self, dataset_dir):
-        """
-        Function that takes in the directory of the dataset and outputs the format the model requires.
-        """
-
-    @abstractmethod
     def perform_ocr(self, input_dir, output_dir):
         """
         Function that takes in the directory of the dataset and outputs the recognized text to a directory.
