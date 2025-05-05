@@ -12,22 +12,38 @@ const UploadPage = () => {
     useEffect(() => {
         // Fetch CSRF token
         fetch('/application/csrf-token/')
-            .then(response => response.json())
-            .then(data => {
-                setCsrfToken(data.csrf_token);
+            .then(async response => {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const data = await response.json();
+                    setCsrfToken(data.csrf_token);
+                } else {
+                    const text = await response.text();
+                    console.error('Non-JSON response for CSRF token:', text);
+                    setError('Unexpected response fetching CSRF token');
+                }
             })
             .catch(error => {
                 console.error('Error fetching CSRF token:', error);
+                setError('An error occurred fetching CSRF token');
             });
 
         // Fetch files
         fetch('/application/files/')
-            .then(response => response.json())
-            .then(data => {
-                setFiles(data);
+            .then(async response => {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const data = await response.json();
+                    setFiles(data);
+                } else {
+                    const text = await response.text();
+                    console.error('Non-JSON response for files:', text);
+                    setError('Unexpected response fetching files');
+                }
             })
             .catch(error => {
                 console.error('Error fetching files:', error);
+                setError('An error occurred fetching files');
             });
     }, []);
 
@@ -41,7 +57,7 @@ const UploadPage = () => {
         event.preventDefault();
         const formData = new FormData();
         const fileInput = document.querySelector('input[type="file"]');
-        
+
         if (fileInput.files.length === 0) {
             setError('Please select a file to upload');
             return;
@@ -63,11 +79,17 @@ const UploadPage = () => {
             if (response.ok) {
                 const data = await response.json();
                 if (data.status === 'success') {
-                    // Refresh the file list
                     const filesResponse = await fetch('/application/files/');
-                    const filesData = await filesResponse.json();
-                    setFiles(filesData);
-                    setError('');
+                    const contentType = filesResponse.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const filesData = await filesResponse.json();
+                        setFiles(filesData);
+                        setError('');
+                    } else {
+                        const text = await filesResponse.text();
+                        console.error('Non-JSON response on refresh:', text);
+                        setError('Unexpected response refreshing file list');
+                    }
                 } else {
                     setError(data.errors || 'Upload failed');
                 }
@@ -120,7 +142,7 @@ const UploadPage = () => {
                 </div>
                 <button type="submit" className="btn btn-primary">Upload</button>
             </form>
-            
+
             {error && (
                 <div className="alert alert-danger mt-3" role="alert">
                     {error}
@@ -161,7 +183,7 @@ const UploadPage = () => {
                     <h3>Privacy Warning</h3>
                     <p>Please do not upload any private or sensitive information.</p>
                     <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                        <button 
+                        <button
                             onClick={handlePrivacyContinue}
                             style={{
                                 padding: '8px 16px',
@@ -174,7 +196,7 @@ const UploadPage = () => {
                         >
                             Continue
                         </button>
-                        <button 
+                        <button
                             onClick={handlePrivacyCancel}
                             style={{
                                 padding: '8px 16px',
@@ -194,4 +216,4 @@ const UploadPage = () => {
     );
 };
 
-export default UploadPage; 
+export default UploadPage;
