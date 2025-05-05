@@ -1,10 +1,8 @@
-from django.urls import include
-from django.views.generic import RedirectView
+from django.contrib import admin
+from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
-from django.contrib import admin
-from django.urls import path
-from application.admin import admin_site
+from application.views import ReactAppView
 
 """
 URL configuration for ocr project.
@@ -24,10 +22,7 @@ Including another URLconf
 """
 
 urlpatterns = [
-    path('application/admin/', admin_site.urls),
-    path('application/', include('application.urls', namespace='application')),
-    path('', RedirectView.as_view(url='application/', permanent=True)),
-    path('social-auth/', include('social_django.urls', namespace='social')),
-]
-
-urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    path('admin/', admin.site.urls),
+    path('api/', include('application.urls')),  # All API routes under /api/
+    re_path(r'^.*$', ReactAppView.as_view(), name='react-app'),  # Serve React app for all other routes
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
