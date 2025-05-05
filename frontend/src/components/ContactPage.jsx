@@ -12,7 +12,7 @@ const ContactPage = () => {
     const handleSubmit = async (event) => {
         event.preventDefault();
         console.log('Form submitted with data:', formData);
-        
+
         // Validate form data
         if (!formData.name || !formData.email || !formData.message) {
             console.error('Validation failed: All fields are required');
@@ -94,8 +94,8 @@ const ContactPage = () => {
                     <div className="row mt-2">
                         <div className="col">
                             <input 
-                                type="email" 
-                                className="form-control" 
+                                type="email"
+                                className="form-control"
                                 name="email" 
                                 placeholder="E-mail"
                                 value={formData.email}
