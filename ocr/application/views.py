@@ -12,7 +12,7 @@ from django.utils.decorators import method_decorator
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class ReactAppView(TemplateView):
-    template_name = 'index.html'
+    template_name = '../../../frontend/public/index.html'
 
     def get(self, request, *args, **kwargs):
         try:
