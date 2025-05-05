@@ -59,7 +59,7 @@ class IAMDataset(Dataset):
 class TrOCR(ModelBase):
     def __init__(self):
         super().__init__("TrOCR")
-        self.text_detector = Craft(output_dir=None, crop_type="box", cuda=True)
+        self.text_detector = Craft(output_dir=None, crop_type="box", cuda=False)
         self.processor = TrOCRProcessor.from_pretrained("microsoft/trocr-base-handwritten")
         self.model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-handwritten")
 
