@@ -6,6 +6,7 @@ from typing import Optional, Union
 
 import cv2
 import numpy as np
+import torch
 
 import application.model.craft_text_detector.file_utils as file_utils
 import application.model.craft_text_detector.torch_utils as torch_utils
@@ -68,11 +69,11 @@ def load_craftnet_model(
         craft_net.load_state_dict(copyStateDict(torch_utils.load(weight_path)))
 
         craft_net = craft_net.cuda()
-        craft_net = torch_utils.DataParallel(craft_net)
+        craft_net = torch.nn.DataParallel(craft_net)
         torch_utils.cudnn_benchmark = False
     else:
         craft_net.load_state_dict(
-            copyStateDict(torch_utils.load(weight_path, map_location="cpu"))
+            copyStateDict(torch_utils.load(weight_path, map_location=torch.device('cpu')))
         )
     craft_net.eval()
     return craft_net
@@ -112,11 +113,11 @@ def load_refinenet_model(
         refine_net.load_state_dict(copyStateDict(torch_utils.load(weight_path)))
 
         refine_net = refine_net.cuda()
-        refine_net = torch_utils.DataParallel(refine_net)
+        refine_net = torch.nn.DataParallel(refine_net)
         torch_utils.cudnn_benchmark = False
     else:
         refine_net.load_state_dict(
-            copyStateDict(torch_utils.load(weight_path, map_location="cpu"))
+            copyStateDict(torch_utils.load(weight_path, map_location=torch.device('cpu')))
         )
     refine_net.eval()
     return refine_net
