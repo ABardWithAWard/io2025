@@ -117,7 +117,8 @@ class Model(ModelBase):
                 cv2.imwrite("UploadedFiles/gray.png", gray)
 
             blur = cv2.GaussianBlur(gray, (7, 7), 0)
-            cv2.imwrite("UploadedFiles/gray_blurred.png", blur)
+            if DEBUG_MODE:
+                cv2.imwrite("UploadedFiles/gray_blurred.png", blur)
 
             thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
             if DEBUG_MODE:
