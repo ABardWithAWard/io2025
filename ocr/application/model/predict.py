@@ -8,4 +8,4 @@ from trocr import TrOCR
 model = TrOCR()
 
 # Test the model
-model.perform_ocr("datasets", "output")
+model.perform_ocr("datasets")
