@@ -21,5 +21,5 @@ class ModelBase(ABC):
             input_dir: Directory of the dataset with some predefined structure.
             output_dir: Directory where the text will be saved.
         Returns:
-            True if the prediction was successful, False otherwise.
+            Prediction if the prediction was successful, Error otherwise.
         """

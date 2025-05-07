@@ -1,3 +1,5 @@
-from model import infer_image
+from model import Model
 
-print(infer_image(r"C:\\Users\Mika\Pictures\fck.png"))
+Model = Model()
+
+print(Model.perform_ocr(r"C:\\Users\Mika\Pictures\fck.png"))

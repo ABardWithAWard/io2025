@@ -1,4 +1,5 @@
 import html
+
 import pandas as pd
 import torch
 
@@ -158,7 +159,7 @@ class TrOCR(ModelBase):
         final_score = cer.compute()
         print(final_score)
 
-    def perform_ocr(self, input_path, output_path):
+    def perform_ocr(self, input_path, **kwargs):
         """
         Function which runs inference on an image and outputs a text file.
         """
@@ -179,6 +180,7 @@ class TrOCR(ModelBase):
                 text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
                 texts.append(text)
 
+            '''
             chars_in_current_line = 0
             max_line_width = 80
             with open(output_path, "w") as f:
@@ -189,7 +191,11 @@ class TrOCR(ModelBase):
                         chars_in_current_line = 0
                     else:
                         f.writelines(f"{seq} ")
+            return output_path
+            '''
 
-            return True
-        except Exception:
+            return texts
+
+        except Exception as e:
+            print(f"Unexpected error: {e}")
             return False
