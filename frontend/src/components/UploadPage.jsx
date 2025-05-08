@@ -29,7 +29,7 @@ const UploadPage = () => {
             });
 
         // Fetch files
-        fetch('/application/files/')
+        fetch('/files/')
             .then(async response => {
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('application/json')) {

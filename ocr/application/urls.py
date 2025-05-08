@@ -1,14 +1,15 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 from . import login
+from api.urls import urlpatterns as api_urls
 
 app_name = 'application'
 
 urlpatterns = [
-    path('upload/', views.upload_file, name='upload_file'),
-    path('files/', views.get_files, name='get_files'),
-    path('contact/', views.enter_contact_ticket, name='enter_contact_ticket'),
-    path('csrf-token/', views.get_csrf_token, name='get_csrf_token'),
+    # API endpoints
+    path('api/', include(api_urls)),
+    
+    # Auth endpoints
     path('auth/login/', login.handle_login, name='handle_login'),
     path('auth/register/', login.handle_register, name='handle_register'),
     path('auth/logout/', login.handle_logout, name='handle_logout'),
