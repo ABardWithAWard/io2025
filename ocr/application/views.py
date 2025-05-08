@@ -1,23 +1,27 @@
 import os
-from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
-from django.shortcuts import render
-from django.views.generic import View, TemplateView
+from django.http import HttpResponse
 from django.conf import settings
-from .forms import UploadFileForm, SubmitTicketForm
-from .models import SupportTicket
-from .services import handle_uploaded_file
-from django.middleware.csrf import get_token
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+from django.views.generic import TemplateView
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.template.loader import render_to_string
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class ReactAppView(TemplateView):
-    template_name = '../../../frontend/public/index.html'
+    template_name = 'index.html'
 
     def get(self, request, *args, **kwargs):
         try:
-            with open(os.path.join(settings.REACT_APP_BUILD_DIR, 'index.html')) as f:
-                return HttpResponse(f.read())
+            # Get the CSRF token
+            csrf_token = request.COOKIES.get('csrftoken', '')
+            
+            # Render the template with the CSRF token
+            html = render_to_string('index.html', {
+                'csrf_token': csrf_token,
+                'static_url': settings.STATIC_URL,
+            })
+            
+            return HttpResponse(html)
         except Exception as e:
             return HttpResponse(
                 """
@@ -28,42 +32,3 @@ class ReactAppView(TemplateView):
                 </div>
                 """.format(str(e))
             )
-
-@ensure_csrf_cookie
-def upload_file(request):
-    if request.method == "POST":
-        form = UploadFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            handle_uploaded_file(request.FILES["file"])
-            return JsonResponse({'status': 'success'})
-        return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
-    return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
-
-@ensure_csrf_cookie
-def get_files(request):
-    if request.method == "GET":
-        directory = os.environ.get('UPLOADED_FILES', settings.MEDIA_ROOT)
-        try:
-            files = os.listdir(directory)
-            return JsonResponse(files, safe=False)
-        except FileNotFoundError:
-            return JsonResponse([], safe=False)
-    return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
-
-@ensure_csrf_cookie
-def enter_contact_ticket(request):
-    if request.method == "POST":
-        form = SubmitTicketForm(request.POST)
-        if form.is_valid():
-            name = form.cleaned_data["name"]
-            email = form.cleaned_data["email"]
-            message = form.cleaned_data["message"]
-            ticket = SupportTicket(name=name, email=email, message=message)
-            ticket.save()
-            return JsonResponse({'status': 'success'})
-        return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
-    return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
-
-@ensure_csrf_cookie
-def get_csrf_token(request):
-    return JsonResponse({'csrf_token': get_token(request)})
