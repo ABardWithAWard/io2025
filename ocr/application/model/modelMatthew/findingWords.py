@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import os
 
+DEBUG_MODE = False
 
 # Might be highly unnecessary and I could just implement it in a different way
 # Code largely stolen from stack overflow. Does not work very well for small text and words which are
@@ -50,7 +51,7 @@ def find_words(line_image):
     return words
 
 
-def preprocessWords():
+def extract_wordlike_sectors(seg_counter_list):
     """
     This function tries to separate words from bigger text sectors to make ocr easier
     without requiring more advanced models. If letters are very big and spaced evenly it might
@@ -59,35 +60,32 @@ def preprocessWords():
     If text is too close it might put words together, but most of the time we should at least separate
     lines which is enough for most models
     """
-    # Create output directory
-    input_dir = os.environ['UPLOADED_FILES']
-    os.makedirs(f'{input_dir}/words', exist_ok=True)
+    # # Create output directory
+    # input_dir = os.environ['UPLOADED_FILES']
+    # os.makedirs(f'{input_dir}/words', exist_ok=True)
 
     # Get and sort all input files
-    files = sorted(glob.glob(f'{input_dir}/roiEdited*.png'),
-                   key=lambda x: int(re.search(r'roiEdited(\d+)\.png$', x).group(1)))
+    segment_list = sorted(seg_counter_list, key=lambda x: x[1])
 
-    if not files:
-        print("No files found matching pattern: UploadedFiles/roiEdited*.png")
+    if len(segment_list) == 0:
+        print("Extracting sectors encountered an empty input list (in previous releases input was roiEdited).")
         return
 
     word_counter = 1
+    wordlike_sector_list = []
 
-    for file_path in files:
-        print(f"Processing {file_path}...")
-        img = cv2.imread(file_path)
-        if img is None:
-            print(f"Warning: Could not read {file_path}")
-            continue
+    for segment, counter in segment_list:
+        if DEBUG_MODE:
+            print(f"Processing segment with count identifier {counter}...")
 
         try:
             # Get image dimensions
-            h, w = img.shape[:2]
+            h, w = segment.shape[:2]
 
             # Find and process lines
-            lines = find_lines(img)
+            lines = find_lines(segment)
             for lx, ly, lw, lh in lines:
-                line_roi = img[ly:ly + lh, lx:lx + lw]
+                line_roi = segment[ly:ly + lh, lx:lx + lw]
                 words = find_words(line_roi)
 
                 # Process words in line
@@ -104,14 +102,15 @@ def preprocessWords():
                     if x2 <= x1 or y2 <= y1:
                         continue
 
-                    # Save word image
-                    word_img = img[y1:y2, x1:x2]
-                    output_path = f'{input_dir}/words/text{word_counter:04d}.png'
-                    cv2.imwrite(output_path, word_img)
+                    # Append wordlike sector to output list
+                    word_img = segment[y1:y2, x1:x2]
+                    wordlike_sector_list.append([word_img, word_counter])
                     word_counter += 1
 
         except Exception as e:
-            print(f"Error processing {file_path}: {str(e)}")
+            print(f"Unexpected error: {e}")
 
-    print(f"Processed {word_counter - 1} words total")
+    if DEBUG_MODE:
+        print(f"Processed {word_counter - 1} sectors total")
 
+    return wordlike_sector_list

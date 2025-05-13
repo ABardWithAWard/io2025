@@ -4,8 +4,7 @@ from django.core.files.storage import FileSystemStorage
 from application.model.modelMatthew.model import Model
 from application.model.trocr import TrOCR
 
-model = TrOCR()
-modelMatthew = Model()
+model = Model()
 
 def prepare_file_hierarchy (file):
     """Takes uploaded file and returns directory where it is saved and its detected content"""
@@ -28,13 +27,6 @@ def handle_uploaded_file(file):
     """Takes file uploaded in form and calls helper function to manage file and its contents"""
     full_path = prepare_file_hierarchy(file)
 
-    # using protected function like this because model is still above 0.02 loss and doesnt
-    # predict well
-    modelMatthew._preprocess(full_path)
-    # function used in different model than trocr, for more details go to implementation
-
     # Process the single uploaded file
     # Now, we catch errors in trocr.py file since we did it anyway, no need for doing this twice
-    print(model.perform_ocr(full_path))
-
-    #TODO: Somehow save to cloud user input and model input (or just user input? Depends on pricing)
+    print(model.perform_ocr(full_path, ""))

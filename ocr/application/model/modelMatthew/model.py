@@ -1,17 +1,19 @@
-import os  # For file path operations
+import os
 import cv2
-import torch  # Main deep learning framework
-from torch.utils.data import Dataset, DataLoader  # For data loading utilities
-from PIL import Image  # For image handling
-from torchvision import transforms  # For image transformations
-from torch import nn, optim  # Neural network modules and optimizers
-from torchvision import models  # Pretrained computer vision models
-from torch.nn import TransformerDecoder, TransformerDecoderLayer  # Transformer components
+import torch
+from torch.utils.data import Dataset, DataLoader
+from PIL import Image
+from torchvision import transforms
+from torch import nn, optim
+from torchvision import models
+from torch.nn import TransformerDecoder, TransformerDecoderLayer
+from typing import List
 import string
-from application.model.modelMatthew.findingWords import preprocessWords
-from application.model.modelMatthew.textSectors import process_images
+from application.model.modelMatthew.findingWords import extract_wordlike_sectors
+from application.model.modelMatthew.textSectors import adjust_for_outliers
 from application.model.modelbase import ModelBase
 
+import os
 
 DEBUG_MODE = False
 
@@ -21,15 +23,12 @@ class Model(ModelBase):
     def __init__(self):
         super().__init__("OCR")
         # Define character set: letters, digits, punctuation and space
-        # Can expand to polish characters in near future
         chars = list(string.ascii_letters + string.digits + string.punctuation + ' ')
 
         # Special tokens for sequence processing
-        # https://datascience.stackexchange.com/questions/26947/why-do-we-need-to-add-start-s-end-s-symbols-when-using-recurrent-neural-n
         self.pad_token = "[PAD]"  # Padding token for batch processing
         self.sos_token = "[SOS]"  # Start-of-sequence token
         self.eos_token = "[EOS]"  # End-of-sequence token
-        # Can possibly add unknown character which should filter out noise??
 
         # Create vocabulary with special tokens first
         self.vocab = [self.pad_token, self.sos_token, self.eos_token] + chars
@@ -55,10 +54,14 @@ class Model(ModelBase):
         """Total number of tokens in vocabulary"""
         return len(self.vocab)
 
-    def perform_ocr(self, input_path, output_path ) -> str:
+    def perform_ocr(self, input_path, output_path) -> List[str]:
         """Perform inference on a single image"""
+        sectors_of_interest = self._preprocess(input_path)
+        decoded_text_list = []
+
         try:
-            model_path = r".\model.pth"
+            model_path = "modelMatthew/model.pth"
+            print(os.getcwd())
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             print(f"Using {device} device")
 
@@ -76,42 +79,50 @@ class Model(ModelBase):
             ])
 
             # Load and preprocess image
-            image = Image.open(input_path).convert('RGB')
-            image_tensor = transform(image).unsqueeze(0).to(device)  # Add batch dimension
+            #image = Image.open(input_path).convert('RGB')
+            for sector in sectors_of_interest:
+                # cv2 image array word_img is contained in sector[0], converting to PIL
+                cv2_img_array = sector[0]
+                rgb_img_array = cv2.cvtColor(cv2_img_array, cv2.COLOR_BGR2RGB)
+                converted_image = Image.fromarray(rgb_img_array)
+                image_tensor = transform(converted_image).unsqueeze(0).to(device)  # Add batch dimension
 
-            # Initialize generation with start token
-            input_seq = torch.tensor([[tokenizer.char2idx[tokenizer.sos_token]]], dtype=torch.long).to(device)
+                # Initialize generation with start token
+                input_seq = torch.tensor([[tokenizer.char2idx[tokenizer.sos_token]]], dtype=torch.long).to(device)
 
-            # Autoregressive generation loop
-            for _ in range(100):  # Maximum sequence length
-                # Get predictions
-                logits = model(image_tensor, input_seq)
+                # Autoregressive generation loop
+                for _ in range(100):  # Maximum sequence length
+                    # Get predictions
+                    logits = model(image_tensor, input_seq)
 
-                # Greedy decoding: select most probable next token
-                next_token = logits[:, -1, :].argmax(dim=-1, keepdim=True)
+                    # Greedy decoding: select most probable next token
+                    next_token = logits[:, -1, :].argmax(dim=-1, keepdim=True)
 
-                # Append to input sequence
-                input_seq = torch.cat([input_seq, next_token], dim=1)
+                    # Append to input sequence
+                    input_seq = torch.cat([input_seq, next_token], dim=1)
 
-                # Stop if end token generated
-                if next_token.item() == tokenizer.char2idx[tokenizer.eos_token]:
-                    break
+                    # Stop if end token generated
+                    if next_token.item() == tokenizer.char2idx[tokenizer.eos_token]:
+                        break
 
-            # Convert indices to text
-            decoded_text = tokenizer.decode(input_seq[0].tolist())
-            return decoded_text.strip()  # Remove whitespace
+                # Convert indices to text
+                decoded_text = tokenizer.decode(input_seq[0].tolist())
+                decoded_text_list.append(decoded_text.strip())  # Remove whitespace and add to output
+
         except Exception as e:
-            return f"Unexpected error: {e}"
+            print(f"Unexpected error: {e}")
 
-    def _preprocess(self, data_dir):
+        return decoded_text_list
+
+    def _preprocess(self, data_dir, tolerance_coeff = 0.10):
         """
         Function which detects text sectors and tries to cut them into single lines or words.
         Argument image is path to image which will be preprocessed.
         Does not return anything, but saves cut images to directories created by it.
         """
         try:
-            input_dir = os.environ['UPLOADED_FILES']
-            imageLoad = cv2.imread(data_dir)
+            #input_dir = os.environ['UPLOADED_FILES']
+            imageLoad = cv2.imread("stringent-1.jpg")
             gray = cv2.cvtColor(imageLoad, cv2.COLOR_BGR2GRAY)
             if DEBUG_MODE:
                 cv2.imwrite("UploadedFiles/gray.png", gray)
@@ -126,8 +137,8 @@ class Model(ModelBase):
 
             kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 13))
             dilate = cv2.dilate(thresh, kernel, iterations=1)
-            if DEBUG_MODE:
-                cv2.imwrite(f"{input_dir}/dilate.png", dilate)
+            #if DEBUG_MODE:
+                #cv2.imwrite(f"{input_dir}/dilate.png", dilate)
 
             # Everything above this line prepares for text sectors detection,
             # we do things like blurring the image, graying it out to reduce noice
@@ -139,7 +150,7 @@ class Model(ModelBase):
 
             boxes = [cv2.boundingRect(c) for c in contours if cv2.boundingRect(c)[2] > 1 and cv2.boundingRect(c)[3] > 1]
             img_height = imageLoad.shape[0]
-            tolerance = int(0.10 * img_height)
+            tolerance = int(tolerance_coeff * img_height)
 
             filtered_boxes = []
             for i, (x1, y1, w1, h1) in enumerate(boxes):
@@ -157,8 +168,7 @@ class Model(ModelBase):
                 # Threshold is in pixels
                 x1, y1, w1, h1 = b1
                 x2, y2, w2, h2 = b2
-                return not (
-                            x1 + w1 + thresh < x2 or x2 + w2 + thresh < x1 or y1 + h1 + thresh < y2 or y2 + h2 + thresh < y1)
+                return not (x1 + w1 + thresh < x2 or x2 + w2 + thresh < x1 or y1 + h1 + thresh < y2 or y2 + h2 + thresh < y1)
 
             def merge_boxes(b1, b2):
                 #Merges close boxes
@@ -191,23 +201,22 @@ class Model(ModelBase):
                 filtered_boxes = new_boxes
 
             def sort_key(box):
-                #Sorts boxes vertically and horizontally. We sort vertically according to a tolerance,
-                #as curved text skewes results
-                return (box[1] // tolerance, box[0])
+                # Sorts boxes vertically and horizontally. We sort vertically according to a tolerance, as curved text skews results
+                return (box[1] // tolerance), box[0]
 
             sorted_boxes = sorted(filtered_boxes, key=sort_key)
 
             img_w, img_h = imageLoad.shape[1], imageLoad.shape[0]
 
             def is_horizontal_line(box):
-                #Checks if we detected a divider as text.
-                #Reduces noise overall when document is partitioned
+                # Checks if we detected a divider as text.
+                # Reduces noise overall when document is partitioned
                 x, y, w, h = box
                 aspect_ratio = w / h if h > 0 else 0
                 return h <= 15 and aspect_ratio > 10
 
-            #We filter out very small boxes which is likely noise
-            #w and h can be adjusted to smaller/bigger values
+            # We filter out very small boxes which is likely noise
+            # w and h can be adjusted to smaller/bigger values
             final_boxes = [(x, y, w, h) for (x, y, w, h) in sorted_boxes if w >= 25 and h >= 25]
 
             # Split boxes containing horizontal lines
@@ -217,21 +226,22 @@ class Model(ModelBase):
             new_other_boxes = []
 
             for other_box in other_boxes:
-                #Splintering file according to boxes
+                # Splintering file according to boxes
                 ox, oy, ow, oh = other_box
                 split_lines = []
                 for line_box in line_boxes:
                     lx, ly, lw, lh = line_box
-                    if (lx >= ox and ly >= oy and (lx + lw) <= (ox + ow) and (ly + lh) <= (oy + oh)):
+                    if lx >= ox and ly >= oy and (lx + lw) <= (ox + ow) and (ly + lh) <= (oy + oh):
                         if lw >= 0.8 * ow:
                             split_lines.append(line_box)
                             used_lines.append(line_box)
+
                 split_lines.sort(key=lambda lb: lb[1])
                 current_y = oy
                 remaining_height = oh
-                # There is lower tolerance since it is way less likely to have noise slightly out of box
-                # Than have a random stray box
-                # However upper_height and remaining_height can be adjusted if needed
+
+                # There is lower tolerance since it is much less likely to have noise slightly out of box
+                # Than have a random stray box, however upper_height and remaining_height can be adjusted if needed
                 for line in split_lines:
                     ly = line[1]
                     lh_line = line[3]
@@ -246,23 +256,30 @@ class Model(ModelBase):
             remaining_line_boxes = [lb for lb in line_boxes if lb not in used_lines]
             final_boxes = new_other_boxes + remaining_line_boxes
             final_boxes = sorted(final_boxes, key=sort_key)  # Re-sort after splitting
+            roi_idx_list = []
 
             for idx, (x, y, w, h) in enumerate(final_boxes, start=1):
-                #Writing cut boxes to files in sorted order for next steps.
-                roi = imageLoad[y:y + h, x:x + w]
-                color = (0, 0, 255) if is_horizontal_line((x, y, w, h)) else (36, 255, 12)
-                cv2.imwrite(f"{input_dir}/roi{idx}.png", roi)
-                cv2.rectangle(imageLoad, (x, y), (x + w, y + h), color, 2)
+                # Appending cut boxes to list in sorted order for next steps.
+                roi = imageLoad[y: y + h, x: x + w]
+                roi_idx_list.append([roi, idx])
 
-            if DEBUG_MODE:
-                #We can check what we have drawn there
-                cv2.imwrite(f"{input_dir}/boxed.png", imageLoad)
+                # Draw a rectangle on the image which will be saved if debugging
+                if DEBUG_MODE:
+                    color = (0, 0, 255) if is_horizontal_line((x, y, w, h)) else (36, 255, 12)
+                    cv2.rectangle(imageLoad, (x, y), (x + w, y + h), color, 2)
 
-            #Processing even more for higher accuracy ocr, details in implementations of those functions
-            process_images()
-            preprocessWords()
+            #if DEBUG_MODE:
+                # We can check what we have drawn there
+                #cv2.imwrite(f"{input_dir}/boxed.png", imageLoad)
+
+            # Find stray dividers and lastly hone in on final sectors
+            segment_counter_list = adjust_for_outliers(roi_idx_list)
+            wordlike_sector_list = extract_wordlike_sectors(segment_counter_list)
+
+            return wordlike_sector_list
         except Exception as e:
             print(f"Unexpected error: {e}")
+            return None
 
 
 class OCRDataset(Dataset):
