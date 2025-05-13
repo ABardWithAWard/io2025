@@ -108,7 +108,7 @@ def extract_wordlike_sectors(seg_counter_list):
                     word_counter += 1
 
         except Exception as e:
-            print(f"Unexpected error: {e}")
+            print(f"Unexpected error in extract_wordlike_sectors: {e}")
 
     if DEBUG_MODE:
         print(f"Processed {word_counter - 1} sectors total")
