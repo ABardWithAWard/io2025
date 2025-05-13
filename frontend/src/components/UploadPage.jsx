@@ -12,7 +12,10 @@ const UploadPage = () => {
 
     useEffect(() => {
         // Fetch CSRF token
-        fetch(data.csrf_token = '/application/csrf-token/')
+        fetch('/api/csrf-token/', {
+            method: 'GET',
+            credentials: 'include'
+        })
             .then(async response => {
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('application/json')) {
@@ -30,12 +33,15 @@ const UploadPage = () => {
             });
 
         // Fetch files
-        fetch('/files/')
+        fetch('api/files/', {
+            method: 'GET',
+            credentials: 'include'
+        })
             .then(async response => {
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('application/json')) {
                     const data = await response.json();
-                    setFiles(data);
+                    setFiles(data.results);
                 } else {
                     const text = await response.text();
                     console.error('Non-JSON response for files:', text);
