@@ -1,5 +1,5 @@
 import os
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
 from django.views.generic import TemplateView
 from django.utils.decorators import method_decorator
@@ -15,20 +15,37 @@ class ReactAppView(TemplateView):
             # Get the CSRF token
             csrf_token = request.COOKIES.get('csrftoken', '')
             
-            # Render the template with the CSRF token
-            html = render_to_string('index.html', {
-                'csrf_token': csrf_token,
-                'static_url': settings.STATIC_URL,
-            })
+            # Read the index.html file
+            with open(os.path.join(settings.REACT_APP_BUILD_DIR, 'index.html'), 'r') as f:
+                html = f.read()
             
-            return HttpResponse(html)
+            # Replace absolute paths with relative ones
+            html = html.replace('src="/static/', f'src="{settings.STATIC_URL}static/')
+            html = html.replace('href="/static/', f'href="{settings.STATIC_URL}static/')
+            html = html.replace('href="/manifest.json"', f'href="{settings.STATIC_URL}manifest.json"')
+            html = html.replace('href="/favicon.ico"', f'href="{settings.STATIC_URL}favicon.ico"')
+            html = html.replace('href="/logo192.png"', f'href="{settings.STATIC_URL}logo192.png"')
+            
+            response = StreamingHttpResponse(
+                streaming_content=[html],
+                content_type='text/html'
+            )
+            response['X-Content-Type-Options'] = 'nosniff'
+            response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response['Pragma'] = 'no-cache'
+            response['Expires'] = '0'
+            return response
+            
         except Exception as e:
-            return HttpResponse(
-                """
+            error_html = """
                 <div style="text-align: center; margin-top: 50px;">
                     <h1>Error loading React app</h1>
                     <p>Please make sure the React app is built and the build directory is properly configured.</p>
                     <p>Error details: {}</p>
                 </div>
-                """.format(str(e))
+            """.format(str(e))
+            
+            return StreamingHttpResponse(
+                streaming_content=[error_html],
+                content_type='text/html'
             )

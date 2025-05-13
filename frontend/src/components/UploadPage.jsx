@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import data from "bootstrap/js/src/dom/data";
 
 const UploadPage = () => {
     const [files, setFiles] = useState([]);
@@ -11,7 +12,7 @@ const UploadPage = () => {
 
     useEffect(() => {
         // Fetch CSRF token
-        fetch('/application/csrf-token/')
+        fetch(data.csrf_token = '/application/csrf-token/')
             .then(async response => {
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('application/json')) {
