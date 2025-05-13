@@ -1,10 +1,9 @@
 import os
 from django.core.files.storage import FileSystemStorage
-from django.conf import settings
 
 def get_files():
     """Get list of files from the upload directory"""
-    directory = os.environ.get('UPLOADED_FILES', settings.MEDIA_ROOT)
+    directory = os.environ.get('UPLOADED_FILES')
     try:
         return os.listdir(directory)
     except FileNotFoundError:
@@ -40,4 +39,5 @@ def handle_uploaded_file(file):
 
     # Process the single uploaded file
     # Now, we catch errors in trocr.py file since we did it anyway, no need for doing this twice
-    print(model.perform_ocr(full_path)) 
+    print(model.perform_ocr(full_path))
+    return full_path

@@ -9,6 +9,8 @@ const UploadPage = () => {
     const [error, setError] = useState('');
     const [csrfToken, setCsrfToken] = useState('');
     const navigate = useNavigate();
+    const [pendingFile, setPendingFile] = useState(null);
+    const [showUploadModal, setShowUploadModal] = useState(false);
 
     useEffect(() => {
         // Fetch CSRF token
@@ -60,54 +62,14 @@ const UploadPage = () => {
         return allowedExtensions.some(ext => fileName.endsWith(ext));
     };
 
-    const handleFileUpload = async (event) => {
+    const handleUploadClick = (event) => {
         event.preventDefault();
-        const formData = new FormData();
         const fileInput = document.querySelector('input[type="file"]');
-
-        if (fileInput.files.length === 0) {
+        if (!fileInput || fileInput.files.length === 0) {
             setError('Please select a file to upload');
             return;
         }
-
-        formData.append('file', fileInput.files[0]);
-        formData.append('csrfmiddlewaretoken', csrfToken);
-
-        try {
-            const response = await fetch('/application/upload/', {
-                method: 'POST',
-                body: formData,
-                credentials: 'include',
-                headers: {
-                    'X-CSRFToken': csrfToken
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.status === 'success') {
-                    const filesResponse = await fetch('/application/files/');
-                    const contentType = filesResponse.headers.get('content-type');
-                    if (contentType && contentType.includes('application/json')) {
-                        const filesData = await filesResponse.json();
-                        setFiles(filesData);
-                        setError('');
-                    } else {
-                        const text = await filesResponse.text();
-                        console.error('Non-JSON response on refresh:', text);
-                        setError('Unexpected response refreshing file list');
-                    }
-                } else {
-                    setError(data.errors || 'Upload failed');
-                }
-            } else {
-                const data = await response.json();
-                setError(data.errors || 'Upload failed');
-            }
-        } catch (error) {
-            console.error('Error uploading file:', error);
-            setError('An error occurred while uploading the file');
-        }
+        setShowUploadModal(true);
     };
 
     const handlePrivacyContinue = () => {
@@ -139,10 +101,62 @@ const UploadPage = () => {
         }
     };
 
+    const handleCancelUpload = () => {
+        setShowUploadModal(false);
+    };
+
+    const handleConfirmUpload = async () => {
+        setShowUploadModal(false);
+        await handleFileUpload();
+    };
+
+    const handleFileUpload = async () => {
+        const formData = new FormData();
+        const fileInput = document.querySelector('input[type="file"]');
+
+        if (fileInput.files.length === 0) {
+            setError('Please select a file to upload');
+            return;
+        }
+
+        formData.append('file', fileInput.files[0]);
+
+        try {
+            const response = await fetch('/api/upload/', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                }
+            });
+
+            const data = await response.json();
+            if (response.ok && data.file) {
+                const filesResponse = await fetch('/api/files/');
+                const contentType = filesResponse.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const filesData = await filesResponse.json();
+                    setFiles(filesData);
+                    setError('');
+                } else {
+                    setError('Unexpected response refreshing file list');
+                }
+            } else {
+                setError(data.errors || 'Upload failed');
+            }
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            setError('An error occurred while uploading the file');
+        }
+    };
+
+
+
     return (
         <div className="container mt-4">
             <h2>Upload File</h2>
-            <form onSubmit={handleFileUpload} id="uploadForm">
+            <form onSubmit={handleUploadClick} id="uploadForm">
                 <div className="mb-3">
                     <label htmlFor="file" className="form-label">Select file to upload:</label>
                     <input type="file" className="form-control" id="file" accept="image/*" />
@@ -161,19 +175,11 @@ const UploadPage = () => {
                 <ul className="list-group">
                     {files.map((file, index) => (
                         <li key={index} className="list-group-item">
-                            {file}
+                            <strong>File:</strong> {file.file} <br />
+                            <strong>Uploaded At:</strong> {new Date(file.uploaded_at).toLocaleString()}
                         </li>
                     ))}
                 </ul>
-            </div>
-
-            <div className="mt-3">
-                <button className="btn btn-primary me-2" onClick={handleGoogleLogin}>
-                    Login with Google
-                </button>
-                <button className="btn btn-danger" onClick={handleLogout}>
-                    Logout
-                </button>
             </div>
 
             {showPrivacyDialog && (
@@ -219,6 +225,49 @@ const UploadPage = () => {
                     </div>
                 </dialog>
             )}
+
+            {showUploadModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100vw',
+                    height: '100vh',
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)', // dim effect
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 1000,
+                }}>
+                    <div style={{
+                        backgroundColor: '#fff',
+                        padding: '30px',
+                        borderRadius: '10px',
+                        width: '90%',
+                        maxWidth: '400px',
+                        boxShadow: '0 0 15px rgba(0,0,0,0.3)',
+                        textAlign: 'center',
+                    }}>
+                        <h3>Confirm Upload</h3>
+                        <p>Are you sure you want to upload this file?</p>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
+                            <button
+                                onClick={handleConfirmUpload}
+                                className="btn btn-success"
+                            >
+                                Continue
+                            </button>
+                            <button
+                                onClick={handleCancelUpload}
+                                className="btn btn-secondary"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 };
