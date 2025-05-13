@@ -10,4 +10,5 @@ python manage.py collectstatic --noinput
 
 # Start Django server
 Write-Host "Starting Django server..."
-python manage.py runserver 
+Set-Location -Path ".."
+python ocr/manage.py runserver
