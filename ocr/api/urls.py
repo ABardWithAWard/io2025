@@ -1,5 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+
+from .services import handle_uploaded_file
 from .views import UploadedFileViewSet, DataLimitViewSet, FileLimitViewSet, BlockListViewSet, SupportTicketViewSet, CSRFView
 
 # Create a router and register our viewsets with it
@@ -9,6 +11,7 @@ router.register(r'data-limits', DataLimitViewSet)
 router.register(r'file-limits', FileLimitViewSet)
 router.register(r'block-lists', BlockListViewSet)
 router.register(r'support-tickets', SupportTicketViewSet)
+router.register(r'upload', UploadedFileViewSet, basename='upload')
 
 urlpatterns = [
     path('', include(router.urls)),

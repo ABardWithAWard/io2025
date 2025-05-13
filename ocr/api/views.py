@@ -1,4 +1,6 @@
 import os
+
+from django.db.migrations import serializer
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
@@ -36,10 +38,12 @@ class UploadedFileViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def upload(self, request):
+        print("FILES:", request.FILES)
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
-            handle_uploaded_file(request.FILES["file"])
-            return Response({'status': 'success'})
+            file_instance = handle_uploaded_file(request.FILES["file"])
+            serializer = self.get_serializer(file_instance)
+            return Response({'status': 'success', 'file': serializer.data})
         return Response({'status': 'error', 'errors': form.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['get'])
