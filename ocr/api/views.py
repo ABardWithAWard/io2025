@@ -1,6 +1,7 @@
 import os
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.conf import settings
@@ -14,6 +15,7 @@ from .serializers import (
     DataLimitSerializer, FileLimitSerializer, BlockListSerializer,
     UploadedFileSerializer, SupportTicketSerializer
 )
+from django.http import JsonResponse
 
 class DataLimitViewSet(viewsets.ModelViewSet):
     queryset = dataLimit.objects.all()
@@ -30,6 +32,7 @@ class BlockListViewSet(viewsets.ModelViewSet):
 class UploadedFileViewSet(viewsets.ModelViewSet):
     queryset = UploadedFile.objects.all()
     serializer_class = UploadedFileSerializer
+    permission_classes = [AllowAny]
 
     @action(detail=False, methods=['post'])
     def upload(self, request):
@@ -56,6 +59,7 @@ class SupportTicketViewSet(viewsets.ModelViewSet):
         return Response({'status': 'error', 'errors': form.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 class CSRFView(APIView):
+    permission_classes = [AllowAny]
     @method_decorator(ensure_csrf_cookie)
     def get(self, request):
-        return Response({'csrf_token': get_token(request)}) 
+        return JsonResponse({'csrf_token': get_token(request)}) 

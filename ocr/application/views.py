@@ -1,16 +1,27 @@
 import os
-from django.http import HttpResponse, StreamingHttpResponse
+from django.http import HttpResponse, StreamingHttpResponse, JsonResponse
 from django.conf import settings
 from django.views.generic import TemplateView
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.template.loader import render_to_string
+from django.urls import resolve
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class ReactAppView(TemplateView):
     template_name = 'index.html'
 
     def get(self, request, *args, **kwargs):
+        # Check if the request is for an API endpoint
+        path = request.path_info
+        if path.startswith('/api/'):
+            # Let the API views handle the response
+            return JsonResponse({'error': 'Not found'}, status=404)
+
+        # Check if the request wants JSON response
+        if request.headers.get('Accept') == 'application/json':
+            return JsonResponse({'error': 'Not found'}, status=404)
+
         try:
             # Get the CSRF token
             csrf_token = request.COOKIES.get('csrftoken', '')
