@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import path, include, re_path
+from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from application.views import ReactAppView
@@ -23,6 +23,6 @@ Including another URLconf
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('application.urls')),  # All API routes under /api/
-    re_path(r'^.*$', ReactAppView.as_view(), name='react-app'),  # Serve React app for all other routes
+    path('api/', include('api.urls')),  # API routes first
+    path('', ReactAppView.as_view(), name='react_app'),  # React app last
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
