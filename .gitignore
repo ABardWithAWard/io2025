@@ -97,8 +97,4 @@ replace.txt
 
 frontend/build
 frontend/node_modules
-ocr/staticfiles/admin
-ocr/staticfiles/css
-ocr/staticfiles/js
-ocr/staticfiles/rest_framework
-ocr/staticfiles/static
+ocr/staticfiles

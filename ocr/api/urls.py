@@ -6,7 +6,7 @@ from .views import UploadedFileViewSet, DataLimitViewSet, FileLimitViewSet, Bloc
 
 # Create a router and register our viewsets with it
 router = DefaultRouter()
-router.register(r'files', UploadedFileViewSet, basename='file')
+router.register(r'files', UploadedFileViewSet, basename='list_files')
 router.register(r'data-limits', DataLimitViewSet)
 router.register(r'file-limits', FileLimitViewSet)
 router.register(r'block-lists', BlockListViewSet)
