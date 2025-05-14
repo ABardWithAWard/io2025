@@ -18,6 +18,9 @@ from .serializers import (
     UploadedFileSerializer, SupportTicketSerializer
 )
 from django.http import JsonResponse
+import firebase_admin
+from firebase_admin import credentials, firestore
+import json
 
 class DataLimitViewSet(viewsets.ModelViewSet):
     queryset = dataLimit.objects.all()
@@ -66,4 +69,54 @@ class CSRFView(APIView):
     permission_classes = [AllowAny]
     @method_decorator(ensure_csrf_cookie)
     def get(self, request):
-        return JsonResponse({'csrf_token': get_token(request)}) 
+        return JsonResponse({'csrf_token': get_token(request)})
+
+class ContactAPIView(APIView):
+    permission_classes = [AllowAny]  # Allow public access to this endpoint
+    
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            name = data.get('name')
+            email = data.get('email')
+            message = data.get('message')
+            
+            if not all([name, email, message]):
+                return Response(
+                    {'error': 'All fields are required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Initialize Firebase if not already initialized
+            if not firebase_admin._apps:
+                cred_path = os.environ['FIREBASE_KEY']
+                if not os.path.exists(cred_path):
+                    return Response(
+                        {'error': 'Firebase credentials not found'}, 
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+                cred = credentials.Certificate(cred_path)
+                firebase_admin.initialize_app(cred)
+
+            # Get Firestore client
+            db = firestore.client()
+            
+            # Add contact message to Firestore
+            contact_ref = db.collection('contacts').document()
+            contact_ref.set({
+                'name': name,
+                'email': email,
+                'message': message,
+                'timestamp': firestore.SERVER_TIMESTAMP
+            })
+            
+            return Response(
+                {'message': 'Contact message saved successfully'}, 
+                status=status.HTTP_201_CREATED
+            )
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            ) 

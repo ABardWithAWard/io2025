@@ -1,7 +1,9 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
+
+from application import views
 from application.views import ReactAppView
 
 """
@@ -24,5 +26,5 @@ Including another URLconf
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),  # API routes first
-    path('', ReactAppView.as_view(), name='react_app'),  # React app last
+    re_path(r'^(?!api/|admin/|media/).*$', views.ReactAppView.as_view(), name='react_app'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
