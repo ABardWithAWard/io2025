@@ -1,6 +1,9 @@
 import os
 from django.core.files.storage import FileSystemStorage
 
+from application.model.modelMatthew.model import Model
+from application.model.trocr import TrOCR
+
 def get_files():
     """Get list of files from the upload directory"""
     directory = os.environ.get('UPLOADED_FILES')
@@ -26,7 +29,7 @@ def handle_uploaded_file(file):
     """Takes file uploaded in form and calls helper function to manage file and its contents"""
     from application.model.modelMatthew.model import Model
     from application.model.trocr import TrOCR
-
+    print("Attempted ocr")
     model = TrOCR()
     modelMatthew = Model()
     
