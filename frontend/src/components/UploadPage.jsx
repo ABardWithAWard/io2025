@@ -35,7 +35,11 @@ const UploadPage = () => {
             });
 
         // Fetch files
-        fetch('api/files/', {
+        fetchFiles()
+    }, []);
+
+    const fetchFiles = () => {
+        fetch('/api/files/list_files', {
             method: 'GET',
             credentials: 'include'
         })
@@ -43,7 +47,7 @@ const UploadPage = () => {
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('application/json')) {
                     const data = await response.json();
-                    setFiles(data.results);
+                    setFiles(data);
                 } else {
                     const text = await response.text();
                     console.error('Non-JSON response for files:', text);
@@ -54,7 +58,7 @@ const UploadPage = () => {
                 console.error('Error fetching files:', error);
                 setError('An error occurred fetching files');
             });
-    }, []);
+    };
 
     const validateFile = (file) => {
         const allowedExtensions = ['.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff', '.webp'];
@@ -122,7 +126,7 @@ const UploadPage = () => {
         formData.append('file', fileInput.files[0]);
 
         try {
-            const response = await fetch('/api/upload/', {
+            const response = await fetch('/api/files/upload/', {
                 method: 'POST',
                 body: formData,
                 credentials: 'include',
@@ -132,16 +136,9 @@ const UploadPage = () => {
             });
 
             const data = await response.json();
-            if (response.ok && data.file) {
-                const filesResponse = await fetch('/api/files/');
-                const contentType = filesResponse.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    const filesData = await filesResponse.json();
-                    setFiles(filesData);
-                    setError('');
-                } else {
-                    setError('Unexpected response refreshing file list');
-                }
+            if (response.ok) {
+                fetchFiles();
+                setError('');
             } else {
                 setError(data.errors || 'Upload failed');
             }
@@ -175,8 +172,7 @@ const UploadPage = () => {
                 <ul className="list-group">
                     {files.map((file, index) => (
                         <li key={index} className="list-group-item">
-                            <strong>File:</strong> {file.file} <br />
-                            <strong>Uploaded At:</strong> {new Date(file.uploaded_at).toLocaleString()}
+                            <strong>File:</strong> {file} <br />
                         </li>
                     ))}
                 </ul>
