@@ -13,7 +13,7 @@ function App() {
         <Routes>
           <Route path="/upload" element={<UploadPage />} />
           <Route path="/contact" element={<ContactPage />} />
-          <Route path="/" element={<UploadPage />} />
+
         </Routes>
       </div>
     </Router>

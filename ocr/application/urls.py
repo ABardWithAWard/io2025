@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path, include, re_path
 from . import views
 from . import login
 from api.urls import urlpatterns as api_urls
@@ -8,7 +8,12 @@ app_name = 'application'
 urlpatterns = [
     # API endpoints
     path('api/', include(api_urls)),
-    
+
+    # Contact endpoint
+    path('contact/', views.ContactView.as_view(), name='contact'),
+
+    #path('admin/', admin.site.urls),
+
     # Auth endpoints
     path('auth/login/', login.handle_login, name='handle_login'),
     path('auth/register/', login.handle_register, name='handle_register'),
@@ -17,5 +22,5 @@ urlpatterns = [
     path('auth/google/callback/', login.google_auth_callback, name='google_auth_callback'),
 
     # This must come last to prevent overriding all other paths
-    path('', views.ReactAppView.as_view(), name='react_app'),
+    re_path(r'^(?!api/|admin/|media/).*$', views.ReactAppView.as_view(), name='react_app'),
 ]

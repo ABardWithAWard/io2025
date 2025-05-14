@@ -3,9 +3,11 @@ from django.http import HttpResponse, StreamingHttpResponse, JsonResponse
 from django.conf import settings
 from django.views.generic import TemplateView
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.template.loader import render_to_string
 from django.urls import resolve
+from django.views import View
+import json
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class ReactAppView(TemplateView):
@@ -60,3 +62,18 @@ class ReactAppView(TemplateView):
                 streaming_content=[error_html],
                 content_type='text/html'
             )
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ContactView(View):
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            name = data.get('name')
+            email = data.get('email')
+            message = data.get('message')
+            
+            print(data)
+            
+            return JsonResponse({'message': 'Message received successfully'})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
