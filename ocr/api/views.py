@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.middleware.csrf import get_token
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from application.models import dataLimit, fileLimit, blockList, UploadedFile, SupportTicket
 from application.forms import UploadFileForm, SubmitTicketForm
 from .services import handle_uploaded_file, get_files
@@ -123,48 +123,24 @@ class ContactAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-class LoginAPIView(APIView):
+@method_decorator(csrf_exempt, name='dispatch')
+class RegisterAPIView(APIView):
     permission_classes = [AllowAny]
-    
-    @method_decorator(ensure_csrf_cookie)
+
     def post(self, request):
         try:
-            # Read request body once
-            body = request.body.decode('utf-8')
-            data = json.loads(body)
-            
-            email = data.get('email')
-            password = data.get('password')
-            
-            if not email or not password:
-                return Response(
-                    {'error': 'Email and password are required'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
 
-            user = authenticate(request, username=email, password=password)
-            
-            if user is not None:
-                login(request, user)
-                return Response({
-                    'message': 'Login successful',
-                    'user': {
-                        'email': user.email,
-                        'username': user.username,
-                        'is_staff': user.is_staff
-                    }
-                })
-            else:
-                return Response(
-                    {'error': 'Invalid credentials'}, 
-                    status=status.HTTP_401_UNAUTHORIZED
-                )
-                
+            email = request.data.get("email")
+            password = request.data.get("password")
+
+            if not email or not password:
+                return Response({"error": "Email and password are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+            user_record = auth.create_user(email=email, password=password)
+            return Response({"message": "User registered", "uid": user_record.uid})
+
         except Exception as e:
-            return Response(
-                {'error': str(e)}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class GoogleAuthAPIView(APIView):
@@ -241,67 +217,37 @@ class LogoutAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-class RegisterAPIView(APIView):
+@method_decorator(csrf_exempt, name='dispatch')
+class LoginAPIView(APIView):
     permission_classes = [AllowAny]
-    
-    @method_decorator(ensure_csrf_cookie)
+
     def post(self, request):
         try:
-            # Read request body once
-            body = request.body.decode('utf-8')
-            data = json.loads(body)
-            
-            email = data.get('email')
-            password = data.get('password')
-            confirm_password = data.get('confirmPassword')
-            
-            if not all([email, password, confirm_password]):
-                return Response(
-                    {'error': 'All fields are required'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            if password != confirm_password:
-                return Response(
-                    {'error': 'Passwords do not match'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            if User.objects.filter(email=email).exists():
-                return Response(
-                    {'error': 'Email already registered'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            # Create new user
-            username = email.split('@')[0]
-            # Ensure username is unique
-            base_username = username
-            counter = 1
-            while User.objects.filter(username=username).exists():
-                username = f"{base_username}{counter}"
-                counter += 1
-            
-            user = User.objects.create_user(
-                username=username,
+            id_token_str = request.data.get("idToken")
+            if not id_token_str:
+                return Response({"error": "ID token is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+            decoded_token = auth.verify_id_token(id_token_str)
+            email = decoded_token.get("email")
+
+            if not email:
+                return Response({"error": "Email not found in token"}, status=status.HTTP_400_BAD_REQUEST)
+
+            user, _ = User.objects.get_or_create(
                 email=email,
-                password=password
+                defaults={"username": self._generate_unique_username(email)}
             )
-            
-            # Log the user in
+
             login(request, user)
-            
+
             return Response({
-                'message': 'Registration successful',
-                'user': {
-                    'email': user.email,
-                    'username': user.username,
-                    'is_staff': user.is_staff
+                "message": "Login successful",
+                "user": {
+                    "email": user.email,
+                    "username": user.username,
+                    "is_staff": user.is_staff
                 }
-            }, status=status.HTTP_201_CREATED)
-                
+            })
+
         except Exception as e:
-            return Response(
-                {'error': str(e)}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            ) 
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
