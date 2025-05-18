@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'api',
     'firebase_admin',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
