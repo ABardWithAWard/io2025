@@ -17,28 +17,9 @@ function NavbarComponent() {
     password: '',
     confirmPassword: ''
   });
-  const [isGoogleInitialized, setIsGoogleInitialized] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Initialize Google Sign-In
-    if (!GOOGLE_CLIENT_ID) {
-    console.error('Missing Google Client ID');
-    return;
-  }
-
-  // Initialize Google Identity Services
-  window.google?.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    callback: handleGoogleCallback,
-  });
-
-  // Render the button (hidden, used for manual trigger)
-  window.google?.accounts.id.renderButton(
-    document.getElementById('google-button'),
-    { theme: 'outline', size: 'large' }
-  );
-
     // Get CSRF token
     fetch('/api/csrf-token/', {
       method: 'GET',
@@ -92,7 +73,7 @@ function NavbarComponent() {
       });
 
       const data = await response.json();
-      
+
       if (response.ok) {
         setIsAuthenticated(true);
         setUserEmail(data.user.email);
@@ -109,7 +90,7 @@ function NavbarComponent() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    
+
     if (formData.password !== formData.confirmPassword) {
       setMessages(['Passwords do not match']);
       return;
@@ -131,7 +112,7 @@ function NavbarComponent() {
       });
 
       const data = await response.json();
-      
+
       if (response.ok) {
         setIsAuthenticated(true);
         setUserEmail(data.user.email);
@@ -147,6 +128,7 @@ function NavbarComponent() {
   };
 
   window.handleGoogleLogin = async (response) => {
+    console.log("Callback is okay.v2");
     console.log(response)
     const idToken = response.credential;
     try {
@@ -197,36 +179,6 @@ function NavbarComponent() {
     } catch (error) {
       console.error('Logout error:', error);
       setMessages(['An error occurred during logout']);
-    }
-  };
-
-  const handleGoogleCallback = async (response) => {
-    try {
-      const idToken = response.credential;
-
-      const res = await fetch('/api/google-auth/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken,
-        },
-        credentials: 'include',
-        body: JSON.stringify({ idToken }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setIsAuthenticated(true);
-        setUserEmail(data.user.email);
-        handleModalClose();
-        navigate('/');
-      } else {
-        setMessages([data.error || 'Google login failed']);
-      }
-    } catch (error) {
-      console.error('Google login error:', error);
-      setMessages(['An error occurred during Google login']);
     }
   };
 
@@ -348,12 +300,36 @@ function NavbarComponent() {
 
 export default NavbarComponent;
 
-
 const GoogleSignInButton = ({ clientId }) => {
   const buttonDiv = useRef();
 
   useEffect(() => {
+    if (!window.handleGoogleLogin) {
+      console.log("Callback is okay");
+      window.handleGoogleLogin = async (response) => {
+        const idToken = response.credential;
+        if (!idToken) return;
+
+        const res = await fetch('/api/google-auth/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ idToken }),
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          // success handling here
+        } else {
+          // show error message
+        }
+      };
+    }
+
     if (window.google && buttonDiv.current) {
+      console.log("initialized");
       window.google.accounts.id.initialize({
         client_id: clientId,
         callback: window.handleGoogleLogin,
@@ -366,7 +342,7 @@ const GoogleSignInButton = ({ clientId }) => {
         text: 'signin_with',
       });
     }
-  }, []);
+  }, [clientId]);
 
   return <div ref={buttonDiv}></div>;
 };

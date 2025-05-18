@@ -98,3 +98,6 @@ replace.txt
 frontend/build
 frontend/node_modules
 ocr/staticfiles
+cert.pem
+cert.pfx
+key.pem
