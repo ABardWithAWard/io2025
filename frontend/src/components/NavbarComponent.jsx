@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import { Navbar, Nav, Container, Button, Modal, Tab, Tabs, Form, Alert } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
-import './NavbarComponent.css'; // Custom CSS for styling
+import './NavbarComponent.css';
+
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_OAUTH2_CLIENT_ID;
 
 function NavbarComponent() {
   const [showModal, setShowModal] = useState(false);
@@ -9,11 +11,224 @@ function NavbarComponent() {
   const [messages, setMessages] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState('');
+  const [csrfToken, setCsrfToken] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [isGoogleInitialized, setIsGoogleInitialized] = useState(false);
   const navigate = useNavigate();
 
-  const handleModalClose = () => setShowModal(false);
+  useEffect(() => {
+    // Initialize Google Sign-In
+    if (!GOOGLE_CLIENT_ID) {
+    console.error('Missing Google Client ID');
+    return;
+  }
+
+  // Initialize Google Identity Services
+  window.google?.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleCallback,
+  });
+
+  // Render the button (hidden, used for manual trigger)
+  window.google?.accounts.id.renderButton(
+    document.getElementById('google-button'),
+    { theme: 'outline', size: 'large' }
+  );
+
+    // Get CSRF token
+    fetch('/api/csrf-token/', {
+      method: 'GET',
+      credentials: 'include'
+    })
+      .then(async response => {
+        const data = await response.json();
+        setCsrfToken(data.csrf_token);
+      })
+      .catch(error => {
+        console.error('Error fetching CSRF token:', error);
+        setMessages(['Error fetching security token']);
+      });
+  }, []);
+
+  const handleModalClose = () => {
+    setShowModal(false);
+    setMessages([]);
+    setFormData({ email: '', password: '', confirmPassword: '' });
+  };
+
   const handleModalShow = () => setShowModal(true);
-  const handleTabSelect = (k) => setActiveTab(k);
+  const handleTabSelect = (k) => {
+    setActiveTab(k);
+    setMessages([]);
+    setFormData({ email: '', password: '', confirmPassword: '' });
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        setIsAuthenticated(true);
+        setUserEmail(data.user.email);
+        handleModalClose();
+        navigate('/');
+      } else {
+        setMessages([data.error || 'Login failed']);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setMessages(['An error occurred during login']);
+    }
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    
+    if (formData.password !== formData.confirmPassword) {
+      setMessages(['Passwords do not match']);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/register/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          confirmPassword: formData.confirmPassword
+        })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        setIsAuthenticated(true);
+        setUserEmail(data.user.email);
+        handleModalClose();
+        navigate('/');
+      } else {
+        setMessages([data.error || 'Registration failed']);
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      setMessages(['An error occurred during registration']);
+    }
+  };
+
+  window.handleGoogleLogin = async (response) => {
+    console.log(response)
+    const idToken = response.credential;
+    try {
+      const res = await fetch('/api/google-auth/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+        },
+        credentials: 'include',
+        body: JSON.stringify({ idToken }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setIsAuthenticated(true);
+        setUserEmail(data.user.email);
+        handleModalClose();
+        navigate('/');
+      } else {
+        setMessages([data.error || 'Google login failed']);
+      }
+    } catch (err) {
+      console.error('Google login error:', err);
+      setMessages(['An error occurred during Google login']);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/logout/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+        },
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        setIsAuthenticated(false);
+        setUserEmail('');
+        navigate('/');
+      } else {
+        setMessages(['Logout failed']);
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      setMessages(['An error occurred during logout']);
+    }
+  };
+
+  const handleGoogleCallback = async (response) => {
+    try {
+      const idToken = response.credential;
+
+      const res = await fetch('/api/google-auth/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+        },
+        credentials: 'include',
+        body: JSON.stringify({ idToken }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setIsAuthenticated(true);
+        setUserEmail(data.user.email);
+        handleModalClose();
+        navigate('/');
+      } else {
+        setMessages([data.error || 'Google login failed']);
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      setMessages(['An error occurred during Google login']);
+    }
+  };
 
   return (
     <>
@@ -24,13 +239,15 @@ function NavbarComponent() {
           <Navbar.Collapse id="navbarSupportedContent">
             <Nav className="me-auto mb-2 mb-lg-0">
               <Nav.Link as={Link} to="/contact">Kontakt</Nav.Link>
-              <Nav.Link as={Link} to="/admin">Panel administracji</Nav.Link>
+              {isAuthenticated && (
+                <Nav.Link as={Link} to="/admin">Panel administracji</Nav.Link>
+              )}
             </Nav>
             <Nav className="ml-auto">
               {isAuthenticated ? (
                 <>
                   <span className="navbar-text me-3">{userEmail}</span>
-                  <Button variant="outline-primary" as={Link} to="/logout">Logout</Button>
+                  <Button variant="outline-primary" onClick={handleLogout}>Logout</Button>
                 </>
               ) : (
                 <Button variant="outline-primary" onClick={handleModalShow}>Login</Button>
@@ -59,44 +276,70 @@ function NavbarComponent() {
         <Modal.Body>
           <Tabs activeKey={activeTab} onSelect={handleTabSelect} className="mb-3">
             <Tab eventKey="login" title="Login">
-              <Form action="/login" method="POST">
+              <Form onSubmit={handleLogin}>
                 <Form.Group className="mb-3" controlId="loginEmail">
                   <Form.Label>Email</Form.Label>
-                  <Form.Control type="email" name="email" required />
+                  <Form.Control 
+                    type="email" 
+                    name="email" 
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required 
+                  />
                 </Form.Group>
                 <Form.Group className="mb-3" controlId="loginPassword">
                   <Form.Label>Password</Form.Label>
-                  <Form.Control type="password" name="password" required />
+                  <Form.Control 
+                    type="password" 
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    required 
+                  />
                 </Form.Group>
                 <Button variant="primary" type="submit" className="w-100 mb-2">Login</Button>
-                <Button variant="light" className="w-100 d-flex align-items-center justify-content-center border">
-                  <img src="https://www.google.com/favicon.ico" alt="Google" width="18" className="me-2" />
-                  Login with Google
-                </Button>
+                <GoogleSignInButton clientId={GOOGLE_CLIENT_ID} />
+
               </Form>
             </Tab>
             <Tab eventKey="register" title="Register">
-              <Form action="/register" method="POST">
+              <Form onSubmit={handleRegister}>
                 <Form.Group className="mb-3" controlId="registerEmail">
                   <Form.Label>Email</Form.Label>
-                  <Form.Control type="email" name="email" required />
+                  <Form.Control 
+                    type="email" 
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required 
+                  />
                 </Form.Group>
                 <Form.Group className="mb-3" controlId="registerPassword">
                   <Form.Label>Password</Form.Label>
-                  <Form.Control type="password" name="password" required />
+                  <Form.Control 
+                    type="password" 
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    required 
+                  />
                 </Form.Group>
                 <Form.Group className="mb-3" controlId="registerConfirmPassword">
                   <Form.Label>Confirm Password</Form.Label>
-                  <Form.Control type="password" name="confirm_password" required />
+                  <Form.Control 
+                    type="password" 
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    required 
+                  />
                 </Form.Group>
                 <Button variant="primary" type="submit" className="w-100 mb-2">Register</Button>
-                <Button variant="light" className="w-100 d-flex align-items-center justify-content-center border">
-                  <img src="https://www.google.com/favicon.ico" alt="Google" width="18" className="me-2" />
-                  Register with Google
-                </Button>
+                <GoogleSignInButton clientId={GOOGLE_CLIENT_ID} />
               </Form>
             </Tab>
           </Tabs>
+          <div id="google-button" style={{ display: 'none' }}></div>
         </Modal.Body>
       </Modal>
     </>
@@ -104,3 +347,26 @@ function NavbarComponent() {
 }
 
 export default NavbarComponent;
+
+
+const GoogleSignInButton = ({ clientId }) => {
+  const buttonDiv = useRef();
+
+  useEffect(() => {
+    if (window.google && buttonDiv.current) {
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: window.handleGoogleLogin,
+        ux_mode: 'popup',
+      });
+
+      window.google.accounts.id.renderButton(buttonDiv.current, {
+        theme: 'outline',
+        size: 'large',
+        text: 'signin_with',
+      });
+    }
+  }, []);
+
+  return <div ref={buttonDiv}></div>;
+};
