@@ -8,6 +8,7 @@ from django.template.loader import render_to_string
 from django.urls import resolve
 from django.views import View
 import json
+from django.shortcuts import render
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class ReactAppView(TemplateView):
@@ -77,3 +78,10 @@ class ContactView(View):
             return JsonResponse({'message': 'Message received successfully'})
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
+
+def index(request):
+    context = {
+        'static_url': settings.STATIC_URL,
+        'google_client_id': settings.GOOGLE_OAUTH2_CLIENT_ID
+    }
+    return render(request, 'index.html', context)

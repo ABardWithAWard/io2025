@@ -19,8 +19,10 @@ from .serializers import (
 )
 from django.http import JsonResponse
 import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import credentials, firestore, auth
 import json
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 
 class DataLimitViewSet(viewsets.ModelViewSet):
     queryset = dataLimit.objects.all()
@@ -115,6 +117,189 @@ class ContactAPIView(APIView):
                 status=status.HTTP_201_CREATED
             )
             
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class LoginAPIView(APIView):
+    permission_classes = [AllowAny]
+    
+    @method_decorator(ensure_csrf_cookie)
+    def post(self, request):
+        try:
+            # Read request body once
+            body = request.body.decode('utf-8')
+            data = json.loads(body)
+            
+            email = data.get('email')
+            password = data.get('password')
+            
+            if not email or not password:
+                return Response(
+                    {'error': 'Email and password are required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            user = authenticate(request, username=email, password=password)
+            
+            if user is not None:
+                login(request, user)
+                return Response({
+                    'message': 'Login successful',
+                    'user': {
+                        'email': user.email,
+                        'username': user.username,
+                        'is_staff': user.is_staff
+                    }
+                })
+            else:
+                return Response(
+                    {'error': 'Invalid credentials'}, 
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+                
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class GoogleAuthAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        try:
+            id_token_str = request.data.get("idToken")
+            print(id_token_str)
+
+            if not id_token_str:
+                return Response(
+                    {"error": "ID token is required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Firebase initialization
+            if not firebase_admin._apps:
+                cred_path = os.environ["FIREBASE_KEY"]
+                cred = credentials.Certificate(cred_path)
+                firebase_admin.initialize_app(cred)
+
+            # Verify ID token
+            decoded_token = auth.verify_id_token(id_token_str)
+            email = decoded_token.get("email")
+
+            if not email:
+                return Response(
+                    {"error": "Email not found in token"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Get or create user
+            user, _ = User.objects.get_or_create(
+                email=email,
+                defaults={"username": self._generate_unique_username(email)}
+            )
+
+            login(request, user)
+
+            return Response({
+                "message": "Google login successful",
+                "user": {
+                    "email": user.email,
+                    "username": user.username,
+                    "is_staff": user.is_staff
+                }
+            })
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def _generate_unique_username(self, email):
+        base_username = email.split("@")[0]
+        username = base_username
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{base_username}{counter}"
+            counter += 1
+        return username
+
+
+class LogoutAPIView(APIView):
+    def post(self, request):
+        try:
+            logout(request)
+            return Response({'message': 'Logout successful'})
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class RegisterAPIView(APIView):
+    permission_classes = [AllowAny]
+    
+    @method_decorator(ensure_csrf_cookie)
+    def post(self, request):
+        try:
+            # Read request body once
+            body = request.body.decode('utf-8')
+            data = json.loads(body)
+            
+            email = data.get('email')
+            password = data.get('password')
+            confirm_password = data.get('confirmPassword')
+            
+            if not all([email, password, confirm_password]):
+                return Response(
+                    {'error': 'All fields are required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if password != confirm_password:
+                return Response(
+                    {'error': 'Passwords do not match'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if User.objects.filter(email=email).exists():
+                return Response(
+                    {'error': 'Email already registered'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Create new user
+            username = email.split('@')[0]
+            # Ensure username is unique
+            base_username = username
+            counter = 1
+            while User.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
+            
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password
+            )
+            
+            # Log the user in
+            login(request, user)
+            
+            return Response({
+                'message': 'Registration successful',
+                'user': {
+                    'email': user.email,
+                    'username': user.username,
+                    'is_staff': user.is_staff
+                }
+            }, status=status.HTTP_201_CREATED)
+                
         except Exception as e:
             return Response(
                 {'error': str(e)}, 
