@@ -172,4 +172,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # Firebase Configuration
-FIREBASE_CREDENTIALS = os.path.join(BASE_DIR, 'firebase-credentials.json')
+FIREBASE_CREDENTIALS = os.path.join(BASE_DIR, '../firebaseSecretKey.json')
+
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
