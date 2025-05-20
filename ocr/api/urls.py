@@ -6,7 +6,7 @@ from .views import (
     UploadedFileViewSet, DataLimitViewSet, FileLimitViewSet, 
     BlockListViewSet, SupportTicketViewSet, CSRFView,
     ContactAPIView, LoginAPIView, GoogleAuthAPIView, LogoutAPIView,
-    RegisterAPIView
+    RegisterAPIView, AuthStatusAPIView
 )
 
 # Create a router and register our viewsets with it
@@ -26,4 +26,5 @@ urlpatterns = [
     path('register/', RegisterAPIView.as_view(), name='register_api'),
     path('google-auth/', GoogleAuthAPIView.as_view(), name='google_auth_api'),
     path('logout/', LogoutAPIView.as_view(), name='logout_api'),
+    path('auth-status/', AuthStatusAPIView.as_view(), name='auth_status_api'),
 ] 
