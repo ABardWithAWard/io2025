@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import './NavbarComponent.css';
 
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_OAUTH2_CLIENT_ID;
+const FIREBASE_PROJECT_ID = process.env.REACT_APP_FIREBASE_PROJECT_ID;
 
 function NavbarComponent() {
   const [showModal, setShowModal] = useState(false);
