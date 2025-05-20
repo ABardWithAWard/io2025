@@ -215,14 +215,12 @@ function NavbarComponent() {
           <Navbar.Collapse id="navbarSupportedContent">
             <Nav className="me-auto mb-2 mb-lg-0">
               <Nav.Link as={Link} to="/contact">Kontakt</Nav.Link>
-              {isAuthenticated && (
-                <Nav.Link as={Link} to="/admin">Panel administracji</Nav.Link>
-              )}
+              <Nav.Link as={Link} to="/admin">Panel administracji</Nav.Link>
             </Nav>
             <Nav className="ml-auto">
               {isAuthenticated ? (
                 <>
-                  <span className="navbar-text me-3">{userEmail}</span>
+                  <Nav.Link as={Link} to="/profile" className="me-3">{userEmail}</Nav.Link>
                   <Button variant="outline-primary" onClick={handleLogout}>Logout</Button>
                 </>
               ) : (
