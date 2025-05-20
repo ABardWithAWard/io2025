@@ -1,5 +1,8 @@
 import os
+import base64
 from django.core.files.storage import FileSystemStorage
+import firebase_admin
+from firebase_admin import credentials, firestore
 
 from application.model.modelMatthew.model import Model
 from application.model.trocr import TrOCR
@@ -43,4 +46,31 @@ def handle_uploaded_file(file):
     # Process the single uploaded file
     # Now, we catch errors in trocr.py file since we did it anyway, no need for doing this twice
     print(model.perform_ocr(full_path))
+
+    # Initialize Firebase if not already initialized
+    if not firebase_admin._apps:
+        cred_path = os.environ['FIREBASE_KEY']
+        if not os.path.exists(cred_path):
+            raise Exception('Firebase credentials not found')
+        cred = credentials.Certificate(cred_path)
+        firebase_admin.initialize_app(cred)
+
+    # Get Firestore client
+    db = firestore.client()
+
+    # Read and encode the image
+    with open(full_path, 'rb') as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+
+    # Add image to Firestore
+    image_ref = db.collection('images').document()
+    image_ref.set({
+        'image_data': encoded_string,
+        'filename': file.name,
+        'timestamp': firestore.SERVER_TIMESTAMP
+    })
+
+    # We can look up images using https://base64.guru/converter/decode/image
+    # As they are saved as base64 strings
+
     return full_path
