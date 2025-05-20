@@ -21,6 +21,9 @@ function NavbarComponent() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check authentication status on component mount
+    checkAuthStatus();
+    
     // Get CSRF token
     fetch('/api/csrf-token/', {
       method: 'GET',
@@ -35,6 +38,26 @@ function NavbarComponent() {
         setMessages(['Error fetching security token']);
       });
   }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      const response = await fetch('/api/auth-status/', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      const data = await response.json();
+      
+      if (data.isAuthenticated) {
+        setIsAuthenticated(true);
+        setUserEmail(data.user.email);
+      } else {
+        setIsAuthenticated(false);
+        setUserEmail('');
+      }
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+    }
+  };
 
   const handleModalClose = () => {
     setShowModal(false);
