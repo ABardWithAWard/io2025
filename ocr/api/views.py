@@ -164,9 +164,10 @@ class GoogleAuthAPIView(APIView):
                 cred = credentials.Certificate(cred_path)
                 firebase_admin.initialize_app(cred)
 
-            # bypass verification (shouldnt be done ever but its 4 am will fix in the morning)
+            # Verify the ID token
             decoded_token = id_token.verify_oauth2_token(id_token_str, requests.Request())
             email = decoded_token.get("email")
+            name = decoded_token.get("name", email.split('@')[0])  # Use name from token or email prefix
 
             if not email:
                 return Response(
@@ -174,13 +175,27 @@ class GoogleAuthAPIView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Get or create user
+            try:
+                # Try to get existing Firebase user
+                firebase_user = auth.get_user_by_email(email)
+            except auth.UserNotFoundError:
+                # Create new Firebase user if doesn't exist
+                firebase_user = auth.create_user(
+                    email=email,
+                    display_name=name,
+                    email_verified=True  # Google accounts are pre-verified
+                )
+
+            # Get or create Django user
             user, _ = User.objects.get_or_create(
                 email=email,
-                defaults={"username": self._generate_unique_username(email)}
+                defaults={
+                    "username": self._generate_unique_username(email),
+                    "first_name": name
+                }
             )
 
-            #Hardcoded backend
+            # Hardcoded backend
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
             return Response({
@@ -188,7 +203,8 @@ class GoogleAuthAPIView(APIView):
                 "user": {
                     "email": user.email,
                     "username": user.username,
-                    "is_staff": user.is_staff
+                    "is_staff": user.is_staff,
+                    "firebase_uid": firebase_user.uid
                 }
             })
 
@@ -207,12 +223,35 @@ class GoogleAuthAPIView(APIView):
             counter += 1
         return username
 
-
 class LogoutAPIView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         try:
             logout(request)
+            request.session.flush()  # Clear all session data
             return Response({'message': 'Logout successful'})
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class AuthStatusAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        try:
+            if request.user.is_authenticated:
+                return Response({
+                    'isAuthenticated': True,
+                    'user': {
+                        'email': request.user.email,
+                        'username': request.user.username,
+                        'is_staff': request.user.is_staff
+                    }
+                })
+            return Response({'isAuthenticated': False})
         except Exception as e:
             return Response(
                 {'error': str(e)}, 
