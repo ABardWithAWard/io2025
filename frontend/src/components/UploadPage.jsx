@@ -86,25 +86,6 @@ const UploadPage = () => {
         setShowPrivacyDialog(false);
     };
 
-    const handleGoogleLogin = () => {
-        window.location.href = '/application/auth/google/';
-    };
-
-    const handleLogout = async () => {
-        try {
-            await fetch('/application/auth/logout/', {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'X-CSRFToken': csrfToken
-                }
-            });
-            window.location.href = '/application/';
-        } catch (error) {
-            console.error('Error logging out:', error);
-        }
-    };
-
     const handleCancelUpload = () => {
         setShowUploadModal(false);
     };
