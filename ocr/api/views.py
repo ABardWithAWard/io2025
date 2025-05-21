@@ -48,8 +48,7 @@ class UploadedFileViewSet(viewsets.ModelViewSet):
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
             file_instance = handle_uploaded_file(request.FILES["file"])
-            serializer = self.get_serializer(file_instance)
-            return Response({'status': 'success', 'file': serializer.data})
+            return Response({'status': 'success'})
         return Response({'status': 'error', 'errors': form.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['get'])
