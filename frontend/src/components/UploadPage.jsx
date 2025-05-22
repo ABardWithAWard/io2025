@@ -11,7 +11,7 @@ const UploadPage = () => {
     const navigate = useNavigate();
     const [pendingFile, setPendingFile] = useState(null);
     const [showUploadModal, setShowUploadModal] = useState(false);
-    const { getCsrfToken } = useAuth();
+    const { getCsrfToken, isAuthenticated, userUid } = useAuth();
 
     useEffect(() => {
         // Fetch files
@@ -85,6 +85,8 @@ const UploadPage = () => {
         }
 
         formData.append('file', fileInput.files[0]);
+        // Add userUid as null if not authenticated, or the actual UID if authenticated
+        formData.append('userUid', isAuthenticated ? userUid : null);
 
         try {
             const response = await fetch('/api/files/upload/', {

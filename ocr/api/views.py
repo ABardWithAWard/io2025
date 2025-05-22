@@ -47,7 +47,9 @@ class UploadedFileViewSet(viewsets.ModelViewSet):
         print("FILES:", request.FILES)
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
-            file_instance = handle_uploaded_file(request.FILES["file"])
+            # Get userUid from form data, it will be null if not provided
+            user_uid = request.POST.get('userUid')
+            file_instance = handle_uploaded_file(request.FILES["file"], user_uid)
             return Response({'status': 'success'})
         return Response({'status': 'error', 'errors': form.errors}, status=status.HTTP_400_BAD_REQUEST)
 
