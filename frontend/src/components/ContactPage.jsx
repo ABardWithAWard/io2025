@@ -1,36 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import data from "bootstrap/js/src/dom/data";
+import React, { useState } from 'react';
+import { useAuth } from '../AuthContext';
 
 const ContactPage = () => {
-    const [error, setError] = useState('');
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         message: ''
     });
-    const [csrfToken, setCsrfToken] = useState('');
-
-    useEffect(() => {
-        fetch('/api/csrf-token/', {
-            method: 'GET',
-            credentials: 'include'
-        })
-            .then(async response => {
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    const data = await response.json();
-                    setCsrfToken(data.csrf_token);
-                } else {
-                    const text = await response.text();
-                    console.error('Non-JSON response for CSRF token:', text);
-                    setError('Unexpected response fetching CSRF token');
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching CSRF token:', error);
-                setError('An error occurred fetching CSRF token');
-            });
-    }, []);
+    const { getCsrfToken } = useAuth();
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -43,6 +20,7 @@ const ContactPage = () => {
             return;
         }
 
+        const csrfToken = getCsrfToken();
         if (!csrfToken) {
             console.error('No CSRF token available');
             alert('Security token not found. Please refresh the page and try again.');
