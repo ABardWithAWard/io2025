@@ -1,25 +1,29 @@
-from abc import ABC, abstractmethod
+from pathlib import Path
+from PIL import Image
+from paddleocr import PaddleOCR as externalPaddleOCR
 
-class ModelBase(ABC):
-    def __init__(self, name):
+from application.model.modelbase import ModelBase
+
+class PaddleOCR(ModelBase):
+    def __init__(self):
         """
         Constructor which initializes the model and gets everything ready for running after upload.
         """
-        self.name = name
+        super().__init__("PaddleOCR")
+        self.model = externalPaddleOCR()
 
-    @abstractmethod
     def _preprocess(self, dataset_dir):
         """
         Function that takes in the directory of the dataset and outputs the format the model requires.
         """
 
-    @abstractmethod
-    def perform_ocr(self, input_path):
+    def perform_ocr(self, input_path: Path):
         """
         Function that takes in the directory of the dataset and outputs the recognized text to a directory.
-        Inputs:
+        Args
             input_path: Path to the image on which to perform OCR.
-            kwargs: Additional arguments dictionary.
         Returns:
             Prediction if the prediction was successful, Error otherwise.
         """
+        result = self.model.predict(str(input_path))
+        return result
