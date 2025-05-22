@@ -28,7 +28,7 @@ def prepare_file_hierarchy(file):
 
     return full_path
 
-def handle_uploaded_file(file):
+def handle_uploaded_file(file, user_uid=None):
     """Takes file uploaded in form and calls helper function to manage file and its contents"""
     from application.model.modelMatthew.model import Model
     from application.model.trocr import TrOCR
@@ -62,12 +62,13 @@ def handle_uploaded_file(file):
     with open(full_path, 'rb') as image_file:
         encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
 
-    # Add image to Firestore
+    # Add image to Firestore with userUid
     image_ref = db.collection('images').document()
     image_ref.set({
         'image_data': encoded_string,
         'filename': file.name,
-        'timestamp': firestore.SERVER_TIMESTAMP
+        'timestamp': firestore.SERVER_TIMESTAMP,
+        'userUid': user_uid  # This will be null for unauthenticated users
     })
 
     # We can look up images using https://base64.guru/converter/decode/image

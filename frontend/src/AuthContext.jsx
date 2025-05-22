@@ -1,44 +1,88 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
+import { initializeApp } from 'firebase/app';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 const AuthContext = createContext(null);
 
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+};
+
+const firebaseConfig = {
+    apiKey: process.env.REACT_APP_PRIVATE_KEY,
+    authDomain: `${process.env.REACT_APP_PROJECT_ID}.firebaseapp.com`,
+    projectId: process.env.REACT_APP_PROJECT_ID,
+    storageBucket: `${process.env.REACT_APP_PROJECT_ID}.appspot.com`,
+    messagingSenderId: process.env.REACT_APP_CLIENT_ID,
+    appId: process.env.REACT_APP_CLIENT_ID
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
 export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [csrfToken, setCsrfToken] = useState(null);
-    const [error, setError] = useState('');
+    const [userUid, setUserUid] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    const refreshCsrfToken = async () => {
+    useEffect(() => {
+        let unsubscribe;
+        
+        try {
+            unsubscribe = onAuthStateChanged(auth, 
+                (user) => {
+                    if (user) {
+                        setIsAuthenticated(true);
+                        setUserUid(user.uid);
+                        fetchCsrfToken();
+                    } else {
+                        setIsAuthenticated(false);
+                        setUserUid(null);
+                    }
+                    setIsLoading(false);
+                },
+                (error) => {
+                    console.error('Auth state change error:', error);
+                    setError(error.message);
+                    setIsLoading(false);
+                }
+            );
+        } catch (error) {
+            console.error('Error setting up auth state listener:', error);
+            setError(error.message);
+            setIsLoading(false);
+        }
+
+        return () => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        };
+    }, []);
+
+    const fetchCsrfToken = async () => {
         try {
             const response = await fetch('/api/csrf-token/', {
                 method: 'GET',
                 credentials: 'include'
             });
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                const data = await response.json();
-                setCsrfToken(data.csrf_token);
-                return data.csrf_token;
-            } else {
-                const text = await response.text();
-                console.error('Non-JSON response for CSRF token:', text);
-                setError('Unexpected response fetching CSRF token');
-                return null;
+            if (!response.ok) {
+                throw new Error('Failed to fetch CSRF token');
             }
         } catch (error) {
             console.error('Error fetching CSRF token:', error);
-            setError('An error occurred fetching CSRF token');
-            return null;
+            setError(error.message);
         }
     };
 
-    useEffect(() => {
-        // Get CSRF token from cookies on initial load
-        refreshCsrfToken();
-    }, []);
-
     const getCsrfToken = () => {
-        return csrfToken;
+        return Cookies.get('csrftoken');
     };
 
     const checkAuthentication = async () => {
@@ -50,8 +94,7 @@ export const AuthProvider = ({ children }) => {
             const data = await response.json();
             setIsAuthenticated(data.isAuthenticated);
             if (data.isAuthenticated) {
-                // Refresh CSRF token when authentication state changes
-                await refreshCsrfToken();
+                await fetchCsrfToken();
             }
             return data.isAuthenticated;
         } catch (error) {
@@ -60,52 +103,45 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const refreshCsrfToken = async () => {
+        await fetchCsrfToken();
+    };
+
     const logout = async () => {
         try {
-            const response = await fetch('/api/logout/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken,
-                },
-                credentials: 'include'
-            });
-            
-            if (response.ok) {
-                Cookies.remove('csrftoken');
-                setIsAuthenticated(false);
-                setCsrfToken(null);
-                // Refresh CSRF token after logout
-                await refreshCsrfToken();
-            }
+            await auth.signOut();
+            setIsAuthenticated(false);
+            setUserUid(null);
+            Cookies.remove('csrftoken');
         } catch (error) {
             console.error('Error during logout:', error);
+            setError(error.message);
         }
     };
 
     const value = {
         isAuthenticated,
-        csrfToken,
         getCsrfToken,
-        checkAuthentication,
         logout,
+        userUid,
+        auth,
+        isLoading,
         error,
+        checkAuthentication,
         refreshCsrfToken
     };
+
+    if (isLoading) {
+        return <div>Loading...</div>;
+    }
+
+    if (error) {
+        return <div>Error: {error}</div>;
+    }
 
     return (
         <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );
-};
-
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
-};
-
-export default AuthContext; 
+}; 
