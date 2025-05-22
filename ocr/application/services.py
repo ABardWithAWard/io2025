@@ -1,11 +1,12 @@
 import os
+from pathlib import Path
 from django.core.files.storage import FileSystemStorage
 
-from application.model.modelMatthew.model import Model
-from application.model.trocr import TrOCR
+#from application.model.modelMatthew.model import Model
+#from application.model.trocr import TrOCR
+from application.model.paddleocr import PaddleOCR
 
-model = TrOCR()
-modelMatthew = Model()
+model = PaddleOCR()
 
 def prepare_file_hierarchy (file):
     """Takes uploaded file and returns directory where it is saved and its detected content"""
@@ -30,11 +31,13 @@ def handle_uploaded_file(file):
 
     # using protected function like this because model is still above 0.02 loss and doesnt
     # predict well
-    modelMatthew._preprocess(full_path)
+    #modelMatthew._preprocess(full_path)
     # function used in different model than trocr, for more details go to implementation
 
     # Process the single uploaded file
     # Now, we catch errors in trocr.py file since we did it anyway, no need for doing this twice
-    print(model.perform_ocr(full_path))
+    result_list = model.perform_ocr(input_path=Path(full_path))
+    for result in result_list[0]["rec_texts"]:
+        print(result)
 
     #TODO: Somehow save to cloud user input and model input (or just user input? Depends on pricing)

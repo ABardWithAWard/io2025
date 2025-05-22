@@ -13,6 +13,12 @@ cd <nazwa_folderu_docelowego>
 
 pip install -r requirements.txt
 
+# uruchom nvidia-smi przed tym krokiem, dobierz wersję CUDA, która odpowiada outputowi (tutaj CUDA 12.2 output smi => v12.1 pytorch)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+# paddleocr
+https://www.paddlepaddle.org.cn/en/install/quick?docurl=/documentation/docs/en/develop/install/pip/linux-pip_en.html
+
 # For ReactJS
 conda install conda-forge::nodejs
 npm install react react-dom
