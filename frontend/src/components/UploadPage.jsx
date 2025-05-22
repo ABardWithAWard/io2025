@@ -84,11 +84,18 @@ const UploadPage = () => {
             return;
         }
 
-        formData.append('file', fileInput.files[0]);
-        // Add userUid as null if not authenticated, or the actual UID if authenticated
-        formData.append('userUid', isAuthenticated ? userUid : null);
-
         try {
+            // Check authentication status first
+            const authResponse = await fetch('/api/auth-status/', {
+                method: 'GET',
+                credentials: 'include'
+            });
+            const authData = await authResponse.json();
+
+            formData.append('file', fileInput.files[0]);
+            // Pass null if not authenticated, otherwise use the firebase_uid
+            formData.append('userUid', authData.isAuthenticated ? authData.user.firebase_uid : null);
+
             const response = await fetch('/api/files/upload/', {
                 method: 'POST',
                 body: formData,

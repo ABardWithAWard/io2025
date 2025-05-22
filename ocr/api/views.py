@@ -196,7 +196,11 @@ class GoogleAuthAPIView(APIView):
                 }
             )
 
-            # Hardcoded backend
+            # Set session data
+            request.session['firebase_uid'] = firebase_user.uid
+            request.session['user_email'] = email
+            
+            # Login the user
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
             return Response({
@@ -243,17 +247,54 @@ class AuthStatusAPIView(APIView):
 
     def get(self, request):
         try:
-            if request.user.is_authenticated:
+            # Check Django authentication
+            is_django_authenticated = request.user.is_authenticated
+            
+            # Get Firebase auth token from request headers
+            auth_header = request.headers.get('Authorization')
+            is_firebase_authenticated = False
+            firebase_uid = None
+            
+            if auth_header and auth_header.startswith('Bearer '):
+                id_token = auth_header.split('Bearer ')[1]
+                try:
+                    # Verify Firebase token
+                    decoded_token = auth.verify_id_token(id_token)
+                    is_firebase_authenticated = True
+                    firebase_uid = decoded_token.get('uid')
+                    
+                    # If Firebase is authenticated but Django isn't, sync the session
+                    if is_firebase_authenticated and not is_django_authenticated:
+                        email = decoded_token.get('email')
+                        if email:
+                            user, _ = User.objects.get_or_create(
+                                email=email,
+                                defaults={
+                                    "username": email.split('@')[0],
+                                    "first_name": decoded_token.get('name', email.split('@')[0])
+                                }
+                            )
+                            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                            is_django_authenticated = True
+                except Exception as e:
+                    print(f"Firebase token verification failed: {str(e)}")
+            
+            # User is considered authenticated if either Django or Firebase auth is valid
+            is_authenticated = is_django_authenticated or is_firebase_authenticated
+            
+            if is_authenticated:
                 return Response({
                     'isAuthenticated': True,
                     'user': {
-                        'email': request.user.email,
-                        'username': request.user.username,
-                        'is_staff': request.user.is_staff
+                        'email': request.user.email if is_django_authenticated else decoded_token.get('email'),
+                        'username': request.user.username if is_django_authenticated else decoded_token.get('name', ''),
+                        'is_staff': request.user.is_staff if is_django_authenticated else False,
+                        'firebase_uid': firebase_uid or request.session.get('firebase_uid')
                     }
                 })
             return Response({'isAuthenticated': False})
         except Exception as e:
+            print(f"Auth status check error: {str(e)}")
             return Response(
                 {'error': str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
