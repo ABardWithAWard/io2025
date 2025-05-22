@@ -1,6 +1,7 @@
 import React, {useState, useEffect, useRef} from 'react';
 import { Navbar, Nav, Container, Button, Modal, Tab, Tabs, Form, Alert } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../AuthContext';
 import './NavbarComponent.css';
 
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_OAUTH2_CLIENT_ID;
@@ -12,31 +13,17 @@ function NavbarComponent() {
   const [messages, setMessages] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState('');
-  const [csrfToken, setCsrfToken] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: ''
   });
   const navigate = useNavigate();
+  const { getCsrfToken, checkAuthentication, refreshCsrfToken } = useAuth();
 
   useEffect(() => {
     // Check authentication status on component mount
     checkAuthStatus();
-    
-    // Get CSRF token
-    fetch('/api/csrf-token/', {
-      method: 'GET',
-      credentials: 'include'
-    })
-      .then(async response => {
-        const data = await response.json();
-        setCsrfToken(data.csrf_token);
-      })
-      .catch(error => {
-        console.error('Error fetching CSRF token:', error);
-        setMessages(['Error fetching security token']);
-      });
   }, []);
 
   const checkAuthStatus = async () => {
@@ -50,6 +37,8 @@ function NavbarComponent() {
       if (data.isAuthenticated) {
         setIsAuthenticated(true);
         setUserEmail(data.user.email);
+        // Refresh CSRF token when authenticated
+        await refreshCsrfToken();
       } else {
         setIsAuthenticated(false);
         setUserEmail('');
@@ -87,7 +76,7 @@ function NavbarComponent() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken,
+          'X-CSRFToken': getCsrfToken(),
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -101,6 +90,8 @@ function NavbarComponent() {
       if (response.ok) {
         setIsAuthenticated(true);
         setUserEmail(data.user.email);
+        // Refresh CSRF token after successful login
+        await refreshCsrfToken();
         handleModalClose();
         navigate('/');
       } else {
@@ -125,7 +116,7 @@ function NavbarComponent() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken,
+          'X-CSRFToken': getCsrfToken(),
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -140,6 +131,8 @@ function NavbarComponent() {
       if (response.ok) {
         setIsAuthenticated(true);
         setUserEmail(data.user.email);
+        // Refresh CSRF token after successful registration
+        await refreshCsrfToken();
         handleModalClose();
         navigate('/');
       } else {
@@ -160,7 +153,7 @@ function NavbarComponent() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken,
+          'X-CSRFToken': getCsrfToken(),
         },
         credentials: 'include',
         body: JSON.stringify({ idToken }),
@@ -171,6 +164,8 @@ function NavbarComponent() {
       if (res.ok) {
         setIsAuthenticated(true);
         setUserEmail(data.user.email);
+        // Refresh CSRF token after successful Google login
+        await refreshCsrfToken();
         handleModalClose();
         navigate('/');
       } else {
@@ -188,7 +183,7 @@ function NavbarComponent() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken,
+          'X-CSRFToken': getCsrfToken(),
         },
         credentials: 'include'
       });
@@ -196,6 +191,8 @@ function NavbarComponent() {
       if (response.ok) {
         setIsAuthenticated(false);
         setUserEmail('');
+        // Refresh CSRF token after logout
+        await refreshCsrfToken();
         navigate('/');
       } else {
         setMessages(['Logout failed']);
