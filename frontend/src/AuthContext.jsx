@@ -30,18 +30,28 @@ export const AuthProvider = ({ children }) => {
     const [userUid, setUserUid] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [idToken, setIdToken] = useState(null);
 
     useEffect(() => {
         let unsubscribe;
         
         try {
             unsubscribe = onAuthStateChanged(auth, 
-                (user) => {
+                async (user) => {
                     if (user) {
-                        setIsAuthenticated(true);
-                        setUserUid(user.uid);
-                        fetchCsrfToken();
+                        try {
+                            // Get the ID token
+                            const token = await user.getIdToken();
+                            setIdToken(token);
+                            // Check authentication status with backend
+                            await checkAuthentication();
+                        } catch (error) {
+                            console.error('Error getting user token:', error);
+                            setError(error.message);
+                        }
                     } else {
+                        console.log('User signed out'); // Debug log
+                        setIdToken(null);
                         setIsAuthenticated(false);
                         setUserUid(null);
                     }
@@ -89,16 +99,23 @@ export const AuthProvider = ({ children }) => {
         try {
             const response = await fetch('/api/auth-status/', {
                 method: 'GET',
-                credentials: 'include'
+                credentials: 'include',
+                headers: {
+                    'Authorization': idToken ? `Bearer ${idToken}` : ''
+                }
             });
             const data = await response.json();
             setIsAuthenticated(data.isAuthenticated);
-            if (data.isAuthenticated) {
+            if (data.isAuthenticated && data.user?.firebase_uid) {
+                setUserUid(data.user.firebase_uid);
                 await fetchCsrfToken();
+            } else {
+                setUserUid(null);
             }
             return data.isAuthenticated;
         } catch (error) {
             console.error('Error checking authentication:', error);
+            setUserUid(null);
             return false;
         }
     };
@@ -112,6 +129,7 @@ export const AuthProvider = ({ children }) => {
             await auth.signOut();
             setIsAuthenticated(false);
             setUserUid(null);
+            setIdToken(null);
             Cookies.remove('csrftoken');
         } catch (error) {
             console.error('Error during logout:', error);
