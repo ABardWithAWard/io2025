@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../AuthContext';
 import data from "bootstrap/js/src/dom/data";
 
 const UploadPage = () => {
@@ -7,33 +8,12 @@ const UploadPage = () => {
     const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
     const [hasShownPrivacyWarning, setHasShownPrivacyWarning] = useState(false);
     const [error, setError] = useState('');
-    const [csrfToken, setCsrfToken] = useState('');
     const navigate = useNavigate();
     const [pendingFile, setPendingFile] = useState(null);
     const [showUploadModal, setShowUploadModal] = useState(false);
+    const { getCsrfToken } = useAuth();
 
     useEffect(() => {
-        // Fetch CSRF token
-        fetch('/api/csrf-token/', {
-            method: 'GET',
-            credentials: 'include'
-        })
-            .then(async response => {
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    const data = await response.json();
-                    setCsrfToken(data.csrf_token);
-                } else {
-                    const text = await response.text();
-                    console.error('Non-JSON response for CSRF token:', text);
-                    setError('Unexpected response fetching CSRF token');
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching CSRF token:', error);
-                setError('An error occurred fetching CSRF token');
-            });
-
         // Fetch files
         fetchFiles()
     }, []);
@@ -112,7 +92,7 @@ const UploadPage = () => {
                 body: formData,
                 credentials: 'include',
                 headers: {
-                    'X-CSRFToken': csrfToken
+                    'X-CSRFToken': getCsrfToken()
                 }
             });
 
@@ -128,8 +108,6 @@ const UploadPage = () => {
             setError('An error occurred while uploading the file');
         }
     };
-
-
 
     return (
         <div className="container mt-4">
