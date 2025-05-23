@@ -12,10 +12,9 @@ git clone <link_do_repo> <nazwa_folderu_docelowego>
 cd <nazwa_folderu_docelowego>
 
 pip install -r requirements.txt
+cd frontend
+npm install
 
-# For ReactJS
-conda install conda-forge::nodejs
-npm install react react-dom
 ```
 ### 2. Utwórz plik .env i dodaj tam odpowiednie zmienne środowiskowe
 ```bash
@@ -28,6 +27,24 @@ nano .env
 # GOOGLE_OAUTH2_CLIENT_ID=<id_klienta_google_auth>
 # GOOGLE_OAUTH2_CLIENT_SECRET=<klucz_prywatny_google_auth>
 # GOOGLE_OAUTH2_REDIRECT_URI=<link_powrotny_google_auth>
+############## ZAWARTOŚĆ .env ##############
+
+cd ../frontend
+nano .env
+############## ZAWARTOŚĆ .env ##############
+REACT_APP_GOOGLE_OAUTH2_CLIENT_ID=
+REACT_APP_FIREBASE_KEY=
+REACT_APP_TYPE=
+REACT_APP_PROJECT_ID=
+REACT_APP_PRIVATE_KEY_ID=
+REACT_APP_PRIVATE_KEY=
+REACT_APP_CLIENT_EMAIL=
+REACT_APP_CLIENT_ID=
+REACT_APP_AUTH_URI=
+REACT_APP_TOKEN_URI=
+REACT_APP_AUTH_PROVIDER_X509_CERT_URL=
+REACT_APP_CLIENT_X509_CERT_URL=
+REACT_APP_UNIVERSE_DOMAIN=
 ############## ZAWARTOŚĆ .env ##############
 ```
 Czyli przykładowo, jeśli mój klucz prywatny to django-insecure-c-!bac#($x2etc, a katalog w którym
@@ -87,6 +104,13 @@ model/
 └── setup_datasets.sh
 ```
 A następnie uruchomić z poziomu katalogu model/ skrypt ./setup_datasets.sh.
+
+### 5. Key-gen
+Po wszystkim nalezy takze wygenerowac certyfikat i go podpisac (mozna rowniez uzyc istniejacego, jesli ktos posiada)
+```bash
+./certgen.ps1
+```
+Nastepnie nalezy uzupelnic pola na terminalu
 
 ### Dane do logowania administratora
 ```bash
