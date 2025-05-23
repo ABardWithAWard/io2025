@@ -1,5 +1,5 @@
 from django.urls import path, include, re_path
-from . import views
+from . import views, admin
 from . import login
 from api.urls import urlpatterns as api_urls
 
@@ -12,7 +12,7 @@ urlpatterns = [
     # Contact endpoint
     path('contact/', views.ContactView.as_view(), name='contact'),
 
-    #path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls),
 
     # Auth endpoints
     path('auth/login/', login.handle_login, name='handle_login'),
