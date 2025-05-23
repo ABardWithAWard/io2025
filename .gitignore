@@ -101,3 +101,4 @@ ocr/staticfiles
 cert.pem
 cert.pfx
 key.pem
+/frontend/package-lock.json
