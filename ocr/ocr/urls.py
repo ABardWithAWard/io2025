@@ -24,7 +24,7 @@ Including another URLconf
 """
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', include('api.urls')),  # API routes first
-    re_path(r'^(?!api/|admin/|media/).*$', views.ReactAppView.as_view(), name='react_app'),
+    path('admin/', admin.site.urls),  # Django admin
+    path('api/', include('api.urls')),  # API routes
+    re_path(r'^(?!api/|admin/|media/).*$', ReactAppView.as_view(), name='react_app'),  # All other routes go to React
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
