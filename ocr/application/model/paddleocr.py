@@ -17,7 +17,7 @@ class PaddleOCR(ModelBase):
         Function that takes in the directory of the dataset and outputs the format the model requires.
         """
 
-    def perform_ocr(self, input_path: Path):
+    def perform_ocr(self, input_path):
         """
         Function that takes in the directory of the dataset and outputs the recognized text to a directory.
         Args
@@ -25,5 +25,5 @@ class PaddleOCR(ModelBase):
         Returns:
             Prediction if the prediction was successful, Error otherwise.
         """
-        result = self.model.predict(str(input_path))
+        result = self.model.predict(input_path)
         return result
