@@ -5,8 +5,10 @@ from django.core.files.storage import FileSystemStorage
 #from application.model.modelMatthew.model import Model
 #from application.model.trocr import TrOCR
 from application.model.paddleocr import PaddleOCR
+from application.model.easyocr import EasyOCR
 
-model = PaddleOCR()
+paddle_model = PaddleOCR()
+easy_model = EasyOCR()
 
 def prepare_file_hierarchy (file):
     """Takes uploaded file and returns directory where it is saved and its detected content"""
@@ -36,8 +38,12 @@ def handle_uploaded_file(file):
 
     # Process the single uploaded file
     # Now, we catch errors in trocr.py file since we did it anyway, no need for doing this twice
-    result_list = model.perform_ocr(input_path=Path(full_path))
-    for result in result_list[0]["rec_texts"]:
-        print(result)
+    paddle_result_list = paddle_model.perform_ocr(input_path=full_path)
+    print("PaddleOCR results:")
+    print(" ".join([result for result in paddle_result_list[0]["rec_texts"]]))
+
+    easy_result_list = easy_model.perform_ocr(input_path=full_path)
+    print("EasyOCR results:")
+    print(" ".join([result[1] for result in easy_result_list]))
 
     #TODO: Somehow save to cloud user input and model input (or just user input? Depends on pricing)
