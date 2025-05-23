@@ -129,35 +129,15 @@
     color: #721c24;
     border: 1px solid #f5c6cb;
   }
-
-  /* Weird boxes near links deleted */
-  .navbar-nav { list-style: none !important; padding-left: 0; }
-
-  .admin-panel-link {
-    cursor: pointer;
-  }
-
-  .navbar-brand{
-      font-size: 1.25rem !important; /* Zmiana font-size z użyciem !important */
-      color: rgba(0,0,0, 1) !important;    /* Zmiana koloru z użyciem !important */
-  }
-
-  .nav-link{
-      color: rgba(0,0,0, 0.65) !important;
-      text-decoration: none !important;
-      font-size: 1rem !important;
-  }
 </style>
 
 <!-- Messages -->
 {% if messages %}
-    {% if not '/admin' in request.path %}
-        <div class="messages">
-            {% for message in messages %}
-                <div class="message">{{ message }}</div>
-            {% endfor %}
-        </div>
-    {% endif %}
+<div class="messages">
+  {% for message in messages %}
+    <div class="message">{{ message }}</div>
+  {% endfor %}
+</div>
 {% endif %}
 
 <!-- Navbar HTML -->
@@ -173,31 +153,18 @@
           <a class="nav-link" href="{% url 'application:contact' %}">Kontakt</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="{% if user.is_superuser %}{% url 'admin:index' %}{% else %}#{% endif %}" 
-               onclick="{% if not user.is_superuser %}openPopUp(); event.preventDefault();{% endif %}">
-                Panel administracji
-            </a>
-            {% if not user.is_superuser %}
-                <div id="accessDenied" class="access-denied" style="display:none;">
-                    <div class="modal-content">
-                        <span class="close" onclick="closePopUp()">&times;</span>
-                        <h2>Brak dostępu</h2>
-                        <p>Nie masz uprawnień do dostępu do panelu administracyjnego.</p>
-                    </div>
-                </div>
-            {% endif %}
+          <a class="nav-link" href="{% url 'admin:index' %}">Panel administracji</a>
         </li>
       </ul>
       {% if user.is_authenticated %}
           <span style="margin-right: 1rem;">{{ user.email }}</span>
-          <a href="{% url 'application:logout' %}"><button name="logoutButton" class="btn btn-outline-primary">Logout</button></a>
+          <a href="{% url 'application:logout' %}"><button class="btn btn-outline-primary">Logout</button></a>
         {% else %}
-          <button name="loginButton" class="btn btn-outline-primary" onclick="openModal()">Login</button>
+          <button class="btn btn-outline-primary" onclick="openModal()">Login</button>
       {% endif %}
     </div>
   </div>
 </nav>
-
 
 <!-- Modal -->
 <div id="loginModal" class="modal">
@@ -254,15 +221,6 @@
 </div>
 
 <script>
-    
-function closePopUp() {
-    document.getElementById('accessDenied').style.display = 'none';
-}
-
-function openPopUp() {
-    document.getElementById('accessDenied').style.display = 'block';
-}
-    
 function openModal() {
   document.getElementById('loginModal').style.display = 'block';
   document.body.classList.add('modal-open');
@@ -306,41 +264,3 @@ document.addEventListener('DOMContentLoaded', function() {
   }, 5000);
 });
 </script>
-
-<style>
-    .access-denied {
-        display: none; /* Hidden by default */
-        position: fixed;
-        z-index: 1;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgb(0,0,0); 
-        background-color: rgba(0,0,0,0.4); /* Black with transparency */
-    }
-
-    .modal-content {
-        background-color: #fefefe;
-        margin: 15% auto;
-        padding: 20px;
-        border: 1px solid #888;
-        width: 80%;
-        max-width: 500px;
-    }
-
-    .close {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
-    }
-
-    .close:hover,
-    .close:focus {
-        color: black;
-        text-decoration: none;
-        cursor: pointer;
-    }
-</style>
