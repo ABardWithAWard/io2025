@@ -15,7 +15,6 @@ from application.models import dataLimit, fileLimit, blockList, UploadedFile, Su
 from application.forms import UploadFileForm, SubmitTicketForm
 from .services import handle_uploaded_file, get_files
 from .serializers import (
-    DataLimitSerializer, FileLimitSerializer, BlockListSerializer,
     UploadedFileSerializer, SupportTicketSerializer
 )
 from django.http import JsonResponse
@@ -24,18 +23,6 @@ from firebase_admin import credentials, firestore, auth
 import json
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-
-class DataLimitViewSet(viewsets.ModelViewSet):
-    queryset = dataLimit.objects.all()
-    serializer_class = DataLimitSerializer
-
-class FileLimitViewSet(viewsets.ModelViewSet):
-    queryset = fileLimit.objects.all()
-    serializer_class = FileLimitSerializer
-
-class BlockListViewSet(viewsets.ModelViewSet):
-    queryset = blockList.objects.all()
-    serializer_class = BlockListSerializer
 
 class UploadedFileViewSet(viewsets.ModelViewSet):
     queryset = UploadedFile.objects.all()

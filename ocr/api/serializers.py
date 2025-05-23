@@ -1,20 +1,5 @@
 from rest_framework import serializers
-from application.models import dataLimit, fileLimit, blockList, UploadedFile, SupportTicket
-
-class DataLimitSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = dataLimit
-        fields = ['id', 'value']
-
-class FileLimitSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = fileLimit
-        fields = ['id', 'value']
-
-class BlockListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = blockList
-        fields = ['id', 'ip_address']
+from application.models import UploadedFile, SupportTicket
 
 class UploadedFileSerializer(serializers.ModelSerializer):
     class Meta:
