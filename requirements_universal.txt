@@ -1,0 +1,16 @@
+django>=5.2.1
+django-bootstrap5>=25.1
+python-dotenv
+datasets
+evaluate
+jiwer
+pandas
+scikit-learn
+pillow
+tqdm
+opencv-python
+gdown
+numpy
+requests
+social-auth-app-django
+easyocr

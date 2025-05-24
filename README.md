@@ -4,23 +4,14 @@
 ### 1. Załóż środowisko lokalne
 Tutaj zastosowano condę, można też użyć venv:
 ```bash
-conda create -n django_test python=3.13
+conda create -n django_test python=3.12.9
 conda activate django_test
 
 cd ~/PycharmProjects
 git clone <link_do_repo> <nazwa_folderu_docelowego>
 cd <nazwa_folderu_docelowego>
 
-pip install -r requirements.txt
-
 # aby poznać swoją wersję CUDA, uruchom 'nvidia-smi'
-
-# Torch Cuda <12.6
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-# Cuda >=12.6, <12.8
-pip3 install torch torchvision torchaudio
-# Cuda >=12.8
-pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
 
 # PaddleOCR Cuda <12.6
 python -m pip install paddlepaddle-gpu==3.0.0 -i https://www.paddlepaddle.org.cn/packages/stable/cu118/
@@ -29,8 +20,27 @@ python -m pip install paddlepaddle-gpu==3.0.0 -i https://www.paddlepaddle.org.cn
 
 pip install paddleocr
 
+pip install -r requirements.txt
+
 # For ReactJS
 conda install -c conda-forge nodejs=22.13
+
+# w przypadku problemów
+conda deactivate django_test
+conda remove -n django_test --all --keep-env
+conda activate django_test
+
+# przekiopiuj requirements_universal do requirements.txt
+
+# PaddleOCR Cuda <12.6
+python -m pip install paddlepaddle-gpu==3.0.0 -i https://www.paddlepaddle.org.cn/packages/stable/cu118/
+# Cuda >=12.6
+python -m pip install paddlepaddle-gpu==3.0.0 -i https://www.paddlepaddle.org.cn/packages/stable/cu126/
+
+pip install paddleocr
+
+pip install -r requirements.txt
+
 ```
 ### 2. Utwórz plik .env i dodaj tam odpowiednie zmienne środowiskowe
 ```bash
