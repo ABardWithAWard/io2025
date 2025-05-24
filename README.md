@@ -4,7 +4,7 @@
 ### 1. Załóż środowisko lokalne
 Tutaj zastosowano condę, można też użyć venv:
 ```bash
-conda create -n django_test python
+conda create -n django_test python=3.13
 conda activate django_test
 
 cd ~/PycharmProjects
@@ -13,15 +13,24 @@ cd <nazwa_folderu_docelowego>
 
 pip install -r requirements.txt
 
-# uruchom nvidia-smi przed tym krokiem, dobierz wersję CUDA, która odpowiada outputowi (tutaj CUDA 12.2 output smi => v12.1 pytorch)
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# aby poznać swoją wersję CUDA, uruchom 'nvidia-smi'
 
-# paddleocr
-https://www.paddlepaddle.org.cn/en/install/quick?docurl=/documentation/docs/en/develop/install/pip/linux-pip_en.html
+# Torch Cuda <12.6
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# Cuda >=12.6, <12.8
+pip3 install torch torchvision torchaudio
+# Cuda >=12.8
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+
+# PaddleOCR Cuda <12.6
+python -m pip install paddlepaddle-gpu==3.0.0 -i https://www.paddlepaddle.org.cn/packages/stable/cu118/
+# Cuda >=12.6
+python -m pip install paddlepaddle-gpu==3.0.0 -i https://www.paddlepaddle.org.cn/packages/stable/cu126/
+
+pip install paddleocr
 
 # For ReactJS
-conda install conda-forge::nodejs
-npm install react react-dom
+conda install -c conda-forge nodejs=22.13
 ```
 ### 2. Utwórz plik .env i dodaj tam odpowiednie zmienne środowiskowe
 ```bash
