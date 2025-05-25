@@ -51,6 +51,9 @@ def handle_uploaded_file(file):
     #TODO: Somehow save to cloud user input and model input (or just user input? Depends on pricing)
 
 def setup_firestore_db():
+    """
+    Initialize the global firestore_db variable to hold a google.cloud.firestore_v1 Client object.
+    """
     # There may be a more elegant solution, but for now I am using a global variable
     global firestore_db
 
