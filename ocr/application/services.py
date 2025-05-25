@@ -20,6 +20,7 @@ easy_model = EasyOCR()
 
 firestore_db = None
 
+
 def prepare_file_hierarchy(file):
     """Takes uploaded file and returns directory where it is saved and its detected content"""
     upload_dir = os.path.abspath(os.environ['UPLOADED_FILES'])
@@ -51,9 +52,6 @@ def handle_uploaded_file(file):
         print(" ".join([result for result in easy_result["text_predictions"]]))
 
 def setup_firestore_db():
-    """
-    Initialize the global firestore_db variable to hold a google.cloud.firestore_v1 Client object.
-    """
     # There may be a more elegant solution, but for now I am using a global variable
     global firestore_db
 
