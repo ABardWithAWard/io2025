@@ -1,13 +1,14 @@
 import os
 from docx import Document
+from docx.shared import Pt
 
 from django.core.files.storage import FileSystemStorage
 
-from application.model.modelMatthew.model import Model
-from application.model.trocr import TrOCR
-
-model = TrOCR()
-modelMatthew = Model()
+# from application.model.modelMatthew.model import Model
+# from application.model.trocr import TrOCR
+#
+# model = TrOCR()
+# modelMatthew = Model()
 
 def prepare_file_hierarchy (file):
     """Takes uploaded file and returns directory where it is saved and its detected content"""
@@ -41,9 +42,9 @@ def handle_uploaded_file(file):
 
     #TODO: Somehow save to cloud user input and model input (or just user input? Depends on pricing)
 
-def output_processed_as_txt(word_list, output_path):
+def output_processed_as_txt(word_list, output_path, line_width=80):
     chars_in_current_line = 0
-    max_line_width = 80
+    max_line_width = line_width
     with open(output_path, "w") as f:
         for word in word_list:
             chars_in_current_line += len(word)
@@ -53,9 +54,11 @@ def output_processed_as_txt(word_list, output_path):
             else:
                 f.writelines(f"{word} ")
 
-def output_processed_as_docx(word_list, output_path):
+def output_processed_as_docx(word_list, output_path, font_size=11):
     document = Document()
-    document.add_paragraph(" ".join(word_list))
+    font = document.add_paragraph().add_run(" ".join(word_list)).font
+    font.name = "Arial"
+    font.size = Pt(font_size)
     document.save(output_path)
 
 if __name__ == "__main__":
