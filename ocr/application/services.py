@@ -1,4 +1,6 @@
 import os
+from docx import Document
+
 from django.core.files.storage import FileSystemStorage
 
 from application.model.modelMatthew.model import Model
