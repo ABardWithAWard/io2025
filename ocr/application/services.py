@@ -1,4 +1,6 @@
 import os
+from docx import Document
+
 from pathlib import Path
 from django.core.files.storage import FileSystemStorage
 
