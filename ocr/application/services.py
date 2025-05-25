@@ -1,6 +1,7 @@
 import os
 from docx import Document
 from docx.shared import Pt
+from typing import List
 
 from pathlib import Path
 from django.core.files.storage import FileSystemStorage
@@ -42,25 +43,47 @@ def handle_uploaded_file(file):
         print("EasyOCR results:")
         print(" ".join([result for result in easy_result["text_predictions"]]))
 
-def output_processed_as_txt(word_list, output_path, line_width=80):
+def output_processed_as_txt(word_list: List[str], output_path: str, line_width=80):
+    """
+    Output a list of words (strings) extracted from an image into a .txt file at output_path.
+    :param word_list: List of strings which are extracted words.
+    :param output_path: A string representing the output_path for the .txt file to be generated at.
+    :param line_width: The limit in characters after which a full new word cannot be written (but a part of the word may).
+    """
     chars_in_current_line = 0
     max_line_width = line_width
     with open(output_path, "w") as f:
         for word in word_list:
             chars_in_current_line += len(word)
+            # If limit exceeded after writing this word, write
             if chars_in_current_line > max_line_width:
+                # But write with a newline and reset next line to the beginning
                 f.writelines(f"{word}\n")
                 chars_in_current_line = 0
             else:
+                # Otherwise simply write
                 f.writelines(f"{word} ")
 
-def output_processed_as_docx(word_list, output_path, font_size=11):
+def output_processed_as_docx(word_list: List[str], output_path: str, font_size=11):
+    """
+    Output a list of words (strings) extracted from an image into a .docx file at output_path.
+    :param word_list: List of strings which are extracted words.
+    :param output_path: A string representing the output_path for the .txt file to be generated at.
+    :param font_size: The size of the font of the text which will take up the entire width at all times.
+    """
     document = Document()
+
+    # Add_run is the most general "generate text" method. It gives access to a Font obj through .font
     font = document.add_paragraph().add_run(" ".join(word_list)).font
+
+    # Through the Font obj we can modify the appearance of the text
     font.name = "Arial"
     font.size = Pt(font_size)
+
+    # The appearance will be saved
     document.save(output_path)
 
+# Unit test
 if __name__ == "__main__":
     word_list = ["God", "save", "our", "gracious", "Queen,", "Long", "live", "our", "noble", "Queen,",
                  "God", "save", "the", "queen!", "Send", "her", "victorious,", "Happy", "and", "Glorious",
