@@ -47,3 +47,6 @@ def handle_uploaded_file(file):
     print(" ".join([result[1] for result in easy_result_list]))
 
     #TODO: Somehow save to cloud user input and model input (or just user input? Depends on pricing)
+
+def output_processed_words(word_list, output_path):
+    return
