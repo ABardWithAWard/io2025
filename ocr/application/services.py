@@ -41,5 +41,29 @@ def handle_uploaded_file(file):
 
     #TODO: Somehow save to cloud user input and model input (or just user input? Depends on pricing)
 
-def output_processed_words(word_list, output_path):
-    return
+def output_processed_as_txt(word_list, output_path):
+    chars_in_current_line = 0
+    max_line_width = 80
+    with open(output_path, "w") as f:
+        for word in word_list:
+            chars_in_current_line += len(word)
+            if chars_in_current_line > max_line_width:
+                f.writelines(f"{word}\n")
+                chars_in_current_line = 0
+            else:
+                f.writelines(f"{word} ")
+
+def output_processed_as_docx(word_list, output_path):
+    document = Document()
+    document.add_paragraph(" ".join(word_list))
+    document.save(output_path)
+
+if __name__ == "__main__":
+    word_list = ["God", "save", "our", "gracious", "Queen,", "Long", "live", "our", "noble", "Queen,",
+                 "God", "save", "the", "queen!", "Send", "her", "victorious,", "Happy", "and", "Glorious",
+                 "Long", "to", "reign", "over", "us;", "God", "save", "the", "Queen!"]
+
+    abs_output_dir = "/home/km/PycharmProjects/io2025/test_output"
+
+    output_processed_as_txt(word_list, abs_output_dir + "/output.txt")
+    output_processed_as_docx(word_list, abs_output_dir + "/output.docx")
