@@ -11,7 +11,10 @@ class ApplicationConfig(AppConfig):
     def ready(self):
 
         try:
+            from application.services import setup_firestore_db
             from application.models import dataLimit, fileLimit
+
+            setup_firestore_db()
 
             if not dataLimit.objects.exists():
                 dataLimit.objects.create(value=0)
