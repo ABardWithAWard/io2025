@@ -14,31 +14,7 @@ const UploadPage = () => {
     const { getCsrfToken, isAuthenticated, userUid } = useAuth();
 
     useEffect(() => {
-        // Fetch files
-        fetchFiles()
     }, []);
-
-    const fetchFiles = () => {
-        fetch('/api/files/list_files', {
-            method: 'GET',
-            credentials: 'include'
-        })
-            .then(async response => {
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    const data = await response.json();
-                    setFiles(data);
-                } else {
-                    const text = await response.text();
-                    console.error('Non-JSON response for files:', text);
-                    setError('Unexpected response fetching files');
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching files:', error);
-                setError('An error occurred fetching files');
-            });
-    };
 
     const validateFile = (file) => {
         const allowedExtensions = ['.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff', '.webp'];
@@ -134,17 +110,6 @@ const UploadPage = () => {
                     {error}
                 </div>
             )}
-
-            <div className="mt-4">
-                <h3>Uploaded Files</h3>
-                <ul className="list-group">
-                    {files.map((file, index) => (
-                        <li key={index} className="list-group-item">
-                            <strong>File:</strong> {file} <br />
-                        </li>
-                    ))}
-                </ul>
-            </div>
 
             {showPrivacyDialog && (
                 <dialog open style={{
