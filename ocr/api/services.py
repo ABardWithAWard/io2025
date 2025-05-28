@@ -13,7 +13,7 @@ def get_files():
     try:
         return os.listdir(directory)
     except FileNotFoundError:
-        return []
+        return ['empty']
 
 def prepare_file_hierarchy(file):
     """Takes uploaded file and returns directory where it is saved and its detected content"""
