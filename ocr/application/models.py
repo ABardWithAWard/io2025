@@ -39,3 +39,7 @@ class SupportTicket(models.Model):
     name = models.CharField(max_length=200)
     email = models.CharField(max_length=200)
     message = models.TextField()
+
+
+def blockList():
+    return None

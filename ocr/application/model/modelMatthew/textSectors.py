@@ -54,7 +54,8 @@ def split_image_on_lines(image, lines, width, height):
 
     return segments
 
-def process_images(input_pattern=f'{os.environ['UPLOADED_FILES']}/roi*.png'):
+#weird syntax in environ get because [] doesnt work for some reason?
+def process_images(input_pattern=f"{os.environ.get('UPLOADED_FILES', '')}/roi*.png"):
     #This function tries to find stray dividers if text is positioned too close to it
     files = sorted(glob.glob(input_pattern), key=lambda x: int(re.search(r'roi(\d+)', x).group(1)))
     counter = 1

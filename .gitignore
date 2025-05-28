@@ -94,5 +94,11 @@ ocr/UploadedFiles/*
 ocr/application/model/datasets
 ocr/firebaseSecretKey.json
 replace.txt
-frontend
+
+frontend/build
+frontend/node_modules
 ocr/staticfiles
+cert.pem
+cert.pfx
+key.pem
+/frontend/package-lock.json
