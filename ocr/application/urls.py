@@ -10,9 +10,6 @@ urlpatterns = [
     # API endpoints
     path('api/', include(api_urls)),
 
-    # Contact endpoint
-    path('contact/', views.ContactView.as_view(), name='contact'),
-
     path('admin/', admin.site.urls),
 
     # This must come last to prevent overriding all other paths

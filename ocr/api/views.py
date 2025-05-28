@@ -52,7 +52,6 @@ class SupportTicketViewSet(viewsets.ModelViewSet):
     def create(self, request):
         form = SubmitTicketForm(request.data)
         if form.is_valid():
-            ticket = form.save()
             return Response({'status': 'success'})
         return Response({'status': 'error', 'errors': form.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -67,10 +66,9 @@ class ContactAPIView(APIView):
     
     def post(self, request):
         try:
-            data = json.loads(request.body)
-            name = data.get('name')
-            email = data.get('email')
-            message = data.get('message')
+            name = request.data.get('name')
+            email = request.data.get('email')
+            message = request.data.get('message')
             
             if not all([name, email, message]):
                 return Response(
