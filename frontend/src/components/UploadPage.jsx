@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
-import data from "bootstrap/js/src/dom/data";
 
 const UploadPage = () => {
     const [files, setFiles] = useState([]);
@@ -83,7 +82,6 @@ const UploadPage = () => {
 
             const data = await response.json();
             if (response.ok) {
-                fetchFiles();
                 setError('');
             } else {
                 setError(data.errors || 'Upload failed');
