@@ -12,4 +12,4 @@ class AdminSessionTimeoutMiddleware(MiddlewareMixin):
 
             elif '_auth_user_id' in request.session:
                 # Session expired -> Move to login page
-                return redirect('/application/')
+                return redirect('/application/admin/login/')
