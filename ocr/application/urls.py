@@ -1,17 +1,20 @@
-from django.urls import path
+from django.urls import path, include, re_path
 from . import views
+from django.contrib import admin
 from . import login
+from api.urls import urlpatterns as api_urls
 
 app_name = 'application'
 
 urlpatterns = [
-    path('', views.upload_file, name='index'),
-    path("api/files", views.get_files, name="get_files"),
-    path('auth/login/', login.handle_login, name='handle_login'),
-    path('auth/register/', login.handle_register, name='handle_register'),
-    path('auth/logout/', login.handle_logout, name='logout'),
-    path('auth/google/', login.google_auth, name='handle_google_auth'),
-    path('auth/google/callback/', login.google_auth_callback, name='google_auth_callback'),
-    path("contact/", views.enter_contact_ticket, name="contact"),
-]
+    # API endpoints
+    path('api/', include(api_urls)),
 
+    # Contact endpoint
+    path('contact/', views.ContactView.as_view(), name='contact'),
+
+    path('admin/', admin.site.urls),
+
+    # This must come last to prevent overriding all other paths
+    re_path(r'^(?!api/|admin/|media/).*$', views.ReactAppView.as_view(), name='react_app'),
+]

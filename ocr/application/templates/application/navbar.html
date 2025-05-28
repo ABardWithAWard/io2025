@@ -163,98 +163,36 @@
 <!-- Navbar HTML -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
   <div class="container-fluid">
-    <a class="navbar-brand" href="{% url 'application:index' %}">Aplikacja OCR</a>
+    <a class="navbar-brand" href="/">Aplikacja OCR</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <li class="nav-item">
-          <a class="nav-link" href="{% url 'application:contact' %}">Kontakt</a>
+          <a class="nav-link" href="/contact">Kontakt</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="{% if user.is_superuser %}{% url 'admin:index' %}{% else %}#{% endif %}" 
-               onclick="{% if not user.is_superuser %}openPopUp(); event.preventDefault();{% endif %}">
+            <a class="nav-link" href="/admin" id="adminLink">
                 Panel administracji
             </a>
-            {% if not user.is_superuser %}
-                <div id="accessDenied" class="access-denied" style="display:none;">
-                    <div class="modal-content">
-                        <span class="close" onclick="closePopUp()">&times;</span>
-                        <h2>Brak dostępu</h2>
-                        <p>Nie masz uprawnień do dostępu do panelu administracyjnego.</p>
-                    </div>
+            <div id="accessDenied" class="access-denied" style="display:none;">
+                <div class="modal-content">
+                    <span class="close" onclick="closePopUp()">&times;</span>
+                    <h2>Brak dostępu</h2>
+                    <p>Nie masz uprawnień do dostępu do panelu administracyjnego.</p>
                 </div>
-            {% endif %}
+            </div>
         </li>
       </ul>
-      {% if user.is_authenticated %}
-          <span style="margin-right: 1rem;">{{ user.email }}</span>
-          <a href="{% url 'application:logout' %}"><button name="logoutButton" class="btn btn-outline-primary">Logout</button></a>
-        {% else %}
-          <button name="loginButton" class="btn btn-outline-primary" onclick="openModal()">Login</button>
-      {% endif %}
+      <div id="authButtons">
+        <!-- This will be populated by React -->
+      </div>
     </div>
   </div>
 </nav>
 
-
-<!-- Modal -->
-<div id="loginModal" class="modal">
-  <div class="modal-content">
-    <span class="close" onclick="closeModal()">&times;</span>
-    
-    <div class="tab">
-      <button class="tablinks active" onclick="openTab(event, 'loginTab')">Login</button>
-      <button class="tablinks" onclick="openTab(event, 'registerTab')">Register</button>
-    </div>
-
-    <div id="loginTab" class="tabcontent" style="display: block;">
-      <form action="{% url 'application:handle_login' %}" method="POST">
-        {% csrf_token %}
-        <div class="form-group">
-          <label for="loginEmail">Email</label>
-          <input type="email" id="loginEmail" name="email" required>
-        </div>
-        <div class="form-group">
-          <label for="loginPassword">Password</label>
-          <input type="password" id="loginPassword" name="password" required>
-        </div>
-        <button type="submit" class="submit-btn">Login</button>
-        <a href="{% url 'application:handle_google_auth' %}" class="google-btn" style="width: 100%; justify-content: center; margin-left: 0;">
-          <img src="https://www.google.com/favicon.ico" alt="Google" width="18">
-          Login with Google
-        </a>
-      </form>
-    </div>
-
-    <div id="registerTab" class="tabcontent">
-      <form action="{% url 'application:handle_register' %}" method="POST">
-        {% csrf_token %}
-        <div class="form-group">
-          <label for="registerEmail">Email</label>
-          <input type="email" id="registerEmail" name="email" required>
-        </div>
-        <div class="form-group">
-          <label for="registerPassword">Password</label>
-          <input type="password" id="registerPassword" name="password" required>
-        </div>
-        <div class="form-group">
-          <label for="registerConfirmPassword">Confirm Password</label>
-          <input type="password" id="registerConfirmPassword" name="confirm_password" required>
-        </div>
-        <button type="submit" class="submit-btn">Register</button>
-        <a href="{% url 'application:handle_google_auth' %}" class="google-btn" style="width: 100%; justify-content: center; margin-left: 0;">
-          <img src="https://www.google.com/favicon.ico" alt="Google" width="18">
-          Register with Google
-        </a>
-      </form>
-    </div>
-  </div>
-</div>
-
 <script>
-    
 function closePopUp() {
     document.getElementById('accessDenied').style.display = 'none';
 }
@@ -262,48 +200,55 @@ function closePopUp() {
 function openPopUp() {
     document.getElementById('accessDenied').style.display = 'block';
 }
-    
-function openModal() {
-  document.getElementById('loginModal').style.display = 'block';
-  document.body.classList.add('modal-open');
+
+// Check if user is authenticated and update UI accordingly
+function updateAuthUI() {
+    fetch('/api/auth/status/')
+        .then(response => response.json())
+        .then(data => {
+            const authButtons = document.getElementById('authButtons');
+            if (data.is_authenticated) {
+                authButtons.innerHTML = `
+                    <span style="margin-right: 1rem;">${data.email}</span>
+                    <button onclick="handleLogout()" class="btn btn-outline-primary">Logout</button>
+                `;
+            } else {
+                authButtons.innerHTML = `
+                    <button onclick="openModal()" class="btn btn-outline-primary">Login</button>
+                `;
+            }
+        });
 }
 
-function closeModal() {
-  document.getElementById('loginModal').style.display = 'none';
-  document.body.classList.remove('modal-open');
+function handleLogout() {
+    fetch('/api/auth/logout/', {
+        method: 'POST',
+        credentials: 'include'
+    })
+    .then(() => {
+        window.location.href = '/';
+    });
 }
 
-function openTab(evt, tabName) {
-  var tabcontent = document.getElementsByClassName("tabcontent");
-  for (var i = 0; i < tabcontent.length; i++) {
-    tabcontent[i].style.display = "none";
-  }
-
-  var tablinks = document.getElementsByClassName("tablinks");
-  for (var i = 0; i < tablinks.length; i++) {
-    tablinks[i].className = tablinks[i].className.replace(" active", "");
-  }
-
-  document.getElementById(tabName).style.display = "block";
-  evt.currentTarget.className += " active";
+// Check admin access
+function checkAdminAccess() {
+    fetch('/api/auth/status/')
+        .then(response => response.json())
+        .then(data => {
+            const adminLink = document.getElementById('adminLink');
+            if (!data.is_superuser) {
+                adminLink.onclick = (e) => {
+                    e.preventDefault();
+                    openPopUp();
+                };
+            }
+        });
 }
 
-// Close modal when clicking outside
-window.onclick = function(event) {
-  var modal = document.getElementById('loginModal');
-  if (event.target == modal) {
-    modal.style.display = "none";
-  }
-}
-
-// Auto-hide messages after 5 seconds
+// Initialize
 document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(function() {
-    var messages = document.querySelector('.messages');
-    if (messages) {
-      messages.style.display = 'none';
-    }
-  }, 5000);
+    updateAuthUI();
+    checkAdminAccess();
 });
 </script>
 

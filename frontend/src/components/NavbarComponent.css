@@ -1,0 +1,18 @@
+/* src/components/NavbarComponent.css */
+
+/* Messages styles */
+.messages {
+  position: fixed;
+  top: 70px;
+  right: 20px;
+  z-index: 1050;
+}
+
+.message {
+  padding: 10px 20px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
