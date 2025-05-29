@@ -43,13 +43,13 @@ def handle_uploaded_file(file, user_uid=None):
     full_path = prepare_file_hierarchy(file)
 
     if validate_image_brightness(full_path):
-        paddle_result_list = paddle_model.perform_ocr(input_path=full_path)
+        paddle_result = paddle_model.perform_ocr(input_path=full_path)
         print("PaddleOCR results:")
-        print(" ".join([result for result in paddle_result_list[0]["rec_texts"]]))
+        print(" ".join([result for result in paddle_result["text_predictions"]]))
 
-        easy_result_list = easy_model.perform_ocr(input_path=full_path)
+        easy_result = easy_model.perform_ocr(input_path=full_path)
         print("EasyOCR results:")
-        print(" ".join([result[1] for result in easy_result_list]))
+        print(" ".join([result for result in easy_result["text_predictions"]]))
 
         # Initialize Firebase if not already initialized
         if not firebase_admin._apps:
