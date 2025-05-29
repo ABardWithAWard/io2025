@@ -4,8 +4,12 @@ from django.core.files.storage import FileSystemStorage
 import firebase_admin
 from firebase_admin import credentials, firestore
 
+from application.model.easyocr import EasyOCR
 from application.model.modelMatthew.model import Model
+from application.model.paddleocr import PaddleOCR
 from application.model.trocr import TrOCR
+from application.services import paddle_model, easy_model
+
 
 def get_files():
     """Get list of files from the upload directory"""
@@ -30,22 +34,30 @@ def prepare_file_hierarchy(file):
 
 def handle_uploaded_file(file, user_uid=None):
     """Takes file uploaded in form and calls helper function to manage file and its contents"""
-    from application.model.modelMatthew.model import Model
-    from application.model.trocr import TrOCR
     print("Attempted ocr")
-    model = TrOCR()
-    modelMatthew = Model()
+    easy = EasyOCR()
+    paddle = PaddleOCR()
     
     full_path = prepare_file_hierarchy(file)
 
     # using protected function like this because model is still above 0.02 loss and doesnt
     # predict well
-    modelMatthew._preprocess(full_path)
+    # modelMatthew._preprocess(full_path)
     # function used in different model than trocr, for more details go to implementation
 
     # Process the single uploaded file
     # Now, we catch errors in trocr.py file since we did it anyway, no need for doing this twice
-    print(model.perform_ocr(full_path))
+    paddle_result_list = paddle_model.perform_ocr(input_path=full_path)
+
+    print("PaddleOCR results:")
+
+    print(" ".join([result for result in paddle_result_list[0]["rec_texts"]]))
+
+    easy_result_list = easy_model.perform_ocr(input_path=full_path)
+
+    print("EasyOCR results:")
+
+    print(" ".join([result[1] for result in easy_result_list]))
 
     # Initialize Firebase if not already initialized
     if not firebase_admin._apps:
