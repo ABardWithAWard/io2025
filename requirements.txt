@@ -2,6 +2,9 @@ Django>=4.2.0
 python-dotenv>=1.0.0
 opencv-python>=4.8.0
 numpy>=1.24.0
+torch>=2.0.0
+torchvision>=0.15.0
+transformers>=4.30.0
 evaluate>=0.4.0
 tqdm>=4.65.0
 pandas>=2.0.0
@@ -16,3 +19,4 @@ pyopenssl>=25.1.0
 django-bootstrap5>=25.1
 firebase-admin>=6.8.0
 easyocr>=1.7.2
+paddleocr==3.0.0
