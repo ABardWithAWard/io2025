@@ -33,8 +33,6 @@ def validate_image_brightness(image_path, dark_threshold=30, bright_threshold=25
 
     # Calculate average lightness
     average_lightness = np.mean(pixels)
-    print("Average lightness:")
-    print(average_lightness)
 
     # Check if within usable range
     return dark_threshold <= average_lightness <= bright_threshold
