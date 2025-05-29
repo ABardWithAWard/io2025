@@ -42,7 +42,7 @@ python manage.py collectstatic --noinput
 python ocr/manage.py runserver_plus --cert-file cert.pem --key-file key.pem 0.0.0.0:8000
 ```
 
-```bash
+```
 # w przypadku problemów
 conda deactivate django_test
 conda remove -n django_test --all --keep-env
