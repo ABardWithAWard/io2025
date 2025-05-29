@@ -89,7 +89,6 @@ const ContactPage = () => {
                                 required
                             />
                         </div>
-                        <div className="col"></div>
                     </div>
                     <div className="row mt-2">
                         <div className="col">
@@ -103,10 +102,9 @@ const ContactPage = () => {
                                 required
                             />
                         </div>
-                        <div className="col"></div>
                     </div>
                     <div className="row mt-2">
-                        <div className="form-group">
+                        <div className="col">
                             <textarea 
                                 className="form-control" 
                                 id="textarea" 
