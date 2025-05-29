@@ -8,12 +8,18 @@ class ModelBase(ABC):
         self.name = name
 
     @abstractmethod
-    def perform_ocr(self, input_path):
+    def _preprocess(self, dataset_dir):
+        """
+        Function that takes in the directory of the dataset and outputs the format the model requires.
+        """
+
+    @abstractmethod
+    def perform_ocr(self, input_dir, output_dir):
         """
         Function that takes in the directory of the dataset and outputs the recognized text to a directory.
         Inputs:
-            input_path: Path to the image on which to perform OCR.
-            kwargs: Additional arguments dictionary.
+            input_dir: Directory of the dataset with some predefined structure.
+            output_dir: Directory where the text will be saved.
         Returns:
             Prediction if the prediction was successful, Error otherwise.
         """

@@ -1,93 +1,37 @@
 # System OCR
 
-### Dane do logowania administratora
-```bash
-Email:    admin@example.com
-Password: admin
-```
-
 ## Instrukcje postawienia lokalnej wersji
 ### 1. Załóż środowisko lokalne
 Tutaj zastosowano condę, można też użyć venv:
 ```bash
-conda create -n django_test python=3.12.9
+conda create -n django_test python
 conda activate django_test
-
-# For ReactJS
-conda install -c conda-forge nodejs=22.13
 
 cd ~/PycharmProjects
 git clone <link_do_repo> <nazwa_folderu_docelowego>
 cd <nazwa_folderu_docelowego>
 
-# aby poznać swoją wersję CUDA, uruchom 'nvidia-smi'
-
-# PaddleOCR Cuda <12.6
-python -m pip install paddlepaddle-gpu==3.0.0 -i https://www.paddlepaddle.org.cn/packages/stable/cu118/
-# Cuda >=12.6
-python -m pip install paddlepaddle-gpu==3.0.0 -i https://www.paddlepaddle.org.cn/packages/stable/cu126/
-
 pip install -r requirements.txt
-
 cd frontend
 npm install
-npm run build
-
-
-cd ..
-# przed tym krokiem wykonaj kroki nr 3 i 4
-python manage.py collectstatic --noinput
-
-# upewnij się, ze jesteś w root directory projektu
-python ocr/manage.py runserver_plus --cert-file cert.pem --key-file key.pem 0.0.0.0:8000
-```
 
 ```
-# w przypadku problemów
-conda deactivate django_test
-conda remove -n django_test --all --keep-env
-conda activate django_test
-
-# przekiopiuj requirements_universal do requirements.txt
-
-# PaddleOCR Cuda <12.6
-python -m pip install paddlepaddle-gpu==3.0.0 -i https://www.paddlepaddle.org.cn/packages/stable/cu118/
-# Cuda >=12.6
-python -m pip install paddlepaddle-gpu==3.0.0 -i https://www.paddlepaddle.org.cn/packages/stable/cu126/
-
-pip install paddleocr
-
-pip install -r requirements.txt
-(...)
-```
-
-### 2. (conda) Zmień interpreter swojego projektu w PyCharmie na django_test:
-![Ustawienia interpretera](interpreter.png)
-
-### 3. Utwórz plik .env i dodaj tam odpowiednie zmienne środowiskowe
-#### Zawartość obu plików .env znajduje się na kanale wewnętrznym. Dostosuj strukturę scieżek do systemu operacyjnego.
+### 2. Utwórz plik .env i dodaj tam odpowiednie zmienne środowiskowe
 ```bash
 cd ocr
 nano .env
-# (...) uzupełnienie ocr/.env
+############## ZAWARTOŚĆ .env ##############
+# SECRET_KEY=<klucz_prywatny>
+# UPLOADED_FILES=<katalog_plikow_lokalnych>
+# FIREBASE_KEY=<adres_lokalny_jsona_wygenerowanego_w_firebase>
+# GOOGLE_OAUTH2_CLIENT_ID=<id_klienta_google_auth>
+# GOOGLE_OAUTH2_CLIENT_SECRET=<klucz_prywatny_google_auth>
+# GOOGLE_OAUTH2_REDIRECT_URI=<link_powrotny_google_auth>
+############## ZAWARTOŚĆ .env ##############
 
 cd ../frontend
 nano .env
-# (...) uzupełnienie frontend/.env
-```
-
-```bash
-# nieuzupełniona zawartość ocr/.env
-SECRET_KEY=
-UPLOADED_FILES=
-FIREBASE_KEY=
-GOOGLE_OAUTH2_CLIENT_ID=
-GOOGLE_OAUTH2_CLIENT_SECRET=
-GOOGLE_OAUTH2_REDIRECT_URI=
-```
-
-```bash
-# nieuzupełniona zawartość frontend/.env
+############## ZAWARTOŚĆ .env ##############
 REACT_APP_GOOGLE_OAUTH2_CLIENT_ID=
 REACT_APP_FIREBASE_KEY=
 REACT_APP_TYPE=
@@ -101,8 +45,19 @@ REACT_APP_TOKEN_URI=
 REACT_APP_AUTH_PROVIDER_X509_CERT_URL=
 REACT_APP_CLIENT_X509_CERT_URL=
 REACT_APP_UNIVERSE_DOMAIN=
+############## ZAWARTOŚĆ .env ##############
 ```
-
+Czyli przykładowo, jeśli mój klucz prywatny to django-insecure-c-!bac#($x2etc, a katalog w którym
+chciałbym lokalnie przechowywać pliki wrzucone na stronę testową to /home/janek/PycharmProjects/ocr/media,
+to mój plik .env będzie miał następującą treść:
+```bash
+SECRET_KEY=django-insecure-c-!bac#($x2etc
+UPLOADED_FILES=/home/janek/PycharmProjects/ocr/media
+FIREBASE_KEY=<adres_lokalny_jsona_wygenerowanego_w_firebase>
+GOOGLE_OAUTH2_CLIENT_ID=<id_klienta_google_auth>
+GOOGLE_OAUTH2_CLIENT_SECRET=<klucz_prywatny_google_auth>
+GOOGLE_OAUTH2_REDIRECT_URI=<link_powrotny_google_auth>
+```
 Nowy SECRET_KEY można wygenerować za pomocą polecenia
 ```bash
 django-admin shell
@@ -114,36 +69,20 @@ get_random_secret_key()
 ```
 w powłokę, którą przed chwilą uruchomiliśmy, aby uzyskać nowy klucz prywatny dla Django.
 
-Gotowy plik .env oraz json z firebase znajduje się na kanale wewnętrznym, ale swoje klucze można wygenerować.
-Json z firebase znajduje się pod linkiem
-```bash
-https://console.firebase.google.com/u/0/project/io2025-d859f/overview
-```
-po wejściu w zakładkę:
-```bash
+Gotowy plik .env oraz json z firebase znajduje się na #mati-keygen, ale swoje klucze można wygenerować.
+Json z firebase znajduje się w:
 Project settings -> Service accounts -> Generate new private key
-```
-
+Pod linkiem:
+https://console.firebase.google.com/u/0/project/io2025-d859f/overview
 Zmienne googlowe można znaleźć w:
-```bash
-Google Cloud Services -> Google Auth Platform (najlepiej wyszukać w wyszukiwarce na górze strony) -> Clients
-```
-Tam możemy wybrać klienta i dodawać oraz edytować rzeczy takie jak redirect url.
+Google cloud services -> Google auth platform (najlepiej wyszukać w wyszukiwarce na górze strony) -> Clients
+Tam możemy wybrać klienta i dodawać oraz edytować rzeczy takie jak redirect uri
+Zmienne te są pod linkiem:
+https://console.cloud.google.com/welcome?project=io2025-d859f
+### 3. (conda) Zmień interpreter swojego projektu w PyCharmie na django_test:
+![Ustawienia interpretera](interpreter.png)
 
-### 4. Key-gen
-#### Windows
-Po wszystkim nalezy takze wygenerowac certyfikat i go podpisac (mozna rowniez uzyc istniejacego, jesli ktos posiada)
-```bash
-./certgen.ps1
-```
-Nastepnie nalezy uzupelnic pola na terminalu
-#### Linux
-```bash
-# uruchom w root directory projektu
-openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
-```
-
-### 5. Dane do modelu
+### 4. Dane do modelu
 Na ten moment interesują nas pierwsze dwa datasety.
 ```bash
 #IAM dataset do walidacji i testowania (oba linki wymagają logowania)
@@ -165,3 +104,32 @@ model/
 └── setup_datasets.sh
 ```
 A następnie uruchomić z poziomu katalogu model/ skrypt ./setup_datasets.sh.
+
+### 5. Key-gen
+Po wszystkim nalezy takze wygenerowac certyfikat i go podpisac (mozna rowniez uzyc istniejacego, jesli ktos posiada)
+```bash
+./certgen.ps1
+```
+Nastepnie nalezy uzupelnic pola na terminalu
+
+### Dane do logowania administratora
+```bash
+Email:    admin@example.com
+Password: admin
+```
+
+### Instrukcje tworzenia od zera
+```bash
+conda create -n django_test python
+conda activate django_test
+
+pip install -r requirements.txt
+
+django-admin startproject ocr
+cd ocr
+
+python manage.py startapp application
+
+mkdir application/templates/application
+(...)
+```

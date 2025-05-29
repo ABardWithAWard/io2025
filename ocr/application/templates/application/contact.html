@@ -5,6 +5,7 @@
 </div>
 <div class="col">
     <form method="post" enctype="multipart/form-data" action="/application/contact/">
+        {% csrf_token %}
       <div class="row">
         <div class="col">
           <label for="id-name" class="form-label">Wypełnij formularz zgłoszeniowy</label>
@@ -15,7 +16,7 @@
       </div>
       <div class="row mt-2">
         <div class="col">
-          <input type="text" class="form-control" name="email" placeholder="E-mail">
+          <input type="text" class="form-control" name="email" placeholder="E-mail" id="id-email">
         </div>
         <div class="col">
         </div>
