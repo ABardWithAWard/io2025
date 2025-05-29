@@ -4,6 +4,7 @@ from django.core.files.storage import FileSystemStorage
 
 from application.model.paddleocr import PaddleOCR
 from application.model.easyocr import EasyOCR
+from application.utils import validate_image_brightness
 
 paddle_model = PaddleOCR()
 easy_model = EasyOCR()
@@ -29,10 +30,11 @@ def handle_uploaded_file(file):
     """Takes file uploaded in form and calls helper function to manage file and its contents"""
     full_path = prepare_file_hierarchy(file)
 
-    paddle_result_list = paddle_model.perform_ocr(input_path=full_path)
-    print("PaddleOCR results:")
-    print(" ".join([result for result in paddle_result_list[0]["rec_texts"]]))
+    if validate_image_brightness(full_path):
+        paddle_result_list = paddle_model.perform_ocr(input_path=full_path)
+        print("PaddleOCR results:")
+        print(" ".join([result for result in paddle_result_list[0]["rec_texts"]]))
 
-    easy_result_list = easy_model.perform_ocr(input_path=full_path)
-    print("EasyOCR results:")
-    print(" ".join([result[1] for result in easy_result_list]))
+        easy_result_list = easy_model.perform_ocr(input_path=full_path)
+        print("EasyOCR results:")
+        print(" ".join([result[1] for result in easy_result_list]))
