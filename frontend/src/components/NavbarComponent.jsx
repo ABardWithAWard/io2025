@@ -3,6 +3,7 @@ import { Navbar, Nav, Container, Button, Modal, Tab, Tabs, Form, Alert } from 'r
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import './NavbarComponent.css';
+import AdminLink from './AdminLink';
 
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_OAUTH2_CLIENT_ID;
 const FIREBASE_PROJECT_ID = process.env.REACT_APP_FIREBASE_PROJECT_ID;
@@ -19,7 +20,7 @@ function NavbarComponent() {
     confirmPassword: ''
   });
   const navigate = useNavigate();
-  const { getCsrfToken, checkAuthentication, refreshCsrfToken } = useAuth();
+  const { getCsrfToken, checkAuthentication, refreshCsrfToken, logout } = useAuth();
 
   useEffect(() => {
     // Check authentication status on component mount
@@ -212,7 +213,9 @@ function NavbarComponent() {
           <Navbar.Collapse id="navbarSupportedContent">
             <Nav className="me-auto mb-2 mb-lg-0">
               <Nav.Link as={Link} to="/contact">Kontakt</Nav.Link>
-              <Nav.Link as={Link} to="/admin">Panel administracji</Nav.Link>
+              <Nav.Item>
+                <AdminLink />
+              </Nav.Item>
             </Nav>
             <Nav className="ml-auto">
               {isAuthenticated ? (

@@ -172,17 +172,8 @@
         <li class="nav-item">
           <a class="nav-link" href="/contact">Kontakt</a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link" href="/admin" id="adminLink">
-                Panel administracji
-            </a>
-            <div id="accessDenied" class="access-denied" style="display:none;">
-                <div class="modal-content">
-                    <span class="close" onclick="closePopUp()">&times;</span>
-                    <h2>Brak dostępu</h2>
-                    <p>Nie masz uprawnień do dostępu do panelu administracyjnego.</p>
-                </div>
-            </div>
+        <li class="nav-item" id="adminLinkContainer">
+          <!-- This will be populated by React -->
         </li>
       </ul>
       <div id="authButtons">
@@ -203,13 +194,13 @@ function openPopUp() {
 
 // Check if user is authenticated and update UI accordingly
 function updateAuthUI() {
-    fetch('/api/auth/status/')
+    fetch('/api/auth-status/')
         .then(response => response.json())
         .then(data => {
             const authButtons = document.getElementById('authButtons');
-            if (data.is_authenticated) {
+            if (data.isAuthenticated) {
                 authButtons.innerHTML = `
-                    <span style="margin-right: 1rem;">${data.email}</span>
+                    <span style="margin-right: 1rem;">${data.user.email}</span>
                     <button onclick="handleLogout()" class="btn btn-outline-primary">Logout</button>
                 `;
             } else {
@@ -232,11 +223,11 @@ function handleLogout() {
 
 // Check admin access
 function checkAdminAccess() {
-    fetch('/api/auth/status/')
+    fetch('/api/auth-status/')
         .then(response => response.json())
         .then(data => {
             const adminLink = document.getElementById('adminLink');
-            if (!data.is_superuser) {
+            if (!data.user.is_staff) {
                 adminLink.onclick = (e) => {
                     e.preventDefault();
                     openPopUp();

@@ -242,23 +242,108 @@ class AuthStatusAPIView(APIView):
         try:
             # Check Django authentication
             is_django_authenticated = request.user.is_authenticated
+            print(f"Django auth status: {is_django_authenticated}")
 
             # Get Firebase auth token from request headers
             auth_header = request.headers.get('Authorization')
+            print(f"Auth header: {auth_header}")
+            
             is_firebase_authenticated = False
-            firebase_uid = None
+            firebase_uid = request.session.get('firebase_uid')
+            is_staff = False
 
+            print(f"Session firebase_uid: {firebase_uid}")
+
+            # Initialize Firebase if not already initialized
+            if not firebase_admin._apps:
+                cred_path = os.environ.get('FIREBASE_KEY', 'firebaseSecretKey.json')
+                print(f"Using Firebase credentials from: {cred_path}")
+                cred = credentials.Certificate(cred_path)
+                firebase_admin.initialize_app(cred)
+                print("Firebase initialized successfully")
+
+            # Check staff status if we have a UID (either from session or token)
+            if firebase_uid:
+                try:
+                    db = firestore.client()
+                    print(f"Checking staff collection for UID: {firebase_uid}")
+                    
+                    # Get all staff members
+                    staff_docs = db.collection('staff').stream()
+                    print("\nCurrent staff members:")
+                    print("-" * 50)
+                    
+                    # Check if UID exists in staff collection
+                    for doc in staff_docs:
+                        data = doc.to_dict()
+                        print(f"Email: {data.get('email')}")
+                        print(f"UID: {data.get('uid')}")
+                        print(f"Added at: {data.get('added_at')}")
+                        print("-" * 50)
+                        
+                        # Check if this document's UID matches our user's UID
+                        if data.get('uid') == firebase_uid:
+                            is_staff = True
+                            print(f"Found matching staff UID: {firebase_uid}")
+                            break
+                    
+                    print(f"Final staff status for {firebase_uid}: {is_staff}")
+                    
+                except Exception as firebase_error:
+                    print(f"Error checking staff collection: {str(firebase_error)}")
+                    raise
+
+            # If we have an auth header, verify the token and update session
             if auth_header and auth_header.startswith('Bearer '):
                 id_token = auth_header.split('Bearer ')[1]
                 try:
                     # Verify Firebase token
                     decoded_token = auth.verify_id_token(id_token)
                     is_firebase_authenticated = True
-                    firebase_uid = decoded_token.get('uid')
+                    token_uid = decoded_token.get('uid')
+                    email = decoded_token.get('email')
+                    print(f"Email from token: {email}")
+                    print(f"UID from token: {token_uid}")
+                    print(f"Session UID matches token UID: {firebase_uid == token_uid}")
+
+                    # Update session UID if needed
+                    if not firebase_uid or firebase_uid != token_uid:
+                        firebase_uid = token_uid
+                        request.session['firebase_uid'] = firebase_uid
+                        print(f"Set session firebase_uid to: {firebase_uid}")
+                        
+                        # Recheck staff status with new UID
+                        try:
+                            db = firestore.client()
+                            print(f"Rechecking staff collection for new UID: {firebase_uid}")
+                            
+                            # Get all staff members
+                            staff_docs = db.collection('staff').stream()
+                            print("\nCurrent staff members:")
+                            print("-" * 50)
+                            
+                            # Check if UID exists in staff collection
+                            for doc in staff_docs:
+                                data = doc.to_dict()
+                                print(f"Email: {data.get('email')}")
+                                print(f"UID: {data.get('uid')}")
+                                print(f"Added at: {data.get('added_at')}")
+                                print("-" * 50)
+                                
+                                # Check if this document's UID matches our user's UID
+                                if data.get('uid') == firebase_uid:
+                                    is_staff = True
+                                    print(f"Found matching staff UID: {firebase_uid}")
+                                    break
+                            
+                            print(f"Final staff status for {firebase_uid}: {is_staff}")
+                            
+                        except Exception as firebase_error:
+                            print(f"Error checking staff collection: {str(firebase_error)}")
+                            raise
 
                     # If Firebase is authenticated but Django isn't, sync the session
                     if is_firebase_authenticated and not is_django_authenticated:
-                        email = decoded_token.get('email')
                         if email:
                             user, _ = User.objects.get_or_create(
                                 email=email,
@@ -274,6 +359,7 @@ class AuthStatusAPIView(APIView):
 
             # User is considered authenticated if either Django or Firebase auth is valid
             is_authenticated = is_django_authenticated or is_firebase_authenticated
+            print(f"Final auth status - Authenticated: {is_authenticated}, Staff: {is_staff}")
 
             if is_authenticated:
                 return Response({
@@ -281,8 +367,8 @@ class AuthStatusAPIView(APIView):
                     'user': {
                         'email': request.user.email if is_django_authenticated else decoded_token.get('email'),
                         'username': request.user.username if is_django_authenticated else decoded_token.get('name', ''),
-                        'is_staff': request.user.is_staff if is_django_authenticated else False,
-                        'firebase_uid': firebase_uid or request.session.get('firebase_uid')
+                        'is_staff': is_staff,
+                        'firebase_uid': firebase_uid
                     }
                 })
             return Response({'isAuthenticated': False})
