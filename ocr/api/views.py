@@ -24,6 +24,7 @@ import json
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 
+
 class UploadedFileViewSet(viewsets.ModelViewSet):
     queryset = UploadedFile.objects.all()
     serializer_class = UploadedFileSerializer
@@ -45,6 +46,7 @@ class UploadedFileViewSet(viewsets.ModelViewSet):
         files = get_files()
         return Response(files)
 
+
 class SupportTicketViewSet(viewsets.ModelViewSet):
     queryset = SupportTicket.objects.all()
     serializer_class = SupportTicketSerializer
@@ -52,29 +54,30 @@ class SupportTicketViewSet(viewsets.ModelViewSet):
     def create(self, request):
         form = SubmitTicketForm(request.data)
         if form.is_valid():
-            ticket = form.save()
             return Response({'status': 'success'})
         return Response({'status': 'error', 'errors': form.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+
 class CSRFView(APIView):
     permission_classes = [AllowAny]
+
     @method_decorator(ensure_csrf_cookie)
     def get(self, request):
         return JsonResponse({'csrf_token': get_token(request)})
 
+
 class ContactAPIView(APIView):
     permission_classes = [AllowAny]  # Allow public access to this endpoint
-    
+
     def post(self, request):
         try:
-            data = json.loads(request.body)
-            name = data.get('name')
-            email = data.get('email')
-            message = data.get('message')
-            
+            name = request.data.get('name')
+            email = request.data.get('email')
+            message = request.data.get('message')
+
             if not all([name, email, message]):
                 return Response(
-                    {'error': 'All fields are required'}, 
+                    {'error': 'All fields are required'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
@@ -83,7 +86,7 @@ class ContactAPIView(APIView):
                 cred_path = os.environ['FIREBASE_KEY']
                 if not os.path.exists(cred_path):
                     return Response(
-                        {'error': 'Firebase credentials not found'}, 
+                        {'error': 'Firebase credentials not found'},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR
                     )
                 cred = credentials.Certificate(cred_path)
@@ -91,7 +94,7 @@ class ContactAPIView(APIView):
 
             # Get Firestore client
             db = firestore.client()
-            
+
             # Add contact message to Firestore
             contact_ref = db.collection('contacts').document()
             contact_ref.set({
@@ -100,17 +103,18 @@ class ContactAPIView(APIView):
                 'message': message,
                 'timestamp': firestore.SERVER_TIMESTAMP
             })
-            
+
             return Response(
-                {'message': 'Contact message saved successfully'}, 
+                {'message': 'Contact message saved successfully'},
                 status=status.HTTP_201_CREATED
             )
-            
+
         except Exception as e:
             return Response(
-                {'error': str(e)}, 
+                {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class RegisterAPIView(APIView):
@@ -186,7 +190,7 @@ class GoogleAuthAPIView(APIView):
             # Set session data
             request.session['firebase_uid'] = firebase_user.uid
             request.session['user_email'] = email
-            
+
             # Login the user
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
@@ -215,6 +219,7 @@ class GoogleAuthAPIView(APIView):
             counter += 1
         return username
 
+
 class LogoutAPIView(APIView):
     permission_classes = [AllowAny]
 
@@ -225,9 +230,10 @@ class LogoutAPIView(APIView):
             return Response({'message': 'Logout successful'})
         except Exception as e:
             return Response(
-                {'error': str(e)}, 
+                {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
 
 class AuthStatusAPIView(APIView):
     permission_classes = [AllowAny]
@@ -236,12 +242,12 @@ class AuthStatusAPIView(APIView):
         try:
             # Check Django authentication
             is_django_authenticated = request.user.is_authenticated
-            
+
             # Get Firebase auth token from request headers
             auth_header = request.headers.get('Authorization')
             is_firebase_authenticated = False
             firebase_uid = None
-            
+
             if auth_header and auth_header.startswith('Bearer '):
                 id_token = auth_header.split('Bearer ')[1]
                 try:
@@ -249,7 +255,7 @@ class AuthStatusAPIView(APIView):
                     decoded_token = auth.verify_id_token(id_token)
                     is_firebase_authenticated = True
                     firebase_uid = decoded_token.get('uid')
-                    
+
                     # If Firebase is authenticated but Django isn't, sync the session
                     if is_firebase_authenticated and not is_django_authenticated:
                         email = decoded_token.get('email')
@@ -265,10 +271,10 @@ class AuthStatusAPIView(APIView):
                             is_django_authenticated = True
                 except Exception as e:
                     print(f"Firebase token verification failed: {str(e)}")
-            
+
             # User is considered authenticated if either Django or Firebase auth is valid
             is_authenticated = is_django_authenticated or is_firebase_authenticated
-            
+
             if is_authenticated:
                 return Response({
                     'isAuthenticated': True,
@@ -283,9 +289,10 @@ class AuthStatusAPIView(APIView):
         except Exception as e:
             print(f"Auth status check error: {str(e)}")
             return Response(
-                {'error': str(e)}, 
+                {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class LoginAPIView(APIView):
