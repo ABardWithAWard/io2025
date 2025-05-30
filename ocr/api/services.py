@@ -3,11 +3,6 @@ import base64
 from django.core.files.storage import FileSystemStorage
 import firebase_admin
 from firebase_admin import credentials, firestore
-
-from application.model.easyocr import EasyOCR
-from application.model.modelMatthew.model import Model
-from application.model.paddleocr import PaddleOCR
-from application.model.trocr import TrOCR
 from application.services import paddle_model, easy_model
 
 from application.model.paddleocr import PaddleOCR

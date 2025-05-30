@@ -15,4 +15,4 @@ class limitAdmin(admin.ModelAdmin):
 admin_site = MyAdminSite(name='myadmin')
 admin_site.register(dataLimit, limitAdmin)
 admin_site.register(fileLimit, limitAdmin)
-admin_site.register(blockList, limitAdmin)
+#admin_site.register(blockList, limitAdmin)
