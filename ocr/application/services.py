@@ -82,14 +82,3 @@ def output_processed_as_docx(word_list: List[str], output_path: str, font_size=1
 
     # The appearance will be saved
     document.save(output_path)
-
-# Unit test
-if __name__ == "__main__":
-    word_list = ["God", "save", "our", "gracious", "Queen,", "Long", "live", "our", "noble", "Queen,",
-                 "God", "save", "the", "queen!", "Send", "her", "victorious,", "Happy", "and", "Glorious",
-                 "Long", "to", "reign", "over", "us;", "God", "save", "the", "Queen!"]
-
-    abs_output_dir = "/home/km/PycharmProjects/io2025/test_output"
-
-    output_processed_as_txt(word_list, abs_output_dir + "/output.txt")
-    output_processed_as_docx(word_list, abs_output_dir + "/output.docx")
