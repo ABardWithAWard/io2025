@@ -11,7 +11,7 @@ from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
-from application.models import dataLimit, fileLimit, blockList, UploadedFile, SupportTicket
+from application.models import dataLimit, fileLimit, UploadedFile, SupportTicket
 from application.forms import UploadFileForm, SubmitTicketForm
 from .services import handle_uploaded_file, get_files
 from .serializers import (

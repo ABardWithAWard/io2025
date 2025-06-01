@@ -2,10 +2,9 @@ import os
 from pathlib import Path
 from django.core.files.storage import FileSystemStorage
 
-#from application.model.modelMatthew.model import Model
-#from application.model.trocr import TrOCR
 from application.model.paddleocr import PaddleOCR
 from application.model.easyocr import EasyOCR
+from application.utils import validate_image_brightness
 
 paddle_model = PaddleOCR()
 easy_model = EasyOCR()
@@ -31,19 +30,11 @@ def handle_uploaded_file(file):
     """Takes file uploaded in form and calls helper function to manage file and its contents"""
     full_path = prepare_file_hierarchy(file)
 
-    # using protected function like this because model is still above 0.02 loss and doesnt
-    # predict well
-    #modelMatthew._preprocess(full_path)
-    # function used in different model than trocr, for more details go to implementation
+    if validate_image_brightness(full_path):
+        paddle_result = paddle_model.perform_ocr(input_path=full_path)
+        print("PaddleOCR results:")
+        print(" ".join([result for result in paddle_result["text_predictions"]]))
 
-    # Process the single uploaded file
-    # Now, we catch errors in trocr.py file since we did it anyway, no need for doing this twice
-    paddle_result_list = paddle_model.perform_ocr(input_path=full_path)
-    print("PaddleOCR results:")
-    print(" ".join([result for result in paddle_result_list[0]["rec_texts"]]))
-
-    easy_result_list = easy_model.perform_ocr(input_path=full_path)
-    print("EasyOCR results:")
-    print(" ".join([result[1] for result in easy_result_list]))
-
-    #TODO: Somehow save to cloud user input and model input (or just user input? Depends on pricing)
+        easy_result = easy_model.perform_ocr(input_path=full_path)
+        print("EasyOCR results:")
+        print(" ".join([result for result in easy_result["text_predictions"]]))
