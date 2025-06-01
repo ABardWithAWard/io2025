@@ -26,4 +26,3 @@ jiwer==3.1.0
 scikit-learn==1.6.1
 torchaudio>=2.7.0
 requests==2.32.3
-python-docx==1.1.2
