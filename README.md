@@ -118,6 +118,13 @@ Email:    admin@example.com
 Password: admin
 ```
 
+### Jak odpalac testy
+```bash
+cd ocr
+python manage.py test <nazwa aplikacji>.tests.<nazwa pliku>.<nazwa klasy>.<nazwa funkcji>
+python manage.py test <nazwa aplikacji>.tests.<nazwa pliku>
+```
+
 ### Instrukcje tworzenia od zera
 ```bash
 conda create -n django_test python
