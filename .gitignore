@@ -90,6 +90,7 @@ db.sqlite3
 
 .idea
 
+ocr/application/tests/ocrTestFiles/*
 ocr/UploadedFiles/*
 ocr/application/model/datasets
 ocr/firebaseSecretKey.json
