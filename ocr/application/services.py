@@ -1,4 +1,8 @@
 import os
+from docx import Document
+from docx.shared import Pt
+from typing import List
+
 from pathlib import Path
 import base64
 from io import BytesIO
@@ -87,3 +91,43 @@ def retrieve_pictures_using_uid(desired_uid: str) -> List[Image]:
     user_images_list = [Image.open(BytesIO(base64.b64decode(user_image_b64))) for user_image_b64 in user_images_b64_list]
 
     return user_images_list
+
+def output_processed_as_txt(word_list: List[str], output_path: str, line_width=80):
+    """
+    Output a list of words (strings) extracted from an image into a .txt file at output_path.
+    :param word_list: List of strings which are extracted words.
+    :param output_path: A string representing the output_path for the .txt file to be generated at.
+    :param line_width: The limit in characters after which a full new word cannot be written (but a part of the word may).
+    """
+    chars_in_current_line = 0
+    max_line_width = line_width
+    with open(output_path, "w") as f:
+        for word in word_list:
+            chars_in_current_line += len(word)
+            # If limit exceeded after writing this word, write
+            if chars_in_current_line > max_line_width:
+                # But write with a newline and reset next line to the beginning
+                f.writelines(f"{word}\n")
+                chars_in_current_line = 0
+            else:
+                # Otherwise simply write
+                f.writelines(f"{word} ")
+
+def output_processed_as_docx(word_list: List[str], output_path: str, font_size=11):
+    """
+    Output a list of words (strings) extracted from an image into a .docx file at output_path.
+    :param word_list: List of strings which are extracted words.
+    :param output_path: A string representing the output_path for the .txt file to be generated at.
+    :param font_size: The size of the font of the text which will take up the entire width at all times.
+    """
+    document = Document()
+
+    # Add_run is the most general "generate text" method. It gives access to a Font obj through .font
+    font = document.add_paragraph().add_run(" ".join(word_list)).font
+
+    # Through the Font obj we can modify the appearance of the text
+    font.name = "Arial"
+    font.size = Pt(font_size)
+
+    # The appearance will be saved
+    document.save(output_path)
