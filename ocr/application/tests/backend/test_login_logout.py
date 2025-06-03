@@ -134,6 +134,3 @@ class LoginLogoutAPITestCase(TestCase):
         self.assertEqual(response.status_code, 400)
         response_data = json.loads(response.content)
         self.assertEqual(response_data['error'], 'Email not found in token')
-
-
-
