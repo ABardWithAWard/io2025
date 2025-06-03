@@ -1,13 +1,11 @@
 import os
 from google.oauth2 import id_token
 from google.auth.transport import requests
-from django.db.migrations import serializer
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
@@ -17,9 +15,12 @@ from .services import handle_uploaded_file, get_files
 from .serializers import (
     UploadedFileSerializer, SupportTicketSerializer
 )
-from django.http import JsonResponse
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
+from django.http import StreamingHttpResponse, JsonResponse
+from django.conf import settings
+from django.views.generic import TemplateView
+from django.contrib.auth import login, logout
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from application.services import retrieve_pictures_using_uid
@@ -434,7 +435,7 @@ class GetImagesAPIView(APIView):
 
             # Get images from Firestore
             images = retrieve_pictures_using_uid(user_uid)
-            
+
             # Convert images to base64
             encoded_images = []
             for img in images:
@@ -452,4 +453,59 @@ class GetImagesAPIView(APIView):
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class ReactAppView(TemplateView):
+    template_name = 'index.html'
+
+    def get(self, request, *args, **kwargs):
+        # Check if the request is for an API endpoint
+        path = request.path_info
+        if path.startswith('/api/'):
+            # Let the API views handle the response
+            return JsonResponse({'error': 'Not found'}, status=404)
+
+        # Check if the request wants JSON response
+        if request.headers.get('Accept') == 'application/json':
+            return JsonResponse({'error': 'Not found'}, status=404)
+
+        try:
+            # Get the CSRF token
+            csrf_token = request.COOKIES.get('csrftoken', '')
+
+            # Read the index.html file
+            with open(os.path.join(settings.REACT_APP_BUILD_DIR, 'index.html'), 'r') as f:
+                html = f.read()
+
+            # Replace absolute paths with relative ones
+            html = html.replace('src="/static/', f'src="{settings.STATIC_URL}static/')
+            html = html.replace('href="/static/', f'href="{settings.STATIC_URL}static/')
+            html = html.replace('href="/manifest.json"', f'href="{settings.STATIC_URL}manifest.json"')
+            html = html.replace('href="/favicon.ico"', f'href="{settings.STATIC_URL}favicon.ico"')
+            html = html.replace('href="/logo192.png"', f'href="{settings.STATIC_URL}logo192.png"')
+
+            response = StreamingHttpResponse(
+                streaming_content=[html],
+                content_type='text/html'
+            )
+            response['X-Content-Type-Options'] = 'nosniff'
+            response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response['Pragma'] = 'no-cache'
+            response['Expires'] = '0'
+            return response
+
+        except Exception as e:
+            error_html = """
+                <div style="text-align: center; margin-top: 50px;">
+                    <h1>Error loading React app</h1>
+                    <p>Please make sure the React app is built and the build directory is properly configured.</p>
+                    <p>Error details: {}</p>
+                </div>
+            """.format(str(e))
+
+            return StreamingHttpResponse(
+                streaming_content=[error_html],
+                content_type='text/html'
             )
