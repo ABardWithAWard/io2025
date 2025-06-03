@@ -1,12 +1,10 @@
 from django.urls import path, include, re_path
 from rest_framework.routers import DefaultRouter
 from django.contrib import admin
-
-from application.views import ReactAppView
 from .views import (
     UploadedFileViewSet, SupportTicketViewSet, CSRFView,
     ContactAPIView, LoginAPIView, GoogleAuthAPIView, LogoutAPIView,
-    RegisterAPIView, AuthStatusAPIView
+    RegisterAPIView, AuthStatusAPIView, ReactAppView
 )
 
 # Create a router and register our viewsets with it
