@@ -18,6 +18,7 @@ paddle_model = PaddleOCR()
 easy_model = EasyOCR()
 
 DEBUG_MODE = False
+POLISH_MODE = False
 
 def get_files():
     """Get list of files from the upload directory"""
@@ -83,15 +84,17 @@ def handle_uploaded_file(file, user_uid=None):
     full_path = prepare_file_hierarchy(file)
 
     if validate_image_brightness(full_path):
-        paddle_result = paddle_model.perform_ocr(input_path=full_path)
-        if DEBUG_MODE:
-            print("PaddleOCR results:")
-            print(" ".join([result for result in paddle_result["text_predictions"]]))
+        if POLISH_MODE:
+            result = easy_model.perform_ocr(input_path=full_path)
+            if DEBUG_MODE:
+                print("EasyOCR results:")
+                print(" ".join([word for word in result["text_predictions"]]))
 
-        easy_result = easy_model.perform_ocr(input_path=full_path)
-        if DEBUG_MODE:
-            print("EasyOCR results:")
-            print(" ".join([result for result in easy_result["text_predictions"]]))
+        if not POLISH_MODE:
+            result = paddle_model.perform_ocr(input_path=full_path)
+            if DEBUG_MODE:
+                print("PaddleOCR results:")
+                print(" ".join([word for word in result["text_predictions"]]))
 
         # Initialize Firebase if not already initialized
         if not firebase_admin._apps:
@@ -120,4 +123,6 @@ def handle_uploaded_file(file, user_uid=None):
         # We can look up images using https://base64.guru/converter/decode/image
         # As they are saved as base64 strings
 
-        return full_path
+        json_ocr_result = convert_result_to_json(file, full_path, result)
+
+        return json_ocr_result
