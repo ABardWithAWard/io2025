@@ -1,8 +1,13 @@
 import os
 import base64
+import json
+from io import BytesIO
+from PIL import Image
 from django.core.files.storage import FileSystemStorage
+from django.core.files.uploadedfile import UploadedFile
 import firebase_admin
 from firebase_admin import credentials, firestore
+
 from application.services import paddle_model, easy_model
 
 from application.model.paddleocr import PaddleOCR
@@ -11,6 +16,8 @@ from application.utils import validate_image_brightness
 
 paddle_model = PaddleOCR()
 easy_model = EasyOCR()
+
+DEBUG_MODE = False
 
 def get_files():
     """Get list of files from the upload directory"""
@@ -23,15 +30,53 @@ def get_files():
 def prepare_file_hierarchy(file):
     """Takes uploaded file and returns directory where it is saved and its detected content"""
     upload_dir = os.path.abspath(os.environ['UPLOADED_FILES'])
-    print(f"Upload directory: {upload_dir}")
+    if DEBUG_MODE:
+        print(f"Upload directory: {upload_dir}")
 
     # Save the uploaded file first
     storage = FileSystemStorage(location=upload_dir)
     file_path = storage.save(file.name, file)
     full_path = storage.path(file_path)
-    print(f"Saved file to: {full_path}")
+    if DEBUG_MODE:
+        print(f"Saved file to: {full_path}")
 
     return full_path
+
+def convert_result_to_json(uploaded_file: UploadedFile, uploaded_file_path: str, ocr_result: dict):
+    """
+    Convert the result of running OCR on an image file to a JSON that goes to frontend.
+
+    Args:
+        uploaded_file (DjangoUploadedFile): A Django UploadedFile object, result of request.FILES["file"]
+        uploaded_file_path (str): Absolute path to where the uploaded file was saved by prepare_file_hierarchy
+        ocr_result (dict): Standardized format for OCR results, look to ModelBase
+
+    Returns:
+        str: A JSON-formatted string with name, image (b64), format, confidence (List[int]) and content (List[str]) information.
+    """
+    name, file_format = uploaded_file.name.split(".")
+
+    img = Image.open(uploaded_file_path)
+    im_file_in_mem = BytesIO()
+
+    if format == "jpg" or format == "jpeg":
+        img.save(im_file_in_mem, format="JPEG")
+    elif format == "png":
+        img.save(im_file_in_mem, format="PNG")
+
+    im_bytes = im_file_in_mem.getvalue()
+    im_b64 = base64.b64encode(im_bytes)
+
+    confidence_list = ocr_result["confidence_scores"]
+    content_list = ocr_result["text_predictions"]
+
+    json_str = json.dumps({"name": name,
+                           "image": im_b64,
+                           "format": file_format,
+                           "confidence": confidence_list,
+                           "content": content_list})
+
+    return json_str
 
 def handle_uploaded_file(file, user_uid=None):
     """Takes file uploaded in form and calls helper function to manage file and its contents"""
@@ -39,12 +84,14 @@ def handle_uploaded_file(file, user_uid=None):
 
     if validate_image_brightness(full_path):
         paddle_result = paddle_model.perform_ocr(input_path=full_path)
-        print("PaddleOCR results:")
-        print(" ".join([result for result in paddle_result["text_predictions"]]))
+        if DEBUG_MODE:
+            print("PaddleOCR results:")
+            print(" ".join([result for result in paddle_result["text_predictions"]]))
 
         easy_result = easy_model.perform_ocr(input_path=full_path)
-        print("EasyOCR results:")
-        print(" ".join([result for result in easy_result["text_predictions"]]))
+        if DEBUG_MODE:
+            print("EasyOCR results:")
+            print(" ".join([result for result in easy_result["text_predictions"]]))
 
         # Initialize Firebase if not already initialized
         if not firebase_admin._apps:

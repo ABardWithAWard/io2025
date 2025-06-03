@@ -20,7 +20,6 @@ from .serializers import (
 from django.http import JsonResponse
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
-import json
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 
