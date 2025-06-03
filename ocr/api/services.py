@@ -46,6 +46,7 @@ def prepare_file_hierarchy(file):
 def convert_result_to_json(uploaded_file: UploadedFile, uploaded_file_path: str, ocr_result: dict):
     """
     Convert the result of running OCR on an image file to a JSON that goes to frontend.
+    This function expects only .jpg (or .jpeg) and .png files. If converting .pdf, preprocess first.
 
     Args:
         uploaded_file (DjangoUploadedFile): A Django UploadedFile object, result of request.FILES["file"]
@@ -60,13 +61,13 @@ def convert_result_to_json(uploaded_file: UploadedFile, uploaded_file_path: str,
     img = Image.open(uploaded_file_path)
     im_file_in_mem = BytesIO()
 
-    if format == "jpg" or format == "jpeg":
+    if file_format == "jpg" or file_format == "jpeg":
         img.save(im_file_in_mem, format="JPEG")
-    elif format == "png":
+    elif file_format == "png":
         img.save(im_file_in_mem, format="PNG")
 
     im_bytes = im_file_in_mem.getvalue()
-    im_b64 = base64.b64encode(im_bytes)
+    im_b64 = base64.b64encode(im_bytes).decode('utf-8')
 
     confidence_list = ocr_result["confidence_scores"]
     content_list = ocr_result["text_predictions"]

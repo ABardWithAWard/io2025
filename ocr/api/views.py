@@ -23,6 +23,7 @@ from firebase_admin import credentials, firestore, auth
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 
+DEBUG_MODE = False
 
 class UploadedFileViewSet(viewsets.ModelViewSet):
     queryset = UploadedFile.objects.all()
@@ -31,12 +32,13 @@ class UploadedFileViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def upload(self, request):
-        print("FILES:", request.FILES)
+        if DEBUG_MODE:
+            print("FILES:", request.FILES)
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
             # Get userUid from form data, it will be null if not provided
             user_uid = request.POST.get('userUid')
-            file_instance = handle_uploaded_file(request.FILES["file"], user_uid)
+            json_str = handle_uploaded_file(request.FILES["file"], user_uid)
             return Response({'status': 'success'})
         return Response({'status': 'error', 'errors': form.errors}, status=status.HTTP_400_BAD_REQUEST)
 
