@@ -23,6 +23,9 @@ from firebase_admin import credentials, firestore, auth
 import json
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
+from application.services import retrieve_pictures_using_uid
+import base64
+from io import BytesIO
 
 
 class UploadedFileViewSet(viewsets.ModelViewSet):
@@ -328,3 +331,38 @@ class LoginAPIView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class GetImagesAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        try:
+            user_uid = request.data.get('uid')
+            if not user_uid:
+                return Response(
+                    {"error": "User UID is required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Get images from Firestore
+            images = retrieve_pictures_using_uid(user_uid)
+            
+            # Convert images to base64
+            encoded_images = []
+            for img in images:
+                buffered = BytesIO()
+                img.save(buffered, format="PNG")
+                img_str = base64.b64encode(buffered.getvalue()).decode()
+                encoded_images.append(img_str)
+
+            return Response({
+                "images": encoded_images,
+                "count": len(encoded_images)
+            })
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
