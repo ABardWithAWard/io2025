@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from django.utils.decorators import method_decorator
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
-from application.models import dataLimit, fileLimit, UploadedFile, SupportTicket
+from application.models import UploadedFile, SupportTicket
 from application.forms import UploadFileForm, SubmitTicketForm
 from .services import handle_uploaded_file, get_files
 from .serializers import (
@@ -252,7 +252,7 @@ class AuthStatusAPIView(APIView):
             # Get Firebase auth token from request headers
             auth_header = request.headers.get('Authorization')
             print(f"Auth header: {auth_header}")
-            
+
             is_firebase_authenticated = False
             firebase_uid = request.session.get('firebase_uid')
             is_staff = False
@@ -272,12 +272,12 @@ class AuthStatusAPIView(APIView):
                 try:
                     db = firestore.client()
                     print(f"Checking staff collection for UID: {firebase_uid}")
-                    
+
                     # Get all staff members
                     staff_docs = db.collection('staff').stream()
                     print("\nCurrent staff members:")
                     print("-" * 50)
-                    
+
                     # Check if UID exists in staff collection
                     for doc in staff_docs:
                         data = doc.to_dict()
@@ -285,15 +285,15 @@ class AuthStatusAPIView(APIView):
                         print(f"UID: {data.get('uid')}")
                         print(f"Added at: {data.get('added_at')}")
                         print("-" * 50)
-                        
+
                         # Check if this document's UID matches our user's UID
                         if data.get('uid') == firebase_uid:
                             is_staff = True
                             print(f"Found matching staff UID: {firebase_uid}")
                             break
-                    
+
                     print(f"Final staff status for {firebase_uid}: {is_staff}")
-                    
+
                 except Exception as firebase_error:
                     print(f"Error checking staff collection: {str(firebase_error)}")
                     raise
@@ -316,17 +316,17 @@ class AuthStatusAPIView(APIView):
                         firebase_uid = token_uid
                         request.session['firebase_uid'] = firebase_uid
                         print(f"Set session firebase_uid to: {firebase_uid}")
-                        
+
                         # Recheck staff status with new UID
                         try:
                             db = firestore.client()
                             print(f"Rechecking staff collection for new UID: {firebase_uid}")
-                            
+
                             # Get all staff members
                             staff_docs = db.collection('staff').stream()
                             print("\nCurrent staff members:")
                             print("-" * 50)
-                            
+
                             # Check if UID exists in staff collection
                             for doc in staff_docs:
                                 data = doc.to_dict()
@@ -334,15 +334,15 @@ class AuthStatusAPIView(APIView):
                                 print(f"UID: {data.get('uid')}")
                                 print(f"Added at: {data.get('added_at')}")
                                 print("-" * 50)
-                                
+
                                 # Check if this document's UID matches our user's UID
                                 if data.get('uid') == firebase_uid:
                                     is_staff = True
                                     print(f"Found matching staff UID: {firebase_uid}")
                                     break
-                            
+
                             print(f"Final staff status for {firebase_uid}: {is_staff}")
-                            
+
                         except Exception as firebase_error:
                             print(f"Error checking staff collection: {str(firebase_error)}")
                             raise
