@@ -32,8 +32,20 @@ export const AuthProvider = ({ children }) => {
     const [error, setError] = useState(null);
     const [idToken, setIdToken] = useState(null);
 
+    // Reset all auth state
+    const resetAuthState = () => {
+        setIsAuthenticated(false);
+        setUserUid(null);
+        setIdToken(null);
+        setError(null);
+        setIsLoading(true);
+    };
+
     useEffect(() => {
         let unsubscribe;
+        
+        // Reset state on mount
+        resetAuthState();
         
         try {
             unsubscribe = onAuthStateChanged(auth, 
@@ -41,31 +53,35 @@ export const AuthProvider = ({ children }) => {
                     if (user) {
                         try {
                             // Get the ID token
-                            const token = await user.getIdToken();
+                            const token = await user.getIdToken(true); // Force refresh token
                             setIdToken(token);
                             // Check authentication status with backend
-                            await checkAuthentication();
+                            const isAuth = await checkAuthentication();
+                            if (!isAuth) {
+                                resetAuthState();
+                            }
                         } catch (error) {
                             console.error('Error getting user token:', error);
                             setError(error.message);
+                            resetAuthState();
                         }
                     } else {
-                        console.log('User signed out'); // Debug log
-                        setIdToken(null);
-                        setIsAuthenticated(false);
-                        setUserUid(null);
+                        console.log('User signed out');
+                        resetAuthState();
                     }
                     setIsLoading(false);
                 },
                 (error) => {
                     console.error('Auth state change error:', error);
                     setError(error.message);
+                    resetAuthState();
                     setIsLoading(false);
                 }
             );
         } catch (error) {
             console.error('Error setting up auth state listener:', error);
             setError(error.message);
+            resetAuthState();
             setIsLoading(false);
         }
 
@@ -127,9 +143,7 @@ export const AuthProvider = ({ children }) => {
     const logout = async () => {
         try {
             await auth.signOut();
-            setIsAuthenticated(false);
-            setUserUid(null);
-            setIdToken(null);
+            resetAuthState();
             Cookies.remove('csrftoken');
         } catch (error) {
             console.error('Error during logout:', error);
@@ -150,7 +164,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     if (isLoading) {
-        return <div>Loading...</div>;
+        return <div>Loading authentication...</div>;
     }
 
     if (error) {

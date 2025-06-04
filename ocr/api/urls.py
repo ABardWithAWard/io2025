@@ -6,7 +6,7 @@ from application.views import ReactAppView
 from .views import (
     UploadedFileViewSet, SupportTicketViewSet, CSRFView,
     ContactAPIView, LoginAPIView, GoogleAuthAPIView, LogoutAPIView,
-    RegisterAPIView, AuthStatusAPIView
+    RegisterAPIView, AuthStatusAPIView, GetImagesAPIView
 )
 
 # Create a router and register our viewsets with it
@@ -26,6 +26,7 @@ urlpatterns = [
     path('google-auth/', GoogleAuthAPIView.as_view(), name='google_auth_api'),
     path('logout/', LogoutAPIView.as_view(), name='logout_api'),
     path('auth-status/', AuthStatusAPIView.as_view(), name='auth_status_api'),
+    path('get-images/', GetImagesAPIView.as_view(), name='get_images_api'),
     path('admin/', admin.site.urls),  # Django admin
     re_path(r'^(?!api/|admin/|media/).*$', ReactAppView.as_view(), name='react_app'),  # All other routes go to React
 ] 
