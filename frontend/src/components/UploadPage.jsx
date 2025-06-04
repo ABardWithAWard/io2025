@@ -99,57 +99,62 @@ const UploadPage = () => {
                     <input type="file" className="form-control" id="file" accept="image/*" />
                 </div>
 
-                <div className="mb-3">
-                    <label htmlFor="fontSize" className="form-label">Font Size:</label>
-                    <input 
-                        type="number" 
-                        className="form-control" 
-                        id="fontSize" 
-                        value={fontSize}
-                        onChange={(e) => setFontSize(Number(e.target.value))}
-                        min="8"
-                        max="72"
-                    />
+                <div className="row mb-3">
+                    <div className="col-md-6">
+                        <label htmlFor="fontSize" className="form-label">Font Size:</label>
+                        <input 
+                            type="number" 
+                            className="form-control" 
+                            id="fontSize" 
+                            value={fontSize}
+                            onChange={(e) => setFontSize(Number(e.target.value))}
+                            min="8"
+                            max="72"
+                        />
+                    </div>
+                    <div className="col-md-6">
+                        <label htmlFor="language" className="form-label">Language:</label>
+                        <select 
+                            className="form-select" 
+                            id="language"
+                            value={language}
+                            onChange={(e) => setLanguage(e.target.value)}
+                        >
+                            <option value="english">English</option>
+                            <option value="polish">Polish</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div className="mb-3">
-                    <label htmlFor="language" className="form-label">Language:</label>
-                    <select 
-                        className="form-select" 
-                        id="language"
-                        value={language}
-                        onChange={(e) => setLanguage(e.target.value)}
-                    >
-                        <option value="english">English</option>
-                        <option value="polish">Polish</option>
-                    </select>
+                <div className="row mb-3">
+                    <div className="col-md-6">
+                        <label htmlFor="exportFormat" className="form-label">Export Format:</label>
+                        <select 
+                            className="form-select" 
+                            id="exportFormat"
+                            value={exportFormat}
+                            onChange={(e) => setExportFormat(e.target.value)}
+                        >
+                            <option value="docx">DOCX</option>
+                            <option value="jpg">JPG</option>
+                            <option value="png">PNG</option>
+                        </select>
+                    </div>
+                    <div className="col-md-6">
+                        <label className="form-label d-block">Confidence:</label>
+                        <button
+                            type="button"
+                            className={`btn ${hasConfidence ? 'btn-primary' : 'btn-secondary'} w-100`}
+                            onClick={() => setHasConfidence(!hasConfidence)}
+                        >
+                            Display confidence: {hasConfidence ? 'true' : 'false'}
+                        </button>
+                    </div>
                 </div>
 
-                <div className="mb-3">
-                    <label htmlFor="exportFormat" className="form-label">Export Format:</label>
-                    <select 
-                        className="form-select" 
-                        id="exportFormat"
-                        value={exportFormat}
-                        onChange={(e) => setExportFormat(e.target.value)}
-                    >
-                        <option value="docx">DOCX</option>
-                        <option value="jpg">JPG</option>
-                        <option value="png">PNG</option>
-                    </select>
+                <div className="text-center">
+                    <button type="submit" className="btn btn-primary">Upload</button>
                 </div>
-
-                <div className="mb-3">
-                    <button
-                        type="button"
-                        className={`btn ${hasConfidence ? 'btn-primary' : 'btn-secondary'}`}
-                        onClick={() => setHasConfidence(!hasConfidence)}
-                    >
-                        Display confidence: {hasConfidence ? 'true' : 'false'}
-                    </button>
-                </div>
-
-                <button type="submit" className="btn btn-primary">Upload</button>
             </form>
 
             {error && (
