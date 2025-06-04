@@ -1,16 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState} from 'react';
 import { useAuth } from '../AuthContext';
 
 const UploadPage = () => {
-    const [files, setFiles] = useState([]);
     const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
-    const [hasShownPrivacyWarning, setHasShownPrivacyWarning] = useState(false);
+    const [setHasShownPrivacyWarning] = useState(false);
     const [error, setError] = useState('');
-    const navigate = useNavigate();
-    const [pendingFile, setPendingFile] = useState(null);
     const [showUploadModal, setShowUploadModal] = useState(false);
-    const { getCsrfToken, isAuthenticated, userUid } = useAuth();
+    const { getCsrfToken} = useAuth();
     const [fontSize, setFontSize] = useState(12);
     const [language, setLanguage] = useState('english');
     const [exportFormat, setExportFormat] = useState('docx');
