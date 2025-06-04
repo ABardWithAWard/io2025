@@ -74,7 +74,7 @@ const ContactPage = () => {
         <div className="row align-items-center h-50">
             <div className="col"></div>
             <div className="col">
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} id="contactForm">
                     <div className="row">
                         <div className="col">
                             <label htmlFor="id-name" className="form-label">Wypełnij formularz zgłoszeniowy</label>
