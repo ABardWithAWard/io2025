@@ -176,3 +176,6 @@ FIREBASE_CREDENTIALS = os.environ.get('FIREBASE_KEY')
 
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
+
+LOGIN_URL = '/admin/'
+LOGOUT_REDIRECT_URL = '/application'
