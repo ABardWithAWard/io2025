@@ -39,7 +39,7 @@ class UploadedFileViewSet(viewsets.ModelViewSet):
             # Get userUid from form data, it will be null if not provided
             user_uid = request.POST.get('userUid')
             json_str = handle_uploaded_file(request.FILES["file"], user_uid)
-            return Response({'status': 'success'})
+            return Response({'status': 'success', 'payload': json_str})
         return Response({'status': 'error', 'errors': form.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['get'])
