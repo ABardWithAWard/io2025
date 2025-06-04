@@ -1,4 +1,4 @@
-import React, { useState} from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../AuthContext';
 
 const UploadPage = () => {
@@ -6,11 +6,12 @@ const UploadPage = () => {
     const [setHasShownPrivacyWarning] = useState(false);
     const [error, setError] = useState('');
     const [showUploadModal, setShowUploadModal] = useState(false);
-    const { getCsrfToken} = useAuth();
+    const {getCsrfToken} = useAuth();
     const [fontSize, setFontSize] = useState(12);
     const [language, setLanguage] = useState('english');
     const [exportFormat, setExportFormat] = useState('docx');
     const [hasConfidence, setHasConfidence] = useState(false);
+    const [paragraphWidth, setParagraphWidth] = useState(80);
 
     const handleUploadClick = (event) => {
         event.preventDefault();
@@ -51,7 +52,6 @@ const UploadPage = () => {
         }
 
         try {
-            // Check authentication status first
             const authResponse = await fetch('/api/auth-status/', {
                 method: 'GET',
                 credentials: 'include'
@@ -64,6 +64,7 @@ const UploadPage = () => {
             formData.append('language', language);
             formData.append('format', exportFormat);
             formData.append('confidence', hasConfidence);
+            formData.append('paragraphWidth', paragraphWidth);
 
             const response = await fetch('/api/files/upload/', {
                 method: 'POST',
@@ -132,20 +133,32 @@ const UploadPage = () => {
                             onChange={(e) => setExportFormat(e.target.value)}
                         >
                             <option value="docx">DOCX</option>
-                            <option value="jpg">JPG</option>
-                            <option value="png">PNG</option>
+                            <option value="txt">TXT</option>
+                            <option value="rtf">RTF</option>
                         </select>
                     </div>
                     <div className="col-md-6">
-                        <label className="form-label d-block">Confidence:</label>
-                        <button
-                            type="button"
-                            className={`btn ${hasConfidence ? 'btn-primary' : 'btn-secondary'} w-100`}
-                            onClick={() => setHasConfidence(!hasConfidence)}
-                        >
-                            Display confidence: {hasConfidence ? 'true' : 'false'}
-                        </button>
+                        <label htmlFor="paragraphWidth" className="form-label">Paragraph Width:</label>
+                        <input 
+                            type="number" 
+                            className="form-control" 
+                            id="paragraphWidth" 
+                            value={paragraphWidth}
+                            onChange={(e) => setParagraphWidth(Number(e.target.value))}
+                            min="40"
+                            max="100"
+                        />
                     </div>
+                </div>
+
+                <div className="text-center mb-3">
+                    <button
+                        type="button"
+                        className={`btn ${hasConfidence ? 'btn-primary' : 'btn-secondary'}`}
+                        onClick={() => setHasConfidence(!hasConfidence)}
+                    >
+                        Display confidence: {hasConfidence ? 'true' : 'false'}
+                    </button>
                 </div>
 
                 <div className="text-center">
