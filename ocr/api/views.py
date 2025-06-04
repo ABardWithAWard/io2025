@@ -20,13 +20,13 @@ from .serializers import (
 from django.http import JsonResponse
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
-import json
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from application.services import retrieve_pictures_using_uid
 import base64
 from io import BytesIO
 
+DEBUG_MODE = False
 
 class UploadedFileViewSet(viewsets.ModelViewSet):
     queryset = UploadedFile.objects.all()
@@ -35,13 +35,14 @@ class UploadedFileViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def upload(self, request):
-        print("FILES:", request.FILES)
+        if DEBUG_MODE:
+            print("FILES:", request.FILES)
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
             # Get userUid from form data, it will be null if not provided
             user_uid = request.POST.get('userUid')
-            file_instance = handle_uploaded_file(request.FILES["file"], user_uid)
-            return Response({'status': 'success'})
+            json_str = handle_uploaded_file(request.FILES["file"], user_uid)
+            return Response({'status': 'success', 'payload': json_str})
         return Response({'status': 'error', 'errors': form.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['get'])
