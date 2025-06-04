@@ -1,25 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import { useAuth } from '../AuthContext';
 
 const UploadPage = () => {
-    const [files, setFiles] = useState([]);
     const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
-    const [hasShownPrivacyWarning, setHasShownPrivacyWarning] = useState(false);
+    const [setHasShownPrivacyWarning] = useState(false);
     const [error, setError] = useState('');
-    const navigate = useNavigate();
-    const [pendingFile, setPendingFile] = useState(null);
     const [showUploadModal, setShowUploadModal] = useState(false);
-    const { getCsrfToken, isAuthenticated, userUid } = useAuth();
-
-    useEffect(() => {
-    }, []);
-
-    const validateFile = (file) => {
-        const allowedExtensions = ['.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff', '.webp'];
-        const fileName = file.name.toLowerCase();
-        return allowedExtensions.some(ext => fileName.endsWith(ext));
-    };
+    const {getCsrfToken} = useAuth();
+    const [fontSize, setFontSize] = useState(12);
+    const [language, setLanguage] = useState('english');
+    const [exportFormat, setExportFormat] = useState('docx');
+    const [hasConfidence, setHasConfidence] = useState(false);
+    const [paragraphWidth, setParagraphWidth] = useState(80);
 
     const handleUploadClick = (event) => {
         event.preventDefault();
@@ -60,7 +52,6 @@ const UploadPage = () => {
         }
 
         try {
-            // Check authentication status first
             const authResponse = await fetch('/api/auth-status/', {
                 method: 'GET',
                 credentials: 'include'
@@ -68,8 +59,12 @@ const UploadPage = () => {
             const authData = await authResponse.json();
 
             formData.append('file', fileInput.files[0]);
-            // Pass null if not authenticated, otherwise use the firebase_uid
             formData.append('userUid', authData.isAuthenticated ? authData.user.firebase_uid : null);
+            formData.append('fontSize', fontSize);
+            formData.append('language', language);
+            formData.append('format', exportFormat);
+            formData.append('confidence', hasConfidence);
+            formData.append('paragraphWidth', paragraphWidth);
 
             const response = await fetch('/api/files/upload/', {
                 method: 'POST',
@@ -100,7 +95,75 @@ const UploadPage = () => {
                     <label htmlFor="file" className="form-label">Select file to upload:</label>
                     <input type="file" className="form-control" id="file" accept="image/*" />
                 </div>
-                <button type="submit" className="btn btn-primary">Upload</button>
+
+                <div className="row mb-3">
+                    <div className="col-md-6">
+                        <label htmlFor="fontSize" className="form-label">Font Size:</label>
+                        <input 
+                            type="number" 
+                            className="form-control" 
+                            id="fontSize" 
+                            value={fontSize}
+                            onChange={(e) => setFontSize(Number(e.target.value))}
+                            min="8"
+                            max="72"
+                        />
+                    </div>
+                    <div className="col-md-6">
+                        <label htmlFor="language" className="form-label">Language:</label>
+                        <select 
+                            className="form-select" 
+                            id="language"
+                            value={language}
+                            onChange={(e) => setLanguage(e.target.value)}
+                        >
+                            <option value="english">English</option>
+                            <option value="polish">Polish</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div className="row mb-3">
+                    <div className="col-md-6">
+                        <label htmlFor="exportFormat" className="form-label">Export Format:</label>
+                        <select 
+                            className="form-select" 
+                            id="exportFormat"
+                            value={exportFormat}
+                            onChange={(e) => setExportFormat(e.target.value)}
+                        >
+                            <option value="docx">DOCX</option>
+                            <option value="txt">TXT</option>
+                            <option value="rtf">RTF</option>
+                        </select>
+                    </div>
+                    <div className="col-md-6">
+                        <label htmlFor="paragraphWidth" className="form-label">Paragraph Width:</label>
+                        <input 
+                            type="number" 
+                            className="form-control" 
+                            id="paragraphWidth" 
+                            value={paragraphWidth}
+                            onChange={(e) => setParagraphWidth(Number(e.target.value))}
+                            min="40"
+                            max="100"
+                        />
+                    </div>
+                </div>
+
+                <div className="text-center mb-3">
+                    <button
+                        type="button"
+                        className={`btn ${hasConfidence ? 'btn-primary' : 'btn-secondary'}`}
+                        onClick={() => setHasConfidence(!hasConfidence)}
+                    >
+                        Display confidence: {hasConfidence ? 'true' : 'false'}
+                    </button>
+                </div>
+
+                <div className="text-center">
+                    <button type="submit" className="btn btn-primary">Upload</button>
+                </div>
             </form>
 
             {error && (
