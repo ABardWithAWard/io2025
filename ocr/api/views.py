@@ -156,7 +156,7 @@ class GoogleAuthAPIView(APIView):
                 firebase_admin.initialize_app(cred)
 
             # Verify the ID token
-            decoded_token = id_token.verify_oauth2_token(id_token_str, requests.Request())
+            decoded_token = id_token.verify_oauth2_token(id_token_str, requests.Request(), clock_skew_in_seconds=60)
             email = decoded_token.get("email")
             name = decoded_token.get("name", email.split('@')[0])  # Use name from token or email prefix
 
