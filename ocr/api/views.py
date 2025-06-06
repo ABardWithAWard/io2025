@@ -509,3 +509,85 @@ class ReactAppView(TemplateView):
                 streaming_content=[error_html],
                 content_type='text/html'
             )
+
+
+class GlobalSettingsAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        try:
+            # Initialize Firebase if not already initialized
+            if not firebase_admin._apps:
+                cred_path = os.environ['FIREBASE_KEY']
+                if not os.path.exists(cred_path):
+                    return Response(
+                        {'error': 'Firebase credentials not found'},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+                cred = credentials.Certificate(cred_path)
+                firebase_admin.initialize_app(cred)
+
+            # Get Firestore client
+            db = firestore.client()
+
+            # Get limits document
+            limits_doc = db.collection('global_settings').document('limits').get()
+            
+            if not limits_doc.exists:
+                return Response(
+                    {'error': 'Limits document not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            limits_data = limits_doc.to_dict()
+            return Response(limits_data)
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def post(self, request):
+        try:
+            data_limit = request.data.get('dataLimit')
+            file_limit = request.data.get('fileLimit')
+
+            if data_limit is None or file_limit is None:
+                return Response(
+                    {'error': 'Both dataLimit and fileLimit are required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Initialize Firebase if not already initialized
+            if not firebase_admin._apps:
+                cred_path = os.environ['FIREBASE_KEY']
+                if not os.path.exists(cred_path):
+                    return Response(
+                        {'error': 'Firebase credentials not found'},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+                cred = credentials.Certificate(cred_path)
+                firebase_admin.initialize_app(cred)
+
+            # Get Firestore client
+            db = firestore.client()
+
+            # Update limits document
+            db.collection('global_settings').document('limits').set({
+                'dataLimit': data_limit,
+                'fileLimit': file_limit,
+                'updatedAt': firestore.SERVER_TIMESTAMP
+            })
+
+            return Response({
+                'message': 'Limits updated successfully',
+                'dataLimit': data_limit,
+                'fileLimit': file_limit
+            })
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

@@ -4,7 +4,7 @@ from django.contrib import admin
 from .views import (
     UploadedFileViewSet, SupportTicketViewSet, CSRFView,
     ContactAPIView, LoginAPIView, GoogleAuthAPIView, LogoutAPIView,
-    RegisterAPIView, AuthStatusAPIView, ReactAppView
+    RegisterAPIView, AuthStatusAPIView, ReactAppView, GlobalSettingsAPIView
 )
 
 # Create a router and register our viewsets with it
@@ -24,6 +24,7 @@ urlpatterns = [
     path('google-auth/', GoogleAuthAPIView.as_view(), name='google_auth_api'),
     path('logout/', LogoutAPIView.as_view(), name='logout_api'),
     path('auth-status/', AuthStatusAPIView.as_view(), name='auth_status_api'),
+    path('global-settings/', GlobalSettingsAPIView.as_view(), name='global_settings_api'),
     path('admin/', admin.site.urls),  # Django admin
     re_path(r'^(?!api/|admin/|media/).*$', ReactAppView.as_view(), name='react_app'),  # All other routes go to React
 ] 
