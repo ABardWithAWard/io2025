@@ -3,8 +3,7 @@ from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 
-from application import views
-from application.views import ReactAppView
+from api.views import ReactAppView
 
 """
 URL configuration for ocr project.

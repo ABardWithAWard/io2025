@@ -67,7 +67,7 @@ def setup_firestore_db():
     firebase_admin.initialize_app(credentials_obj)
     firestore_db = firestore.client()
 
-def retrieve_pictures_using_uid(desired_uid: str) -> List[Image]:
+def retrieve_pictures_using_uid(desired_uid: str) -> List[Image.Image]:
     """
     Retrieve a list of a user's PIL.Image objects from the Firestore database based on his UID.
     Depends on the global (services.py) variable firebase_db being initialized. This variable is
@@ -131,3 +131,30 @@ def output_processed_as_docx(word_list: List[str], output_path: str, font_size=1
 
     # The appearance will be saved
     document.save(output_path)
+
+def get_db():
+    if not firebase_admin._apps:
+        cred_path = os.environ['FIREBASE_KEY']
+        if not os.path.exists(cred_path):
+            raise Exception('Firebase credentials not found')
+        cred = credentials.Certificate(cred_path)
+        firebase_admin.initialize_app(cred)
+
+    return firestore.client()
+
+def set_data_limit(data_limit):
+    db = get_db()
+    db.collection("global_settings").document("limits").set({
+        'dataLimit': data_limit,
+    }, merge=True)
+
+def set_file_limit(file_limit):
+    db = get_db()
+    db.collection("global_settings").document("limits").set({
+        'fileLimit': file_limit,
+    }, merge=True)
+
+def get_limits():
+    db = get_db()
+    doc = db.collection("global_settings").document("limits").get()
+    return doc.to_dict() if doc.exists else {}

@@ -1,26 +1,26 @@
 import os
 from google.oauth2 import id_token
 from google.auth.transport import requests
-from django.db.migrations import serializer
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
-from application.models import dataLimit, fileLimit, UploadedFile, SupportTicket
+from application.models import UploadedFile, SupportTicket
 from application.forms import UploadFileForm, SubmitTicketForm
 from .services import handle_uploaded_file, get_files
 from .serializers import (
     UploadedFileSerializer, SupportTicketSerializer
 )
-from django.http import JsonResponse
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
-from django.contrib.auth import authenticate, login, logout
+from django.http import StreamingHttpResponse, JsonResponse
+from django.conf import settings
+from django.views.generic import TemplateView
+from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
 from application.services import retrieve_pictures_using_uid
 import base64
@@ -161,7 +161,7 @@ class GoogleAuthAPIView(APIView):
                 firebase_admin.initialize_app(cred)
 
             # Verify the ID token
-            decoded_token = id_token.verify_oauth2_token(id_token_str, requests.Request())
+            decoded_token = id_token.verify_oauth2_token(id_token_str, requests.Request(), clock_skew_in_seconds=60)
             email = decoded_token.get("email")
             name = decoded_token.get("name", email.split('@')[0])  # Use name from token or email prefix
 
@@ -246,23 +246,108 @@ class AuthStatusAPIView(APIView):
         try:
             # Check Django authentication
             is_django_authenticated = request.user.is_authenticated
+            print(f"Django auth status: {is_django_authenticated}")
 
             # Get Firebase auth token from request headers
             auth_header = request.headers.get('Authorization')
-            is_firebase_authenticated = False
-            firebase_uid = None
+            print(f"Auth header: {auth_header}")
 
+            is_firebase_authenticated = False
+            firebase_uid = request.session.get('firebase_uid')
+            is_staff = False
+
+            print(f"Session firebase_uid: {firebase_uid}")
+
+            # Initialize Firebase if not already initialized
+            if not firebase_admin._apps:
+                cred_path = os.environ.get('FIREBASE_KEY', 'firebaseSecretKey.json')
+                print(f"Using Firebase credentials from: {cred_path}")
+                cred = credentials.Certificate(cred_path)
+                firebase_admin.initialize_app(cred)
+                print("Firebase initialized successfully")
+
+            # Check staff status if we have a UID (either from session or token)
+            if firebase_uid:
+                try:
+                    db = firestore.client()
+                    print(f"Checking staff collection for UID: {firebase_uid}")
+
+                    # Get all staff members
+                    staff_docs = db.collection('staff').stream()
+                    print("\nCurrent staff members:")
+                    print("-" * 50)
+
+                    # Check if UID exists in staff collection
+                    for doc in staff_docs:
+                        data = doc.to_dict()
+                        print(f"Email: {data.get('email')}")
+                        print(f"UID: {data.get('uid')}")
+                        print(f"Added at: {data.get('added_at')}")
+                        print("-" * 50)
+
+                        # Check if this document's UID matches our user's UID
+                        if data.get('uid') == firebase_uid:
+                            is_staff = True
+                            print(f"Found matching staff UID: {firebase_uid}")
+                            break
+
+                    print(f"Final staff status for {firebase_uid}: {is_staff}")
+
+                except Exception as firebase_error:
+                    print(f"Error checking staff collection: {str(firebase_error)}")
+                    raise
+
+            # If we have an auth header, verify the token and update session
             if auth_header and auth_header.startswith('Bearer '):
                 id_token = auth_header.split('Bearer ')[1]
                 try:
                     # Verify Firebase token
-                    decoded_token = auth.verify_id_token(id_token)
+                    decoded_token = auth.verify_id_token(id_token, clock_skew_seconds=60)
                     is_firebase_authenticated = True
-                    firebase_uid = decoded_token.get('uid')
+                    token_uid = decoded_token.get('uid')
+                    email = decoded_token.get('email')
+                    print(f"Email from token: {email}")
+                    print(f"UID from token: {token_uid}")
+                    print(f"Session UID matches token UID: {firebase_uid == token_uid}")
+
+                    # Update session UID if needed
+                    if not firebase_uid or firebase_uid != token_uid:
+                        firebase_uid = token_uid
+                        request.session['firebase_uid'] = firebase_uid
+                        print(f"Set session firebase_uid to: {firebase_uid}")
+
+                        # Recheck staff status with new UID
+                        try:
+                            db = firestore.client()
+                            print(f"Rechecking staff collection for new UID: {firebase_uid}")
+
+                            # Get all staff members
+                            staff_docs = db.collection('staff').stream()
+                            print("\nCurrent staff members:")
+                            print("-" * 50)
+
+                            # Check if UID exists in staff collection
+                            for doc in staff_docs:
+                                data = doc.to_dict()
+                                print(f"Email: {data.get('email')}")
+                                print(f"UID: {data.get('uid')}")
+                                print(f"Added at: {data.get('added_at')}")
+                                print("-" * 50)
+
+                                # Check if this document's UID matches our user's UID
+                                if data.get('uid') == firebase_uid:
+                                    is_staff = True
+                                    print(f"Found matching staff UID: {firebase_uid}")
+                                    break
+
+                            print(f"Final staff status for {firebase_uid}: {is_staff}")
+
+                        except Exception as firebase_error:
+                            print(f"Error checking staff collection: {str(firebase_error)}")
+                            raise
 
                     # If Firebase is authenticated but Django isn't, sync the session
                     if is_firebase_authenticated and not is_django_authenticated:
-                        email = decoded_token.get('email')
                         if email:
                             user, _ = User.objects.get_or_create(
                                 email=email,
@@ -278,6 +363,7 @@ class AuthStatusAPIView(APIView):
 
             # User is considered authenticated if either Django or Firebase auth is valid
             is_authenticated = is_django_authenticated or is_firebase_authenticated
+            print(f"Final auth status - Authenticated: {is_authenticated}, Staff: {is_staff}")
 
             if is_authenticated:
                 return Response({
@@ -285,8 +371,8 @@ class AuthStatusAPIView(APIView):
                     'user': {
                         'email': request.user.email if is_django_authenticated else decoded_token.get('email'),
                         'username': request.user.username if is_django_authenticated else decoded_token.get('name', ''),
-                        'is_staff': request.user.is_staff if is_django_authenticated else False,
-                        'firebase_uid': firebase_uid or request.session.get('firebase_uid')
+                        'is_staff': is_staff,
+                        'firebase_uid': firebase_uid
                     }
                 })
             return Response({'isAuthenticated': False})
@@ -348,7 +434,7 @@ class GetImagesAPIView(APIView):
 
             # Get images from Firestore
             images = retrieve_pictures_using_uid(user_uid)
-            
+
             # Convert images to base64
             encoded_images = []
             for img in images:
@@ -365,5 +451,142 @@ class GetImagesAPIView(APIView):
         except Exception as e:
             return Response(
                 {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class ReactAppView(TemplateView):
+    template_name = 'index.html'
+
+    def get(self, request, *args, **kwargs):
+        # Check if the request is for an API endpoint
+        path = request.path_info
+        if path.startswith('/api/'):
+            # Let the API views handle the response
+            return JsonResponse({'error': 'Not found'}, status=404)
+
+        # Check if the request wants JSON response
+        if request.headers.get('Accept') == 'application/json':
+            return JsonResponse({'error': 'Not found'}, status=404)
+
+        try:
+            # Get the CSRF token
+            csrf_token = request.COOKIES.get('csrftoken', '')
+
+            # Read the index.html file
+            with open(os.path.join(settings.REACT_APP_BUILD_DIR, 'index.html'), 'r') as f:
+                html = f.read()
+
+            # Replace absolute paths with relative ones
+            html = html.replace('src="/static/', f'src="{settings.STATIC_URL}static/')
+            html = html.replace('href="/static/', f'href="{settings.STATIC_URL}static/')
+            html = html.replace('href="/manifest.json"', f'href="{settings.STATIC_URL}manifest.json"')
+            html = html.replace('href="/favicon.ico"', f'href="{settings.STATIC_URL}favicon.ico"')
+            html = html.replace('href="/logo192.png"', f'href="{settings.STATIC_URL}logo192.png"')
+
+            response = StreamingHttpResponse(
+                streaming_content=[html],
+                content_type='text/html'
+            )
+            response['X-Content-Type-Options'] = 'nosniff'
+            response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response['Pragma'] = 'no-cache'
+            response['Expires'] = '0'
+            return response
+
+        except Exception as e:
+            error_html = """
+                <div style="text-align: center; margin-top: 50px;">
+                    <h1>Error loading React app</h1>
+                    <p>Please make sure the React app is built and the build directory is properly configured.</p>
+                    <p>Error details: {}</p>
+                </div>
+            """.format(str(e))
+
+            return StreamingHttpResponse(
+                streaming_content=[error_html],
+                content_type='text/html'
+            )
+
+
+class GlobalSettingsAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        try:
+            # Initialize Firebase if not already initialized
+            if not firebase_admin._apps:
+                cred_path = os.environ['FIREBASE_KEY']
+                if not os.path.exists(cred_path):
+                    return Response(
+                        {'error': 'Firebase credentials not found'},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+                cred = credentials.Certificate(cred_path)
+                firebase_admin.initialize_app(cred)
+
+            # Get Firestore client
+            db = firestore.client()
+
+            # Get limits document
+            limits_doc = db.collection('global_settings').document('limits').get()
+            
+            if not limits_doc.exists:
+                return Response(
+                    {'error': 'Limits document not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            limits_data = limits_doc.to_dict()
+            return Response(limits_data)
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def post(self, request):
+        try:
+            data_limit = request.data.get('dataLimit')
+            file_limit = request.data.get('fileLimit')
+
+            if data_limit is None or file_limit is None:
+                return Response(
+                    {'error': 'Both dataLimit and fileLimit are required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Initialize Firebase if not already initialized
+            if not firebase_admin._apps:
+                cred_path = os.environ['FIREBASE_KEY']
+                if not os.path.exists(cred_path):
+                    return Response(
+                        {'error': 'Firebase credentials not found'},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+                cred = credentials.Certificate(cred_path)
+                firebase_admin.initialize_app(cred)
+
+            # Get Firestore client
+            db = firestore.client()
+
+            # Update limits document
+            db.collection('global_settings').document('limits').set({
+                'dataLimit': data_limit,
+                'fileLimit': file_limit,
+                'updatedAt': firestore.SERVER_TIMESTAMP
+            })
+
+            return Response({
+                'message': 'Limits updated successfully',
+                'dataLimit': data_limit,
+                'fileLimit': file_limit
+            })
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

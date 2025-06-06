@@ -3,15 +3,18 @@ import { Navbar, Nav, Container, Button, Modal, Tab, Tabs, Form, Alert } from 'r
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import './NavbarComponent.css';
+import AdminPage from "./AdminPage";
 
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_OAUTH2_CLIENT_ID;
 const FIREBASE_PROJECT_ID = process.env.REACT_APP_FIREBASE_PROJECT_ID;
 
 function NavbarComponent() {
   const [showModal, setShowModal] = useState(false);
+  const [showAdminAccessModal, setShowAdminAccessModal] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
   const [messages, setMessages] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isStaff, setIsStaff] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [formData, setFormData] = useState({
     email: '',
@@ -19,7 +22,7 @@ function NavbarComponent() {
     confirmPassword: ''
   });
   const navigate = useNavigate();
-  const { getCsrfToken, checkAuthentication, refreshCsrfToken } = useAuth();
+  const { getCsrfToken, checkAuthentication, refreshCsrfToken, logout } = useAuth();
 
   useEffect(() => {
     // Check authentication status on component mount
@@ -37,14 +40,37 @@ function NavbarComponent() {
       if (data.isAuthenticated) {
         setIsAuthenticated(true);
         setUserEmail(data.user.email);
+        setIsStaff(data.user.is_staff || false);
         // Refresh CSRF token when authenticated
         await refreshCsrfToken();
       } else {
         setIsAuthenticated(false);
         setUserEmail('');
+        setIsStaff(false);
       }
     } catch (error) {
       console.error('Error checking auth status:', error);
+    }
+  };
+
+  const handleAdminClick = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/auth-status/', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      const data = await response.json();
+      
+      if (data.user.is_staff === true) {
+        navigate('/admin');
+      } else {
+        console.log(data.user.is_staff);
+        setShowAdminAccessModal(true);
+      }
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+      setShowAdminAccessModal(true);
     }
   };
 
@@ -212,7 +238,7 @@ function NavbarComponent() {
           <Navbar.Collapse id="navbarSupportedContent">
             <Nav className="me-auto mb-2 mb-lg-0">
               <Nav.Link as={Link} to="/contact">Kontakt</Nav.Link>
-              <Nav.Link as={Link} to="/admin">Panel administracji</Nav.Link>
+              <Nav.Link onClick={handleAdminClick}>Admin</Nav.Link>
             </Nav>
             <Nav className="ml-auto">
               {isAuthenticated ? (
@@ -227,6 +253,29 @@ function NavbarComponent() {
           </Navbar.Collapse>
         </Container>
       </Navbar>
+
+      {/* Admin Access Modal */}
+      <Modal show={showAdminAccessModal} onHide={() => setShowAdminAccessModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Admin Access Required</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Log in with admin account to access admin panel</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowAdminAccessModal(false)}>
+            Close
+          </Button>
+          {!isAuthenticated && (
+            <Button variant="primary" onClick={() => {
+              setShowAdminAccessModal(false);
+              setShowModal(true);
+            }}>
+              Login
+            </Button>
+          )}
+        </Modal.Footer>
+      </Modal>
 
       {/* Messages */}
       {messages.length > 0 && (
