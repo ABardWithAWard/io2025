@@ -102,18 +102,6 @@ const UploadPage = () => {
 
                 <div className="row mb-3">
                     <div className="col-md-6">
-                        <label htmlFor="fontSize" className="form-label">Font Size:</label>
-                        <input 
-                            type="number" 
-                            className="form-control" 
-                            id="fontSize" 
-                            value={fontSize}
-                            onChange={(e) => setFontSize(Number(e.target.value))}
-                            min="8"
-                            max="72"
-                        />
-                    </div>
-                    <div className="col-md-6">
                         <label htmlFor="language" className="form-label">Language:</label>
                         <select 
                             className="form-select" 
@@ -125,9 +113,6 @@ const UploadPage = () => {
                             <option value="polish">Polish</option>
                         </select>
                     </div>
-                </div>
-
-                <div className="row mb-3">
                     <div className="col-md-6">
                         <label htmlFor="exportFormat" className="form-label">Export Format:</label>
                         <select 
@@ -138,20 +123,40 @@ const UploadPage = () => {
                         >
                             <option value="docx">DOCX</option>
                             <option value="txt">TXT</option>
-                            <option value="rtf">RTF</option>
                         </select>
                     </div>
+                </div>
+
+                <div className="row mb-3">
                     <div className="col-md-6">
-                        <label htmlFor="paragraphWidth" className="form-label">Paragraph Width:</label>
-                        <input 
-                            type="number" 
-                            className="form-control" 
-                            id="paragraphWidth" 
-                            value={paragraphWidth}
-                            onChange={(e) => setParagraphWidth(Number(e.target.value))}
-                            min="40"
-                            max="100"
-                        />
+                        {exportFormat === 'docx' && (
+                            <>
+                                <label htmlFor="fontSize" className="form-label">Font Size:</label>
+                                <input 
+                                    type="number" 
+                                    className="form-control" 
+                                    id="fontSize" 
+                                    value={fontSize}
+                                    onChange={(e) => setFontSize(Number(e.target.value))}
+                                    min="8"
+                                    max="72"
+                                />
+                            </>
+                        )}
+                        {exportFormat === 'txt' && (
+                            <>
+                                <label htmlFor="paragraphWidth" className="form-label">Paragraph Width:</label>
+                                <input 
+                                    type="number" 
+                                    className="form-control" 
+                                    id="paragraphWidth" 
+                                    value={paragraphWidth}
+                                    onChange={(e) => setParagraphWidth(Number(e.target.value))}
+                                    min="40"
+                                    max="100"
+                                />
+                            </>
+                        )}
                     </div>
                 </div>
 
