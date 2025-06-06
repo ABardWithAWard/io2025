@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const UploadPage = () => {
     const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
@@ -12,6 +13,7 @@ const UploadPage = () => {
     const [exportFormat, setExportFormat] = useState('docx');
     const [hasConfidence, setHasConfidence] = useState(false);
     const [paragraphWidth, setParagraphWidth] = useState(80);
+    const navigate = useNavigate();
 
     const handleUploadClick = (event) => {
         event.preventDefault();
@@ -78,6 +80,8 @@ const UploadPage = () => {
             const data = await response.json();
             if (response.ok) {
                 setError('');
+                // Navigate to results page with the OCR results from payload
+                navigate('/results', { state: { results: data.payload } });
             } else {
                 setError(data.errors || 'Upload failed');
             }
