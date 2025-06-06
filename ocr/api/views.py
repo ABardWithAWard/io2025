@@ -21,7 +21,6 @@ from django.http import StreamingHttpResponse, JsonResponse
 from django.conf import settings
 from django.views.generic import TemplateView
 from django.contrib.auth import login, logout
-from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from application.services import retrieve_pictures_using_uid
 import base64
