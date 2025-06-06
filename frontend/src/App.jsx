@@ -5,6 +5,7 @@ import UploadPage from './components/UploadPage';
 import ContactPage from './components/ContactPage';
 import ProfileComponent from './components/ProfileComponent';
 import AdminPage from './components/AdminPage';
+import ResultsPage from './components/ResultsPage';
 import { AuthProvider } from './AuthContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -20,6 +21,7 @@ function App() {
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/profile" element={<ProfileComponent />} />
             <Route path="/admin" element={<AdminPage />} />
+            <Route path="/results" element={<ResultsPage />} />
           </Routes>
         </div>
       </Router>
