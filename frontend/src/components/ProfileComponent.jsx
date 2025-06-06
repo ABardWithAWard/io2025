@@ -69,7 +69,21 @@ const ProfileComponent = () => {
     }, [isAuthenticated, userUid, checkAuthentication, getCsrfToken, authLoading]);
 
     if (authLoading) {
-        return <div className="container mt-4"><p>Loading authentication...</p></div>;
+        return (
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '50vh',
+                backgroundColor: '#f8f9fa'
+            }}>
+                <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="mt-3 text-muted">Loading profile...</p>
+            </div>
+        );
     }
 
     return (

@@ -164,11 +164,38 @@ export const AuthProvider = ({ children }) => {
     };
 
     if (isLoading) {
-        return <div>Loading authentication...</div>;
+        return (
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '100vh',
+                backgroundColor: '#f8f9fa'
+            }}>
+                <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="mt-3 text-muted">Initializing application...</p>
+            </div>
+        );
     }
 
     if (error) {
-        return <div>Error: {error}</div>;
+        return (
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '100vh',
+                backgroundColor: '#f8f9fa'
+            }}>
+                <div className="alert alert-danger" role="alert">
+                    Error: {error}
+                </div>
+            </div>
+        );
     }
 
     return (
