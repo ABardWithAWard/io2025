@@ -432,20 +432,37 @@ class GetImagesAPIView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Get images from Firestore
-            images = retrieve_pictures_using_uid(user_uid)
+            # Initialize Firebase if not already initialized
+            if not firebase_admin._apps:
+                cred_path = os.environ['FIREBASE_KEY']
+                if not os.path.exists(cred_path):
+                    return Response(
+                        {'error': 'Firebase credentials not found'},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+                cred = credentials.Certificate(cred_path)
+                firebase_admin.initialize_app(cred)
 
-            # Convert images to base64
-            encoded_images = []
-            for img in images:
-                buffered = BytesIO()
-                img.save(buffered, format="PNG")
-                img_str = base64.b64encode(buffered.getvalue()).decode()
-                encoded_images.append(img_str)
+            # Get Firestore client
+            db = firestore.client()
+
+            # Query images for the user
+            images_ref = db.collection('images').where('userUid', '==', user_uid).stream()
+            
+            # Process images and their OCR results
+            images_data = []
+            for doc in images_ref:
+                data = doc.to_dict()
+                images_data.append({
+                    'image': data.get('image_data'),
+                    'filename': data.get('filename'),
+                    'timestamp': data.get('timestamp'),
+                    'ocr_results': data.get('ocr_results', {})
+                })
 
             return Response({
-                "images": encoded_images,
-                "count": len(encoded_images)
+                "images": images_data,
+                "count": len(images_data)
             })
 
         except Exception as e:

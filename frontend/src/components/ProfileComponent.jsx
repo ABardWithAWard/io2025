@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../AuthContext';
+import { Link } from 'react-router-dom';
 
 const ProfileComponent = () => {
     const [images, setImages] = useState([]);
@@ -97,18 +98,42 @@ const ProfileComponent = () => {
                         {images.length === 0 ? (
                             <p>No images found</p>
                         ) : (
-                            images.map((imageData, index) => (
-                                <div key={index} className="col-md-4 mb-4">
-                                    <div className="card">
-                                        <img 
-                                            src={`data:image/png;base64,${imageData}`}
-                                            alt={`Uploaded image ${index + 1}`}
-                                            className="card-img-top"
-                                            style={{ maxHeight: '300px', objectFit: 'contain' }}
-                                        />
+                            images.map((imageData, index) => {
+                                // Format the data to match the UploadPage payload format
+                                const resultsPayload = {
+                                    name: imageData.filename,
+                                    image: imageData.image,
+                                    format: imageData.filename.split('.').pop().toLowerCase(),
+                                    confidence: imageData.ocr_results.confidence_scores,
+                                    content: imageData.ocr_results.text_predictions
+                                };
+
+                                return (
+                                    <div key={index} className="col-md-4 mb-4">
+                                        <div className="card">
+                                            <img 
+                                                src={`data:image/${resultsPayload.format};base64,${resultsPayload.image}`}
+                                                alt={`Uploaded image ${index + 1}`}
+                                                className="card-img-top"
+                                                style={{ maxHeight: '300px', objectFit: 'contain' }}
+                                            />
+                                            <div className="card-body">
+                                                <h5 className="card-title">{resultsPayload.name}</h5>
+                                                <p className="card-text">
+                                                    {resultsPayload.content?.slice(0, 3).join(' ')}...
+                                                </p>
+                                                <Link 
+                                                    to="/results"
+                                                    state={{ results: JSON.stringify(resultsPayload) }}
+                                                    className="btn btn-primary"
+                                                >
+                                                    View Full Results
+                                                </Link>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
                 )}
