@@ -11,7 +11,7 @@ def validate_image_file(value):
     if ext not in allowed_extensions:
         raise ValidationError('Only image files are allowed.')
 
-def validate_image_brightness(image_path, dark_threshold=30, bright_threshold=250):
+def validate_image_brightness(image: Image, dark_threshold: int = 30, bright_threshold: int = 250):
     """
     Check if a PIL image has usable brightness (not too dark or too bright).
 
@@ -21,10 +21,8 @@ def validate_image_brightness(image_path, dark_threshold=30, bright_threshold=25
         bright_threshold (int): Above this average lightness, image is too bright (0-255)
 
     Returns:
-        bool: True if image has usable brightness, False if too dark or too bright
+        str: "good" if image has usable brightness, "dark" if too dark and "bright" if too bright
     """
-    image = Image.open(image_path)
-
     # Convert to grayscale to get lightness values
     grayscale = image.convert('L')
 
@@ -35,4 +33,8 @@ def validate_image_brightness(image_path, dark_threshold=30, bright_threshold=25
     average_lightness = np.mean(pixels)
 
     # Check if within usable range
-    return dark_threshold <= average_lightness <= bright_threshold
+    if average_lightness < dark_threshold:
+        return "dark"
+    elif average_lightness > bright_threshold:
+        return "bright"
+    return "good"

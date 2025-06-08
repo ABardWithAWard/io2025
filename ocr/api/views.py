@@ -11,7 +11,7 @@ from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from application.models import UploadedFile, SupportTicket
 from application.forms import UploadFileForm, SubmitTicketForm
-from .services import handle_uploaded_file, get_files
+from .services import prepare_file_hierarchy, handle_uploaded_file, get_files
 from .serializers import (
     UploadedFileSerializer, SupportTicketSerializer
 )
@@ -23,8 +23,11 @@ from django.views.generic import TemplateView
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
 from application.services import retrieve_pictures_using_uid
+from application.utils import validate_image_brightness
 import base64
 from io import BytesIO
+
+from PIL import Image
 
 DEBUG_MODE = False
 
@@ -41,8 +44,17 @@ class UploadedFileViewSet(viewsets.ModelViewSet):
         if form.is_valid():
             # Get userUid from form data, it will be null if not provided
             user_uid = request.POST.get('userUid')
-            json_str = handle_uploaded_file(request.FILES["file"], user_uid)
-            return Response({'status': 'success', 'payload': json_str})
+
+            file_from_request = request.FILES["file"]
+            created_file_path = prepare_file_hierarchy(file_from_request)
+
+            # One of "good", "dark" or "bright"
+            brightness_validation_result = validate_image_brightness(Image.open(created_file_path))
+            if brightness_validation_result == "good":
+                json_str = handle_uploaded_file(file_from_request, created_file_path, user_uid)
+                return Response({'status': 'success', 'payload': json_str})
+            else:
+                return Response({'status': 'invalid', 'type': brightness_validation_result})
         return Response({'status': 'error', 'errors': form.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['get'])

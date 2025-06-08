@@ -15,7 +15,6 @@ from application.services import paddle_model, easy_model
 
 from application.model.paddleocr import PaddleOCR
 from application.model.easyocr import EasyOCR
-from application.utils import validate_image_brightness
 
 paddle_model = PaddleOCR()
 easy_model = EasyOCR()
@@ -57,7 +56,7 @@ def convert_result_to_json(uploaded_file: UploadedFile, uploaded_file_path: str,
         ocr_result (dict): Standardized format for OCR results, look to ModelBase
 
     Returns:
-        str: A JSON-formatted string with name, image (b64), format, confidence (List[int]) and content (List[str]) information.
+        json_str (str): A JSON-formatted string with name, image (b64), format, confidence (List[int]) and content (List[str]) information.
     """
     name, file_format = uploaded_file.name.split(".")
 
@@ -83,53 +82,59 @@ def convert_result_to_json(uploaded_file: UploadedFile, uploaded_file_path: str,
 
     return json_str
 
-def handle_uploaded_file(file, user_uid=None):
-    """Takes file uploaded in form and calls helper function to manage file and its contents"""
-    full_path = prepare_file_hierarchy(file)
+def handle_uploaded_file(uploaded_file, uploaded_file_path, user_uid=None):
+    """
+    A handler for the logic of performing OCR on a file, adding a Firestore timestamp and returning a JSON for frontend.
+    Args:
+        uploaded_file (DjangoUploadedFile): A Django UploadedFile object, result of request.FILES["file"]
+        uploaded_file_path (str): Absolute path to where the uploaded file was saved by prepare_file_hierarchy
+        user_uid (int): Firestore UID of the user using the application
 
-    if validate_image_brightness(full_path):
-        if POLISH_MODE:
-            result = easy_model.perform_ocr(input_path=full_path)
-            if DEBUG_MODE:
-                print("EasyOCR results:")
-                print(" ".join([word for word in result["text_predictions"]]))
+    Returns:
+        json_ocr_result (str): A JSON-formatted string with name, image (b64), format, confidence (List[int]) and content (List[str]) information.
+    """
+    if POLISH_MODE:
+        result = easy_model.perform_ocr(input_path=uploaded_file_path)
+        if DEBUG_MODE:
+            print("EasyOCR results:")
+            print(" ".join([word for word in result["text_predictions"]]))
 
-        if not POLISH_MODE:
-            result = paddle_model.perform_ocr(input_path=full_path)
-            if DEBUG_MODE:
-                print("PaddleOCR results:")
-                print(" ".join([word for word in result["text_predictions"]]))
+    if not POLISH_MODE:
+        result = paddle_model.perform_ocr(input_path=uploaded_file_path)
+        if DEBUG_MODE:
+            print("PaddleOCR results:")
+            print(" ".join([word for word in result["text_predictions"]]))
 
-        # Initialize Firebase if not already initialized
-        if not firebase_admin._apps:
-            cred_path = os.environ['FIREBASE_KEY']
-            if not os.path.exists(cred_path):
-                raise Exception('Firebase credentials not found')
-            cred = credentials.Certificate(cred_path)
-            firebase_admin.initialize_app(cred)
+    # Initialize Firebase if not already initialized
+    if not firebase_admin._apps:
+        cred_path = os.environ['FIREBASE_KEY']
+        if not os.path.exists(cred_path):
+            raise Exception('Firebase credentials not found')
+        cred = credentials.Certificate(cred_path)
+        firebase_admin.initialize_app(cred)
 
-        # Get Firestore client
-        db = firestore.client()
+    # Get Firestore client
+    db = firestore.client()
 
-        # Read and encode the image
-        with open(full_path, 'rb') as image_file:
-            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+    # Read and encode the image
+    with open(uploaded_file_path, 'rb') as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
 
-        # Add image to Firestore with userUid
-        image_ref = db.collection('images').document()
-        image_ref.set({
-            'image_data': encoded_string,
-            'filename': file.name,
-            'timestamp': firestore.SERVER_TIMESTAMP,
-            'userUid': user_uid  # This will be null for unauthenticated users
-        })
+    # Add image to Firestore with userUid
+    image_ref = db.collection('images').document()
+    image_ref.set({
+        'image_data': encoded_string,
+        'filename': uploaded_file.name,
+        'timestamp': firestore.SERVER_TIMESTAMP,
+        'userUid': user_uid  # This will be null for unauthenticated users
+    })
 
-        # We can look up images using https://base64.guru/converter/decode/image
-        # As they are saved as base64 strings
+    # We can look up images using https://base64.guru/converter/decode/image
+    # As they are saved as base64 strings
 
-        json_ocr_result = convert_result_to_json(file, full_path, result)
+    json_ocr_result = convert_result_to_json(uploaded_file, uploaded_file_path, result)
 
-        return json_ocr_result
+    return json_ocr_result
 
 def output_processed_as_txt(word_list: List[str], output_path: str, line_width=80):
     """
