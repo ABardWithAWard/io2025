@@ -3,18 +3,17 @@ import { Navbar, Nav, Container, Button, Modal, Tab, Tabs, Form, Alert } from 'r
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import './NavbarComponent.css';
-import AdminPage from "./AdminPage";
 
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_OAUTH2_CLIENT_ID;
-const FIREBASE_PROJECT_ID = process.env.REACT_APP_FIREBASE_PROJECT_ID;
 
+// Main navigation component that handles navigation and user login
 function NavbarComponent() {
   const [showModal, setShowModal] = useState(false);
   const [showAdminAccessModal, setShowAdminAccessModal] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
   const [messages, setMessages] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isStaff, setIsStaff] = useState(false);
+  const [setIsStaff] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [formData, setFormData] = useState({
     email: '',
@@ -54,6 +53,7 @@ function NavbarComponent() {
   };
 
   const handleAdminClick = async (e) => {
+    // TODO: Make this function use AuthContext to check if user is staff
     e.preventDefault();
     try {
       const response = await fetch('/api/auth-status/', {
@@ -74,6 +74,7 @@ function NavbarComponent() {
     }
   };
 
+  // Basic modal logic which clears form and hides/shows modals themselves
   const handleModalClose = () => {
     setShowModal(false);
     setMessages([]);
@@ -81,18 +82,23 @@ function NavbarComponent() {
   };
 
   const handleModalShow = () => setShowModal(true);
+
   const handleTabSelect = (k) => {
     setActiveTab(k);
     setMessages([]);
     setFormData({ email: '', password: '', confirmPassword: '' });
   };
 
+  // Generic input handler for updating form state in React
+  // e.target -> HTML input element which just triggered this event
+  // name and value are attributes of it
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
-    }));
+    })); // Updates form data without losing other fields, ...prev copies previous state
+    // and then updates the field that matches name
   };
 
   const handleLogin = async (e) => {
@@ -116,10 +122,10 @@ function NavbarComponent() {
       if (response.ok) {
         setIsAuthenticated(true);
         setUserEmail(data.user.email);
-        // Refresh CSRF token after successful login
+        // Refresh CSRF token after successful login, as a new session begins
         await refreshCsrfToken();
         handleModalClose();
-        navigate('/');
+        navigate('/'); // After login navigate to base page to avoid silly errors
       } else {
         setMessages([data.error || 'Login failed']);
       }
@@ -129,6 +135,7 @@ function NavbarComponent() {
     }
   };
 
+  // Same as login, literally same logic but one additional field
   const handleRegister = async (e) => {
     e.preventDefault();
 
@@ -157,7 +164,6 @@ function NavbarComponent() {
       if (response.ok) {
         setIsAuthenticated(true);
         setUserEmail(data.user.email);
-        // Refresh CSRF token after successful registration
         await refreshCsrfToken();
         handleModalClose();
         navigate('/');
@@ -170,9 +176,8 @@ function NavbarComponent() {
     }
   };
 
+  // Same logic as login, but different implementation on backend
   window.handleGoogleLogin = async (response) => {
-    console.log("Callback is okay.v2");
-    console.log(response)
     const idToken = response.credential;
     try {
       const res = await fetch('/api/google-auth/', {
@@ -190,7 +195,6 @@ function NavbarComponent() {
       if (res.ok) {
         setIsAuthenticated(true);
         setUserEmail(data.user.email);
-        // Refresh CSRF token after successful Google login
         await refreshCsrfToken();
         handleModalClose();
         navigate('/');
@@ -203,6 +207,7 @@ function NavbarComponent() {
     }
   };
 
+  // Same logic as login
   const handleLogout = async () => {
     try {
       const response = await fetch('/api/logout/', {
@@ -217,7 +222,6 @@ function NavbarComponent() {
       if (response.ok) {
         setIsAuthenticated(false);
         setUserEmail('');
-        // Refresh CSRF token after logout
         await refreshCsrfToken();
         navigate('/');
       } else {
