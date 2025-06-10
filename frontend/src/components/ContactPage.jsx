@@ -1,3 +1,4 @@
+// Contact form component for user messages
 import React, { useState } from 'react';
 import { useAuth } from '../AuthContext';
 
@@ -10,7 +11,7 @@ const ContactPage = () => {
     const { getCsrfToken } = useAuth();
 
     const handleSubmit = async (event) => {
-        event.preventDefault();
+        event.preventDefault(); // Prevents browser defined behaviour
         console.log('Form submitted with data:', formData);
 
         // Validate form data
@@ -61,9 +62,9 @@ const ContactPage = () => {
         }
     };
 
+    // Check NavbarComponent.jsx handleInputChange function for more information about this function
     const handleChange = (event) => {
         const { name, value } = event.target;
-        console.log(`Updating ${name} field:`, value);
         setFormData(prevState => ({
             ...prevState,
             [name]: value

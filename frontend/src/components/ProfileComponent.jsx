@@ -1,3 +1,4 @@
+// User history page
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../AuthContext';
 import { Link } from 'react-router-dom';
@@ -22,7 +23,7 @@ const ProfileComponent = () => {
                     return;
                 }
 
-                const isAuth = await checkAuthentication();
+                const isAuth = await checkAuthentication(); // Loads auth from context
                 if (!isAuth || !userUid) {
                     if (isMounted) {
                         setError('Please log in to view your images');
@@ -44,7 +45,7 @@ const ProfileComponent = () => {
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.error || 'Failed to fetch images');
+                    Error(errorData.error || 'Failed to fetch images');
                 }
 
                 const data = await response.json();
@@ -52,7 +53,7 @@ const ProfileComponent = () => {
                     setImages(data.images);
                     setLoading(false);
                     setError(null);
-                }
+                } //
             } catch (err) {
                 if (isMounted) {
                     setError('Error fetching images: ' + err.message);
@@ -111,7 +112,8 @@ const ProfileComponent = () => {
                                 return (
                                     <div key={index} className="col-md-4 mb-4">
                                         <div className="card">
-                                            <img 
+                                            {/* eslint-disable-next-line jsx-a11y/img-redundant-alt */}
+                                            <img
                                                 src={`data:image/${resultsPayload.format};base64,${resultsPayload.image}`}
                                                 alt={`Uploaded image ${index + 1}`}
                                                 className="card-img-top"

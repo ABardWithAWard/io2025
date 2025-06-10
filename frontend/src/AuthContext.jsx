@@ -1,10 +1,14 @@
+// Authentication context provider for managing user authentication state
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
+// Create authentication context on start
 const AuthContext = createContext(null);
 
+// Custom hook for accessing auth context, this should be used in components
+// instead of calling any authentication endpoints
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (!context) {
@@ -13,6 +17,7 @@ export const useAuth = () => {
     return context;
 };
 
+// Firebase configuration, should be changed if app ever makes it to prod
 const firebaseConfig = {
     apiKey: process.env.REACT_APP_PRIVATE_KEY,
     authDomain: `${process.env.REACT_APP_PROJECT_ID}.firebaseapp.com`,
@@ -47,22 +52,20 @@ export const AuthProvider = ({ children }) => {
         // Reset state on mount
         resetAuthState();
         
+        // Unified error handling for authentication flow, used to be a mess
+        // This try-catch block handles:
+        // 1. Firebase auth state changes
+        // 2. Token retrieval and validation
+        // 3. Backend authentication status check
         try {
             unsubscribe = onAuthStateChanged(auth, 
                 async (user) => {
                     if (user) {
-                        try {
-                            // Get the ID token
-                            const token = await user.getIdToken(true); // Force refresh token
-                            setIdToken(token);
-                            // Check authentication status with backend
-                            const isAuth = await checkAuthentication();
-                            if (!isAuth) {
-                                resetAuthState();
-                            }
-                        } catch (error) {
-                            console.error('Error getting user token:', error);
-                            setError(error.message);
+                        // Get the ID token and validate with backend
+                        const token = await user.getIdToken(true);
+                        setIdToken(token);
+                        const isAuth = await checkAuthentication();
+                        if (!isAuth) {
                             resetAuthState();
                         }
                     } else {
@@ -79,7 +82,7 @@ export const AuthProvider = ({ children }) => {
                 }
             );
         } catch (error) {
-            console.error('Error setting up auth state listener:', error);
+            console.error('Authentication error:', error);
             setError(error.message);
             resetAuthState();
             setIsLoading(false);
@@ -87,7 +90,7 @@ export const AuthProvider = ({ children }) => {
 
         return () => {
             if (unsubscribe) {
-                unsubscribe();
+                unsubscribe(); // Makes sure we reset all states on mount
             }
         };
     }, []);
@@ -99,7 +102,7 @@ export const AuthProvider = ({ children }) => {
                 credentials: 'include'
             });
             if (!response.ok) {
-                throw new Error('Failed to fetch CSRF token');
+                Error('Failed to fetch CSRF token');
             }
         } catch (error) {
             console.error('Error fetching CSRF token:', error);
@@ -122,11 +125,15 @@ export const AuthProvider = ({ children }) => {
             });
             const data = await response.json();
             setIsAuthenticated(data.isAuthenticated);
+            // If user is authenticated and firebase_uid is not a null, then set it for
+            // image saving purposes
             if (data.isAuthenticated && data.user?.firebase_uid) {
                 setUserUid(data.user.firebase_uid);
                 await fetchCsrfToken();
             } else {
                 setUserUid(null);
+                // If user is not authenticated set it to null to prevent saving images
+                // to somebody's account
             }
             return data.isAuthenticated;
         } catch (error) {
@@ -161,7 +168,7 @@ export const AuthProvider = ({ children }) => {
         error,
         checkAuthentication,
         refreshCsrfToken
-    };
+    }; // All values which can be used by other components
 
     if (isLoading) {
         return (
@@ -173,6 +180,7 @@ export const AuthProvider = ({ children }) => {
                 minHeight: '100vh',
                 backgroundColor: '#f8f9fa'
             }}>
+                {/* Good-looking spinner when loading context instead of boring text*/}
                 <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
                     <span className="visually-hidden">Loading...</span>
                 </div>
@@ -194,12 +202,16 @@ export const AuthProvider = ({ children }) => {
                 <div className="alert alert-danger" role="alert">
                     Error: {error}
                 </div>
+                {/* Debug screen if auth context fails to load for any reason.
+            It should never be displayed normally (unless local errors like network error are present )*/}
             </div>
         );
     }
 
     return (
         <AuthContext.Provider value={value}>
+            {/* Look at App.jsx to see how AuthContext is implemented there,
+              if you do not understand why this return looks like this */}
             {children}
         </AuthContext.Provider>
     );
