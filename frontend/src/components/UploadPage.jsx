@@ -60,6 +60,12 @@ const UploadPage = () => {
 
     const handleFileUpload = async () => {
         // Reading form and then appending it for backend api call
+        const checkAuth = async () => {
+            await checkAuthentication();
+            setLoading(false);
+        };
+
+        checkAuth(); // Refresh auth before sending form
         const formData = new FormData();
         const fileInput = document.querySelector('input[type="file"]');
 
