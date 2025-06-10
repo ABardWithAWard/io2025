@@ -1,6 +1,6 @@
 // Main page, used for upload form and various modals which can occur during it
 import React, {useEffect, useState} from 'react';
-import { useAuth } from '../AuthContext';
+import {AuthProvider, useAuth} from '../AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const UploadPage = () => {
@@ -8,7 +8,7 @@ const UploadPage = () => {
     const [setHasShownPrivacyWarning] = useState(false);
     const [error, setError] = useState('');
     const [showUploadModal, setShowUploadModal] = useState(false);
-    const {getCsrfToken, userUid, checkAuthentication} = useAuth();
+    const {getCsrfToken, userUid, checkAuthentication, resetAuthState} = useAuth();
     const [fontSize, setFontSize] = useState(12);
     const [language, setLanguage] = useState('english');
     const [exportFormat, setExportFormat] = useState('docx');
@@ -60,12 +60,14 @@ const UploadPage = () => {
 
     const handleFileUpload = async () => {
         // Reading form and then appending it for backend api call
-        const checkAuth = async () => {
-            await checkAuthentication();
-            setLoading(false);
-        };
 
-        checkAuth(); // Refresh auth before sending form
+        const authResponse = await fetch('/api/auth-status/', {
+                method: 'GET',
+                credentials: 'include'
+            });
+        const authData = await authResponse.json(); // We need to get this manually since
+        // user could log in without refreshing page
+
         const formData = new FormData();
         const fileInput = document.querySelector('input[type="file"]');
 
@@ -76,7 +78,7 @@ const UploadPage = () => {
 
         try {
             formData.append('file', fileInput.files[0]);
-            formData.append('userUid', userUid);
+            formData.append('userUid', authData.isAuthenticated ? authData.user.firebase_uid : null);
             formData.append('fontSize', fontSize);
             formData.append('language', language);
             formData.append('format', exportFormat);
