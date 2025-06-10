@@ -49,11 +49,11 @@ const ProfileComponent = () => {
                 }
 
                 const data = await response.json();
-                if (isMounted) {
+                if (isMounted) { // If auth is properly mounted display everything
                     setImages(data.images);
                     setLoading(false);
                     setError(null);
-                } //
+                }
             } catch (err) {
                 if (isMounted) {
                     setError('Error fetching images: ' + err.message);
