@@ -1,6 +1,8 @@
+// Basic admin page
+// A good idea would be to implement clean_firestore.py and set_staff.py here
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Cookies from 'js-cookie';
+import {useAuth} from "../AuthContext";
 
 const AdminPage = () => {
     const navigate = useNavigate();
@@ -8,28 +10,11 @@ const AdminPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
-
-    const fetchCsrfToken = async () => {
-        try {
-            const response = await fetch('/api/csrf-token/', {
-                method: 'GET',
-                credentials: 'include'
-            });
-            if (!response.ok) {
-                throw new Error('Failed to fetch CSRF token');
-            }
-        } catch (error) {
-            console.error('Error fetching CSRF token:', error);
-            setError(error.message);
-        }
-    };
-
-    const getCsrfToken = () => {
-        return Cookies.get('csrftoken');
-    };
+    const {getCsrfToken, fetchCsrfToken} = useAuth();
 
     useEffect(() => {
         const checkAdminAccess = async () => {
+            // Check manually if user is staff, if not redirect back to /
             try {
                 const response = await fetch('/api/auth-status/', {
                     method: 'GET',
@@ -40,9 +25,7 @@ const AdminPage = () => {
                 if (data.user.is_staff !== true) {
                     navigate('/');
                 } else {
-                    // If admin, fetch the limits
-                    await fetchCsrfToken();
-                    fetchLimits();
+                    await fetchLimits();
                 }
             } catch (error) {
                 console.error('Error checking auth status:', error);
@@ -51,9 +34,10 @@ const AdminPage = () => {
         };
 
         checkAdminAccess();
-    }, [navigate]);
+    }, [fetchCsrfToken, navigate]);
 
     const fetchLimits = async () => {
+        // Fetching limits to display them in form
         try {
             const response = await fetch('/api/global-settings/', {
                 method: 'GET',
@@ -70,12 +54,14 @@ const AdminPage = () => {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        // Submit form to backend, simple logic
+        e.preventDefault(); // Prevents undefined behaviour
+        // Browsers sometimes handle forms in a different way than we intend to
+        // e is short for event
         setError(null);
         setSuccess(null);
 
         try {
-            await fetchCsrfToken();
             const response = await fetch('/api/global-settings/', {
                 method: 'POST',
                 headers: {
@@ -100,11 +86,14 @@ const AdminPage = () => {
         }
     };
 
+    // Documentation is in NavbarComponent, look for function handleInputChange
     const handleChange = (e) => {
         const { name, value } = e.target;
         setLimits(prev => ({
             ...prev,
-            [name]: parseInt(value) || 0
+            [name]: parseInt(value) || 0 // Makes sure we have integer as argument
+            // If value is unparsable to integer it returns NaN which makes us submit 0 to form
+            // In any other situation it returns parsed value
         }));
     };
 

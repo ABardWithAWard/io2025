@@ -1,3 +1,5 @@
+// Results display component for showing processed document data
+// NOTE: Should ONLY be accessed by passing payload which this document processes
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
@@ -21,6 +23,8 @@ const ResultsPage = () => {
 
     useEffect(() => {
         if (!location.state?.results) {
+            // If results are null then go back to upload
+            // Should never be called when using app normally
             navigate('/upload');
             return;
         }
@@ -34,9 +38,14 @@ const ResultsPage = () => {
         }
     }, [location.state, navigate]);
 
+    // Check if there is any meaningful data
+    // no keys -> undefined (false if used like boolean)
+    // only zeroes -> false
+    // any other values -> true
     const hasConfidenceValues = results?.confidence?.some(conf => conf > 0);
 
     if (loading) {
+        // Spinner could be added here as well
         return (
             <div className="container mt-4">
                 <p>Loading...</p>
@@ -71,7 +80,8 @@ const ResultsPage = () => {
                         <div className="card-header">
                             <h5 className="card-title mb-0">Processed Image</h5>
                         </div>
-                        <img 
+                        {/* eslint-disable-next-line jsx-a11y/img-redundant-alt */}
+                        <img
                             src={`data:image/${results.format};base64,${results.image}`}
                             alt="Processed image"
                             className="card-img-top"
@@ -137,6 +147,7 @@ const getConfidenceColor = (confidence) => {
     if (confidence >= 0.70) return '#17a2b8'; // blue
     if (confidence >= 0.50) return '#ffc107'; // yellow
     return '#dc3545'; // red
+    // Can be adjusted after further testing
 };
 
 export default ResultsPage; 
