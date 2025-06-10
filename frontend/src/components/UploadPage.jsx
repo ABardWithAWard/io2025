@@ -160,7 +160,7 @@ const UploadPage = () => {
                     </div>
                 </div>
 
-                <div className="text-center mb-3">
+                <div className="text-left mb-3">
                     <button
                         type="button"
                         className={`btn ${hasConfidence ? 'btn-primary' : 'btn-secondary'}`}
@@ -170,7 +170,7 @@ const UploadPage = () => {
                     </button>
                 </div>
 
-                <div className="text-center">
+                <div className="text-left">
                     <button type="submit" className="btn btn-primary">Upload</button>
                 </div>
             </form>
