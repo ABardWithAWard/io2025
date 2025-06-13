@@ -15,16 +15,6 @@ class ApplicationConfig(AppConfig):
             from application.services import setup_firestore_db
 
             setup_firestore_db()
-
-            limits = get_limits()
-            if not limits:
-                set_data_limit(300)
-                set_file_limit(10)
-
-            User = get_user_model()
-            if not User.objects.filter(username="admin@example.com").exists():
-                User.objects.create_superuser("admin@example.com", "admin@example.com", "admin")
-
         except (OperationalError, ProgrammingError) as e:
             print(f"Error: {e}")
 

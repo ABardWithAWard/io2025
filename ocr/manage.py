@@ -8,9 +8,6 @@ import sys
 import warnings
 
 DEBUG_MODE = False
-warnings.filterwarnings(
-    "error", category=RuntimeWarning, message=".*database.*app initialization.*"
-)
 
 
 def cleanup_uploaded_files():
