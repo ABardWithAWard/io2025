@@ -27,7 +27,7 @@ firestore_db = None
 
 def prepare_file_hierarchy(file):
     """Takes uploaded file and returns directory where it is saved and its detected content"""
-    upload_dir = os.path.abspath(os.environ['UPLOADED_FILES'])
+    upload_dir = os.path.abspath(os.environ["UPLOADED_FILES"])
     print(f"Upload directory: {upload_dir}")
 
     # Save the uploaded file first
@@ -42,6 +42,7 @@ def prepare_file_hierarchy(file):
 
     return full_path
 
+
 def handle_uploaded_file(file):
     """Takes file uploaded in form and calls helper function to manage file and its contents"""
     full_path = prepare_file_hierarchy(file)
@@ -55,6 +56,7 @@ def handle_uploaded_file(file):
         print("EasyOCR results:")
         print(" ".join([result for result in easy_result["text_predictions"]]))
 
+
 def setup_firestore_db():
     """
     Initialize the global firestore_db variable to hold a google.cloud.firestore_v1 Client object.
@@ -66,6 +68,7 @@ def setup_firestore_db():
     credentials_obj = credentials.Certificate(os.environ["FIREBASE_KEY"])
     firebase_admin.initialize_app(credentials_obj)
     firestore_db = firestore.client()
+
 
 def retrieve_pictures_using_uid(desired_uid: str) -> List[Image.Image]:
     """
@@ -85,12 +88,19 @@ def retrieve_pictures_using_uid(desired_uid: str) -> List[Image.Image]:
     )
 
     # A list of user images encoded in b64 string format
-    user_images_b64_list = [user_image_snapshot.get("image_data") for user_image_snapshot in user_images_snapshot_list]
+    user_images_b64_list = [
+        user_image_snapshot.get("image_data")
+        for user_image_snapshot in user_images_snapshot_list
+    ]
 
     # A list of PIL.Image objects generated from decoding the b64 string format
-    user_images_list = [Image.open(BytesIO(base64.b64decode(user_image_b64))) for user_image_b64 in user_images_b64_list]
+    user_images_list = [
+        Image.open(BytesIO(base64.b64decode(user_image_b64)))
+        for user_image_b64 in user_images_b64_list
+    ]
 
     return user_images_list
+
 
 def output_processed_as_txt(word_list: List[str], output_path: str, line_width=80):
     """
@@ -113,6 +123,7 @@ def output_processed_as_txt(word_list: List[str], output_path: str, line_width=8
                 # Otherwise simply write
                 f.writelines(f"{word} ")
 
+
 def output_processed_as_docx(word_list: List[str], output_path: str, font_size=11):
     """
     Output a list of words (strings) extracted from an image into a .docx file at output_path.
@@ -132,27 +143,37 @@ def output_processed_as_docx(word_list: List[str], output_path: str, font_size=1
     # The appearance will be saved
     document.save(output_path)
 
+
 def get_db():
     if not firebase_admin._apps:
-        cred_path = os.environ['FIREBASE_KEY']
+        cred_path = os.environ["FIREBASE_KEY"]
         if not os.path.exists(cred_path):
-            raise Exception('Firebase credentials not found')
+            raise Exception("Firebase credentials not found")
         cred = credentials.Certificate(cred_path)
         firebase_admin.initialize_app(cred)
 
     return firestore.client()
 
+
 def set_data_limit(data_limit):
     db = get_db()
-    db.collection("global_settings").document("limits").set({
-        'dataLimit': data_limit,
-    }, merge=True)
+    db.collection("global_settings").document("limits").set(
+        {
+            "dataLimit": data_limit,
+        },
+        merge=True,
+    )
+
 
 def set_file_limit(file_limit):
     db = get_db()
-    db.collection("global_settings").document("limits").set({
-        'fileLimit': file_limit,
-    }, merge=True)
+    db.collection("global_settings").document("limits").set(
+        {
+            "fileLimit": file_limit,
+        },
+        merge=True,
+    )
+
 
 def get_limits():
     db = get_db()

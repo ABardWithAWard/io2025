@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+
 class ModelBase(ABC):
     def __init__(self, name):
         """
