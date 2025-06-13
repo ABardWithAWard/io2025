@@ -1,19 +1,34 @@
-import React, { useState } from 'react';
-import { useAuth } from '../AuthContext';
+// Main page, used for upload form and various modals which can occur during it
+import React, {useEffect, useState} from 'react';
+import {AuthProvider, useAuth} from '../AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const UploadPage = () => {
     const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
     const [setHasShownPrivacyWarning] = useState(false);
     const [error, setError] = useState('');
     const [showUploadModal, setShowUploadModal] = useState(false);
-    const {getCsrfToken} = useAuth();
+    const {getCsrfToken, userUid, checkAuthentication, resetAuthState} = useAuth();
     const [fontSize, setFontSize] = useState(12);
     const [language, setLanguage] = useState('english');
     const [exportFormat, setExportFormat] = useState('docx');
     const [hasConfidence, setHasConfidence] = useState(false);
     const [paragraphWidth, setParagraphWidth] = useState(80);
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            await checkAuthentication();
+            setLoading(false);
+        };
+
+        checkAuth();
+    }, [checkAuthentication]);
 
     const handleUploadClick = (event) => {
+        // Instead of uploading right away we ensure that form is well filled
+        // and then show a modal which actually handles upload logic
         event.preventDefault();
         const fileInput = document.querySelector('input[type="file"]');
         if (!fileInput || fileInput.files.length === 0) {
@@ -24,6 +39,7 @@ const UploadPage = () => {
     };
 
     const handlePrivacyContinue = () => {
+        // Handle upload logic if user agrees to privacy modal
         setHasShownPrivacyWarning(true);
         setShowPrivacyDialog(false);
         document.getElementById('uploadForm').dispatchEvent(new Event('submit'));
@@ -43,6 +59,15 @@ const UploadPage = () => {
     };
 
     const handleFileUpload = async () => {
+        // Reading form and then appending it for backend api call
+
+        const authResponse = await fetch('/api/auth-status/', {
+                method: 'GET',
+                credentials: 'include'
+            });
+        const authData = await authResponse.json(); // We need to get this manually since
+        // user could log in without refreshing page
+
         const formData = new FormData();
         const fileInput = document.querySelector('input[type="file"]');
 
@@ -52,12 +77,6 @@ const UploadPage = () => {
         }
 
         try {
-            const authResponse = await fetch('/api/auth-status/', {
-                method: 'GET',
-                credentials: 'include'
-            });
-            const authData = await authResponse.json();
-
             formData.append('file', fileInput.files[0]);
             formData.append('userUid', authData.isAuthenticated ? authData.user.firebase_uid : null);
             formData.append('fontSize', fontSize);
@@ -77,7 +96,8 @@ const UploadPage = () => {
 
             const data = await response.json();
             if (response.ok) {
-                setError('');
+                // Navigate to results page with the OCR results from payload
+                navigate('/results', { state: { results: data.payload } });
             } else {
                 setError(data.errors || 'Upload failed');
             }
@@ -86,6 +106,25 @@ const UploadPage = () => {
             setError('An error occurred while uploading the file');
         }
     };
+
+    if (loading) {
+        // Spinner could be added here as well
+        return (
+            <div className="container mt-4">
+                <p>Loading...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="container mt-4">
+                <div className="alert alert-danger" role="alert">
+                    {error}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="container mt-4">
@@ -98,18 +137,6 @@ const UploadPage = () => {
 
                 <div className="row mb-3">
                     <div className="col-md-6">
-                        <label htmlFor="fontSize" className="form-label">Font Size:</label>
-                        <input 
-                            type="number" 
-                            className="form-control" 
-                            id="fontSize" 
-                            value={fontSize}
-                            onChange={(e) => setFontSize(Number(e.target.value))}
-                            min="8"
-                            max="72"
-                        />
-                    </div>
-                    <div className="col-md-6">
                         <label htmlFor="language" className="form-label">Language:</label>
                         <select 
                             className="form-select" 
@@ -121,9 +148,6 @@ const UploadPage = () => {
                             <option value="polish">Polish</option>
                         </select>
                     </div>
-                </div>
-
-                <div className="row mb-3">
                     <div className="col-md-6">
                         <label htmlFor="exportFormat" className="form-label">Export Format:</label>
                         <select 
@@ -134,24 +158,44 @@ const UploadPage = () => {
                         >
                             <option value="docx">DOCX</option>
                             <option value="txt">TXT</option>
-                            <option value="rtf">RTF</option>
                         </select>
-                    </div>
-                    <div className="col-md-6">
-                        <label htmlFor="paragraphWidth" className="form-label">Paragraph Width:</label>
-                        <input 
-                            type="number" 
-                            className="form-control" 
-                            id="paragraphWidth" 
-                            value={paragraphWidth}
-                            onChange={(e) => setParagraphWidth(Number(e.target.value))}
-                            min="40"
-                            max="100"
-                        />
                     </div>
                 </div>
 
-                <div className="text-center mb-3">
+                <div className="row mb-3">
+                    <div className="col-md-6">
+                        {exportFormat === 'docx' && (
+                            <>
+                                <label htmlFor="fontSize" className="form-label">Font Size:</label>
+                                <input 
+                                    type="number" 
+                                    className="form-control" 
+                                    id="fontSize" 
+                                    value={fontSize}
+                                    onChange={(e) => setFontSize(Number(e.target.value))}
+                                    min="8"
+                                    max="72"
+                                />
+                            </>
+                        )}
+                        {exportFormat === 'txt' && (
+                            <>
+                                <label htmlFor="paragraphWidth" className="form-label">Paragraph Width:</label>
+                                <input 
+                                    type="number" 
+                                    className="form-control" 
+                                    id="paragraphWidth" 
+                                    value={paragraphWidth}
+                                    onChange={(e) => setParagraphWidth(Number(e.target.value))}
+                                    min="40"
+                                    max="100"
+                                />
+                            </>
+                        )}
+                    </div>
+                </div>
+
+                <div className="text-left mb-3">
                     <button
                         type="button"
                         className={`btn ${hasConfidence ? 'btn-primary' : 'btn-secondary'}`}
@@ -161,7 +205,7 @@ const UploadPage = () => {
                     </button>
                 </div>
 
-                <div className="text-center">
+                <div className="text-left">
                     <button type="submit" className="btn btn-primary">Upload</button>
                 </div>
             </form>

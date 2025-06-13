@@ -115,17 +115,18 @@ def handle_uploaded_file(file, user_uid=None):
         with open(full_path, 'rb') as image_file:
             encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
 
-        # Add image to Firestore with userUid
+        # Add image to Firestore with userUid and OCR results
         image_ref = db.collection('images').document()
         image_ref.set({
             'image_data': encoded_string,
             'filename': file.name,
             'timestamp': firestore.SERVER_TIMESTAMP,
-            'userUid': user_uid  # This will be null for unauthenticated users
+            'userUid': user_uid,  # This will be null for unauthenticated users
+            'ocr_results': {
+                'text_predictions': result["text_predictions"],
+                'confidence_scores': result["confidence_scores"]
+            }
         })
-
-        # We can look up images using https://base64.guru/converter/decode/image
-        # As they are saved as base64 strings
 
         json_ocr_result = convert_result_to_json(file, full_path, result)
 
