@@ -5,19 +5,18 @@ import os
 import shutil
 import sys
 
+import warnings
+
 
 def cleanup_uploaded_files():
     try:
         upload_dir = os.path.abspath(os.environ["UPLOADED_FILES"])
-        print(f"Cleaning up directory: {upload_dir}")
 
         if os.path.exists(upload_dir):
             shutil.rmtree(upload_dir)
             os.makedirs(upload_dir)
-            print("Cleanup completed successfully")
         else:
-            print(f"Directory {upload_dir} does not exist")
-
+            raise OSError(f"Upload directory {upload_dir} does not exist")
     except Exception as e:
         print(f"Error during cleanup: {e}")
 

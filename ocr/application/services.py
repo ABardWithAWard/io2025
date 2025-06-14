@@ -26,7 +26,11 @@ firestore_db = None
 
 
 def prepare_file_hierarchy(file):
-    """Takes uploaded file and returns directory where it is saved and its detected content"""
+    """
+    Save an uploaded file to the designated upload directory and return its full path.
+    :param file: The uploaded file object to be saved.
+    :return: The full file system path where the file was saved.
+    """
     upload_dir = os.path.abspath(os.environ["UPLOADED_FILES"])
     print(f"Upload directory: {upload_dir}")
 
@@ -44,12 +48,13 @@ def prepare_file_hierarchy(file):
 
 
 def handle_uploaded_file(file):
+    """
+    Process an uploaded file by saving it and performing OCR using both Paddle and Easy models.
+    :param file: The uploaded file object to be processed.
+    """
     full_path = prepare_file_hierarchy(file)
 
-    try:
-        if not validate_image_brightness(full_path):
-            return {"status": "error", "message": "Image too dark."}
-
+    if validate_image_brightness(full_path):
         paddle_result = paddle_model.perform_ocr(input_path=full_path)
         print("PaddleOCR results:")
         print(" ".join([result for result in paddle_result["text_predictions"]]))
@@ -57,20 +62,6 @@ def handle_uploaded_file(file):
         easy_result = easy_model.perform_ocr(input_path=full_path)
         print("EasyOCR results:")
         print(" ".join([result for result in easy_result["text_predictions"]]))
-
-        combined_text = (
-            paddle_result["text_predictions"] + easy_result["text_predictions"]
-        )
-        if not combined_text:
-            return {
-                "status": "error",
-                "message": "No text could be extracted from the image.",
-            }
-
-        return {"status": "success", "text": " ".join(combined_text)}
-
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
 
 
 def setup_firestore_db():
@@ -161,6 +152,10 @@ def output_processed_as_docx(word_list: List[str], output_path: str, font_size=1
 
 
 def get_db():
+    """
+    Get a Firestore database client, initializing Firebase app if not already done.
+    :return: A google.cloud.firestore_v1 Client object for database operations.
+    """
     if not firebase_admin._apps:
         cred_path = os.environ["FIREBASE_KEY"]
         if not os.path.exists(cred_path):
@@ -169,3 +164,41 @@ def get_db():
         firebase_admin.initialize_app(cred)
 
     return firestore.client()
+
+
+def set_data_limit(data_limit):
+    """
+    Set the global data limit in the Firestore database.
+    :param data_limit: The data limit value to be stored in the database.
+    """
+    db = get_db()
+    db.collection("global_settings").document("limits").set(
+        {
+            "dataLimit": data_limit,
+        },
+        merge=True,
+    )
+
+
+def set_file_limit(file_limit):
+    """
+    Set the global file limit in the Firestore database.
+    :param file_limit: The file limit value to be stored in the database.
+    """
+    db = get_db()
+    db.collection("global_settings").document("limits").set(
+        {
+            "fileLimit": file_limit,
+        },
+        merge=True,
+    )
+
+
+def get_limits():
+    """
+    Retrieve the global limits settings from the Firestore database.
+    :return: A dictionary containing the limits data, or empty dict if document doesn't exist.
+    """
+    db = get_db()
+    doc = db.collection("global_settings").document("limits").get()
+    return doc.to_dict() if doc.exists else {}

@@ -1,4 +1,5 @@
 import os
+from PIL import Image
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from rest_framework import viewsets, status
@@ -20,7 +21,8 @@ from django.conf import settings
 from django.views.generic import TemplateView
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
-from application.services import retrieve_pictures_using_uid
+from application.services import retrieve_pictures_using_uid, prepare_file_hierarchy
+from application.utils import validate_image_brightness
 import base64
 from io import BytesIO
 
@@ -28,6 +30,10 @@ DEBUG_MODE = False
 
 
 class UploadedFileViewSet(viewsets.ModelViewSet):
+    """
+    Django REST Framework ViewSet for handling file uploads and OCR processing.
+    """
+
     queryset = UploadedFile.objects.all()
     serializer_class = UploadedFileSerializer
     permission_classes = [AllowAny]
@@ -53,7 +59,45 @@ class UploadedFileViewSet(viewsets.ModelViewSet):
         return Response(files)
 
 
+class FileValidationViewSet(viewsets.ModelViewSet):
+    """
+    Django REST Framework ViewSet for validating uploaded files before processing.
+    """
+
+    queryset = UploadedFile.objects.all()
+    serializer_class = UploadedFileSerializer
+    permission_classes = [AllowAny]
+
+    @action(detail=False, methods=["post"])
+    def upload(self, request):
+        if DEBUG_MODE:
+            print("FILES:", request.FILES)
+        form = UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            file_from_request = request.FILES["file"]
+            created_file_path = prepare_file_hierarchy(file_from_request)
+
+            # One of "good", "dark" or "bright"
+            brightness_validation_result = validate_image_brightness(
+                Image.open(created_file_path)
+            )
+            if brightness_validation_result == "good":
+                return Response({"status": "success"})
+            else:
+                return Response(
+                    {"status": "invalid", "type": brightness_validation_result}
+                )
+        return Response(
+            {"status": "error", "errors": form.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
 class SupportTicketViewSet(viewsets.ModelViewSet):
+    """
+    Django REST Framework ViewSet for handling support ticket submissions.
+    """
+
     queryset = SupportTicket.objects.all()
     serializer_class = SupportTicketSerializer
 
@@ -68,6 +112,10 @@ class SupportTicketViewSet(viewsets.ModelViewSet):
 
 
 class CSRFView(APIView):
+    """
+    API view to provide CSRF tokens for client-side requests.
+    """
+
     permission_classes = [AllowAny]
 
     @method_decorator(ensure_csrf_cookie)
@@ -76,6 +124,10 @@ class CSRFView(APIView):
 
 
 class ContactAPIView(APIView):
+    """
+    API view for handling contact form submissions and storing them in Firestore.
+    """
+
     permission_classes = [AllowAny]  # Allow public access to this endpoint
 
     def post(self, request):
@@ -128,6 +180,10 @@ class ContactAPIView(APIView):
 
 @method_decorator(csrf_exempt, name="dispatch")
 class RegisterAPIView(APIView):
+    """
+    API view for user registration using Firebase Authentication.
+    """
+
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -152,6 +208,10 @@ class RegisterAPIView(APIView):
 
 
 class GoogleAuthAPIView(APIView):
+    """
+    API view for handling Google OAuth authentication using Firebase ID tokens.
+    """
+
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -241,6 +301,10 @@ class GoogleAuthAPIView(APIView):
 
 
 class LogoutAPIView(APIView):
+    """
+    API view for handling user logout and session cleanup.
+    """
+
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -255,6 +319,10 @@ class LogoutAPIView(APIView):
 
 
 class AuthStatusAPIView(APIView):
+    """
+    API view for checking user authentication status across Django and Firebase.
+    """
+
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -424,6 +492,10 @@ class AuthStatusAPIView(APIView):
 
 @method_decorator(csrf_exempt, name="dispatch")
 class LoginAPIView(APIView):
+    """
+    API view for user login using Firebase ID token authentication.
+    """
+
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -469,6 +541,10 @@ class LoginAPIView(APIView):
 
 
 class GetImagesAPIView(APIView):
+    """
+    API view for retrieving user images from Firestore database.
+    """
+
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -522,6 +598,10 @@ class GetImagesAPIView(APIView):
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class ReactAppView(TemplateView):
+    """
+    Django template view for serving the React application with CSRF token injection.
+    """
+
     template_name = "index.html"
 
     def get(self, request, *args, **kwargs):
@@ -584,6 +664,10 @@ class ReactAppView(TemplateView):
 
 
 class GlobalSettingsAPIView(APIView):
+    """
+    API view for retrieving global application settings from Firestore database.
+    """
+
     permission_classes = [AllowAny]
 
     def get(self, request):
