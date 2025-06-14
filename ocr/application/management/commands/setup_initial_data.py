@@ -4,6 +4,10 @@ from application.services import get_limits, set_data_limit, set_file_limit
 
 
 class Command(BaseCommand):
+    """
+    Django management command to set up initial application data including limits and admin user.
+    """
+
     help = "Set up initial data for the application"
 
     def handle(self, *args, **options):

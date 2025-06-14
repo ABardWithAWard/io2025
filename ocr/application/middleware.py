@@ -5,6 +5,11 @@ from django.shortcuts import redirect
 
 #
 class AdminSessionTimeoutMiddleware(MiddlewareMixin):
+    """
+    Django middleware to handle session timeout for admin users.
+    Sets admin session expiry to 5 minutes and redirects expired sessions to login.
+    """
+
     def process_request(self, request):
         if request.path.startswith("/admin/"):
             if request.user.is_authenticated:
