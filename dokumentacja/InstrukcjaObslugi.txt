@@ -1,0 +1,77 @@
+1. Wstep
+
+Uzytkownik aby korzystac z aplikacji nie musi sie logowac oraz samo logowanie nie zmienia w jaki sposob dziala aplikacja.
+Zalogowanie umozliwia jednak pare dodatkowych interakcji ktore oznacze na wstepie instrukcji dla kazdej interakcji.
+Pasek nawigacyjny jest zawsze widoczny, niezaleznie od strony. 
+W przypadku korzystania ze strony w malym oknie nalezy go rozwinac przyciskiem znajdujacym sie po prawej stronie, bedacy trzema poziomymi liniami.
+Wtedy zamiast rozmieszczenia po lewej/prawej stronie nalezy interpretowac to rozmieszczenie jako na gorze/dole.
+
+2. OCR
+
+Po wejsciu na strone lub kliknieciu przycisku Aplikacja OCR w pasku nawigacyjnym pojawi sie ekran z formularzem do wypelnienia (Fig1).
+Pola formularzu sa nastepujace:
+- Plik
+- Language
+- Export Format
+- Font Size or Paragraph Width (kazda z tych opcji jest dla odpowiedniego formatu)
+- Display confidence
+
+Aby uzupelnic formularz nalezy kolejno:
+
+- Kliknac przycisk browse oraz wybrac plik ze swojego komputera. Pliki nieobslugiwane (.exe, .bat, itd) nie sa wyswietlane.
+- Wybrac jezyk w rozwijanej liscie
+- Wybrac format do ktorego chcemy wyeksportowac wynik w rozwijanej liscie
+- Po wybraniu formatu .DOCX wybieramy wielkosc czczionki jaka chcemy w pliku, lub alternatywnie dla formatu .TXT szerokosc akapitu
+- Jesli chcemy, aby wynik dzialania programu zawieral pewnosc, z jaka model rozpoznal dane slowa nalezy kliknac w przycisk Display confidence
+
+Po uzupelnieniu formularzy nalezy kliknac przycisk Upload.
+Nastepnie wyswietli sie nam okienko informujace o nieprzesylaniu danych osobowych. Jesli klikniemy Cancel, to anulujemy caly proces.
+Alternatywnie, mozemy kliknac przycisk Continue aby kontynuowac przesylanie pliku. Po krotkiej chwili zostaniemy przeniesieni na nowa strone,
+gdzie beda znajdowac sie nasze wyniki pokolorowane zaleznie od procenta pewnosci modelu oraz link do pobrania naszego pliku w wybranym formacie.
+
+3. Kontakt
+
+Strona ma rowniez inne funkcjonalnosci, ktore znajdziemy w pasku nawigacyjnym. Kolejna funkcjonalnoscia jest kontakt z administratorem za posrednictwem formularza zgloszeniowego.
+
+Aby dostac sie do tej funkcjonalnosci nalezy kliknac przycisk Kontakt znajdujacy sie w pasku nawigacyjnym. Po kliknieciu zostaniemy przeniesieni na strone z formularzem.
+Kolejnymi polami formularzu sa:
+- Name
+- E-mail
+- Your message
+
+Aby uzupelnic formularz nalezy kolejno:
+
+- W polu Name wpisac swoje preferowane imie
+- W polu E-mail wpisac E-mail na ktory chcemy uzyskac odpowiedz od administratora
+- W polu Your message wpisac wiadomosc, ktora chcemy przekazac administratorom strony.
+
+Po uzupelnieniu formularza nalezy kliknac przycisk Submit, aby wyslac wiadomosc. 
+Po kliknieciu powinno wyskoczyc okienko ze statusem przesylania (tzn czy udalo sie przeslac wiadomosc na backend)
+
+4. Logowanie
+
+Aby uzyskac wiecej funkcjonalnosci, nalezy sie zalogowac za posrednictwem przycisku Login w pasku nawigacyjnym. Po kliknieciu wyskoczy nam okienko z dwoma kartami, login i register.
+Aktualnie jedyna metoda logowania jest logowanie przez google niezaleznie od wybranej karty. 
+Aby zalogowac sie za posrednictwem konta google nalezy kliknac przycisk google i wybrac konto (lub alternatywnie dodac nowe) ktore chcemy uzyc do zalogowania sie w aplikacji.
+
+5. Podglad profilu
+
+Jesli jestesmy zalogowani (patrz punkt 4), to zamiast przycisku Login po prawej stronie paska nawigacyjnego znajdziemy nasz e-mail. Aby przejsc do profilu nalezy go kliknac.
+W profilu zobaczymy wszystkie przeslane przez nas pliki wraz z linkami do zformatowanych wynikow.
+
+6. Admin
+
+Jesli jestesmy zalogowani na konto administratora (patrz punkt 4), to po kliknieciu przycisku Admin w pasku nawigacyjnym zostaniemy przeniesieni do strony z formularzem zawierajacym aktualne limity.
+W przeciwnym wypadku zostanie wyswietlone okienko informujace nas o statusie logowania (niezalogowany, zalogowany ale na zwykle konto).
+Formularz ma nastepujace pola:
+
+- Data limit
+- File limit
+
+Aby zmienic wartosci w bazie danych wystarczy zastapic aktualna wartosc w dowolnym z pol nowa, chciana przez nas wartoscia.
+Po zrobieniu tego nalezy kliknac przycisk Update Limits.
+
+7. Wylogowywanie
+
+Jesli jestesmy zalogowani (patrz punkt 4), to zamiast przycisku Login po prawej stronie paska nawigacyjnego znajdziemy przycisk Logout.
+Aby sie wylogowac nalezy go kliknac. Zostaniemy wtedy wylogowani oraz przeniesieni na strone OCR.
