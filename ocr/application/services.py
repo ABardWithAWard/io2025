@@ -43,10 +43,12 @@ def prepare_file_hierarchy(file):
     return full_path
 
 def handle_uploaded_file(file):
-    """Takes file uploaded in form and calls helper function to manage file and its contents"""
     full_path = prepare_file_hierarchy(file)
 
-    if validate_image_brightness(full_path):
+    try:
+        if not validate_image_brightness(full_path):
+            return {'status': 'error', 'message': 'Image too dark.'}
+
         paddle_result = paddle_model.perform_ocr(input_path=full_path)
         print("PaddleOCR results:")
         print(" ".join([result for result in paddle_result["text_predictions"]]))
@@ -54,6 +56,21 @@ def handle_uploaded_file(file):
         easy_result = easy_model.perform_ocr(input_path=full_path)
         print("EasyOCR results:")
         print(" ".join([result for result in easy_result["text_predictions"]]))
+
+        combined_text = paddle_result["text_predictions"] + easy_result["text_predictions"]
+        if not combined_text:
+            return {'status': 'error', 'message': 'No text could be extracted from the image.'}
+
+        return {
+            'status': 'success',
+            'text': " ".join(combined_text)
+        }
+
+    except Exception as e:
+        return {
+            'status': 'error',
+            'message': str(e)
+        }
 
 def setup_firestore_db():
     """
