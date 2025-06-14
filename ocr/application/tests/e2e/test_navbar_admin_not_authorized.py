@@ -8,17 +8,18 @@ from selenium.common.exceptions import TimeoutException
 from urllib.parse import urlparse
 import time
 
+
 class FileUploadFrontendTest(StaticLiveServerTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         chrome_options = Options()
         # chrome_options.add_argument('--headless')
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--disable-dev-shm-usage')
-        chrome_options.add_argument('--disable-gpu')
-        chrome_options.add_argument('--disable-web-security')
-        chrome_options.add_argument('--allow-running-insecure-content')
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--disable-web-security")
+        chrome_options.add_argument("--allow-running-insecure-content")
         chrome_options.add_argument("--window-size=1920,1080")
         cls.driver = webdriver.Chrome(options=chrome_options)
         cls.driver.implicitly_wait(10)
@@ -46,13 +47,17 @@ class FileUploadFrontendTest(StaticLiveServerTestCase):
     def handle_mobile_menu(self):
         try:
             toggle_button = WebDriverWait(self.driver, 2).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, 'button[aria-label="toggle navigation"]'))
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, 'button[aria-label="toggle navigation"]')
+                )
             )
 
             if toggle_button.is_displayed() and toggle_button.is_enabled():
                 # Check if menu items are currently visible
                 try:
-                    self.driver.find_element(By.XPATH, "//a[contains(text(), 'Kontakt')]")
+                    self.driver.find_element(
+                        By.XPATH, "//a[contains(text(), 'Kontakt')]"
+                    )
                     return
                 except:
                     toggle_button.click()
@@ -72,7 +77,9 @@ class FileUploadFrontendTest(StaticLiveServerTestCase):
 
         try:
             ocr = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//a[contains(text(), 'Aplikacja OCR')]"))
+                EC.presence_of_element_located(
+                    (By.XPATH, "//a[contains(text(), 'Aplikacja OCR')]")
+                )
             )
             self.assertTrue(ocr.is_displayed(), "'Aplikacja OCR' should be present")
             self.assertTrue(ocr.is_enabled(), "'Aplikacja OCR' should be clickable")
@@ -81,7 +88,9 @@ class FileUploadFrontendTest(StaticLiveServerTestCase):
 
         try:
             contact = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//a[contains(text(), 'Kontakt')]"))
+                EC.presence_of_element_located(
+                    (By.XPATH, "//a[contains(text(), 'Kontakt')]")
+                )
             )
             self.assertTrue(contact.is_displayed(), "'Kontakt' should be present")
             self.assertTrue(contact.is_enabled(), "'Kontakt' should be clickable")
@@ -90,7 +99,9 @@ class FileUploadFrontendTest(StaticLiveServerTestCase):
 
         try:
             admin = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//a[contains(text(), 'Admin')]"))
+                EC.presence_of_element_located(
+                    (By.XPATH, "//a[contains(text(), 'Admin')]")
+                )
             )
             self.assertTrue(admin.is_displayed(), "'Admin' should be present")
         except TimeoutException:
@@ -99,7 +110,11 @@ class FileUploadFrontendTest(StaticLiveServerTestCase):
         try:
             login = WebDriverWait(self.driver, 10).until(
                 EC.presence_of_element_located(
-                    (By.XPATH, "//button[contains(text(), 'Login')] | //button[contains(text(), 'login')]"))
+                    (
+                        By.XPATH,
+                        "//button[contains(text(), 'Login')] | //button[contains(text(), 'login')]",
+                    )
+                )
             )
             self.assertTrue(login.is_displayed(), "'Login' should be present")
             self.assertTrue(login.is_enabled(), "'Login' should be clickable")
@@ -119,7 +134,9 @@ class FileUploadFrontendTest(StaticLiveServerTestCase):
         self.handle_mobile_menu()
         try:
             kontakt = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Kontakt')]"))
+                EC.element_to_be_clickable(
+                    (By.XPATH, "//a[contains(text(), 'Kontakt')]")
+                )
             )
             kontakt.click()
             time.sleep(1)
@@ -141,7 +158,9 @@ class FileUploadFrontendTest(StaticLiveServerTestCase):
         self.handle_mobile_menu()
         try:
             ocr = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Aplikacja OCR')]"))
+                EC.element_to_be_clickable(
+                    (By.XPATH, "//a[contains(text(), 'Aplikacja OCR')]")
+                )
             )
             ocr.click()
             time.sleep(1)
@@ -157,10 +176,10 @@ class FileUploadFrontendTest(StaticLiveServerTestCase):
         self.navigate_to_contact()
 
         parsed_url = urlparse(self.driver.current_url)
-        self.assertEqual(parsed_url.path, '/contact')
+        self.assertEqual(parsed_url.path, "/contact")
 
     def test_navbar_navigation_from_contact_to_ocr(self):
-        self.driver.get(self.live_server_url + '/contact')
+        self.driver.get(self.live_server_url + "/contact")
         self.wait_for_react_to_load()
 
         self.check_navbar_presence()
@@ -168,7 +187,7 @@ class FileUploadFrontendTest(StaticLiveServerTestCase):
         self.navigate_to_ocr()
 
         parsed_url = urlparse(self.driver.current_url)
-        self.assertEqual(parsed_url.path, '/')
+        self.assertEqual(parsed_url.path, "/")
 
     def test_navbar_navigation_from_ocr_to_admin(self):
         self.driver.get(self.live_server_url)
@@ -187,7 +206,7 @@ class FileUploadFrontendTest(StaticLiveServerTestCase):
             self.fail("Expected admin access modal did not appear")
 
     def test_navbar_navigation_from_contact_to_admin(self):
-        self.driver.get(self.live_server_url + '/contact')
+        self.driver.get(self.live_server_url + "/contact")
         self.wait_for_react_to_load()
 
         self.check_navbar_presence()

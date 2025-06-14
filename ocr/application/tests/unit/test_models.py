@@ -8,7 +8,9 @@ from application.models import UploadedFile, SupportTicket
 class UploadedFileModelTests(TestCase):
 
     def test_file_upload_and_timestamp(self):
-        test_file = SimpleUploadedFile("test.png", b"file_content", content_type="image/png")
+        test_file = SimpleUploadedFile(
+            "test.png", b"file_content", content_type="image/png"
+        )
         uploaded_file = UploadedFile.objects.create(file=test_file)
 
         # check if object was saved
@@ -28,7 +30,7 @@ class SupportTicketModelTests(TestCase):
         self.valid_data = {
             "name": "test",
             "email": "test@example.com",
-            "message": "Testowa wiadomość"
+            "message": "Testowa wiadomość",
         }
 
     def test_create_support_ticket(self):
@@ -44,35 +46,37 @@ class SupportTicketModelTests(TestCase):
 
     def test_max_length_constraints(self):
         # Use input longer than allowed (201)
-        long_name = 'a' * 201
-        long_email = 'b' * 201
+        long_name = "a" * 201
+        long_email = "b" * 201
         ticket = SupportTicket(name=long_name, email=long_email, message="msg")
         with self.assertRaises(ValidationError):
             ticket.full_clean()
 
     def test_max_length_invalid_name(self):
-        long_name = 'a' * 201
-        valid_email = 'b' * 100
+        long_name = "a" * 201
+        valid_email = "b" * 100
         ticket = SupportTicket(name=long_name, email=valid_email, message="msg")
         with self.assertRaises(ValidationError):
             ticket.full_clean()
 
     def test_max_length_invalid_email(self):
-        valid_name = 'a' * 100
-        long_email = 'b' * 201
+        valid_name = "a" * 100
+        long_email = "b" * 201
         ticket = SupportTicket(name=valid_name, email=long_email, message="msg")
         with self.assertRaises(ValidationError):
             ticket.full_clean()
 
     def test_max_length_valid(self):
         valid_combinations = [
-            ('a' * 1, 'b' * 199),
-            ('a' * 199, 'b' * 1),
-            ('a' * 100, 'b' * 100),
+            ("a" * 1, "b" * 199),
+            ("a" * 199, "b" * 1),
+            ("a" * 100, "b" * 100),
         ]
         for name, email in valid_combinations:
             ticket = SupportTicket(name=name, email=email, message="msg")
             try:
                 ticket.full_clean()
             except ValidationError:
-                self.fail(f"ValidationError raised for valid input: name={len(name)}, email={len(email)}")
+                self.fail(
+                    f"ValidationError raised for valid input: name={len(name)}, email={len(email)}"
+                )

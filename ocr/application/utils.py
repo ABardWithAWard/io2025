@@ -5,11 +5,12 @@ from django.core.exceptions import ValidationError
 
 
 def validate_image_file(value):
-    allowed_extensions = ['.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff', '.webp']
+    allowed_extensions = [".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tiff", ".webp"]
 
     ext = os.path.splitext(value.name)[1].lower()
     if ext not in allowed_extensions:
-        raise ValidationError('Only image files are allowed.')
+        raise ValidationError("Only image files are allowed.")
+
 
 def validate_image_brightness(image_path, dark_threshold=30, bright_threshold=250):
     """
@@ -26,7 +27,7 @@ def validate_image_brightness(image_path, dark_threshold=30, bright_threshold=25
     image = Image.open(image_path)
 
     # Convert to grayscale to get lightness values
-    grayscale = image.convert('L')
+    grayscale = image.convert("L")
 
     # Convert to numpy array for efficient calculation
     pixels = np.array(grayscale)

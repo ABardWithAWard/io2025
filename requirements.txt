@@ -26,3 +26,5 @@ jiwer==3.1.0
 scikit-learn==1.6.1
 torchaudio>=2.7.0
 requests==2.32.3
+coverage==7.9.1
+selenium==4.24.0
