@@ -9,16 +9,30 @@ from application.utils import validate_image_file, validate_image_brightness
 
 class ValidateImageFileTests(TestCase):
     def test_valid_extensions(self):
-        valid_filenames = ['image.jpg', 'image.png', 'image.jpeg', 'image.bmp', 'image.gif', 'image.tiff', 'image.webp']
+        valid_filenames = [
+            "image.jpg",
+            "image.png",
+            "image.jpeg",
+            "image.bmp",
+            "image.gif",
+            "image.tiff",
+            "image.webp",
+        ]
         for filename in valid_filenames:
-            file = SimpleUploadedFile(filename, b'somecontent', content_type='image/jpeg')
+            file = SimpleUploadedFile(
+                filename, b"somecontent", content_type="image/jpeg"
+            )
             try:
                 validate_image_file(file)
             except ValidationError:
-                self.fail(f"validate_image_file raised ValidationError for valid file: {filename}")
+                self.fail(
+                    f"validate_image_file raised ValidationError for valid file: {filename}"
+                )
 
     def test_invalid_extension(self):
-        file = SimpleUploadedFile('document.txt', b'text content', content_type='text/plain')
+        file = SimpleUploadedFile(
+            "document.txt", b"text content", content_type="text/plain"
+        )
         with self.assertRaises(ValidationError):
             validate_image_file(file)
 

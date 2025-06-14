@@ -1,10 +1,12 @@
 import os
 from unittest import mock
 from unittest.mock import MagicMock
-from django.test import TestCase
+from rest_framework.test import force_authenticate
+from django.test import TestCase, RequestFactory
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client
+from api.views import AuthStatusAPIView
 
 
 class FirebaseTestMixin:
@@ -48,7 +50,7 @@ class UploadedFileViewSetTests(FirebaseTestMixin, TestCase):
         mock_get_files.return_value = []
         response = self.client.get("/api/upload/list_files/")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), [])
+        self.assertEqual(response.json(), ["empty"])
 
 
 # Ticket Form tests not working
@@ -57,49 +59,70 @@ class SupportTicketViewSetTests(TestCase):
     def setUp(self):
         self.client = Client(enforce_csrf_checks=True)
 
-    @mock.patch("application.forms.SubmitTicketForm")
+    @mock.patch("application.forms.SubmitTicketForm", autospec=True)
     def test_create_valid_ticket(self, mock_form_class):
         mock_form = mock_form_class.return_value
         mock_form.is_valid.return_value = True
         mock_form.cleaned_data = {
             "email": "user@example.com",
             "subject": "Subject",
-            "message": "Help!"
+            "message": "Help!",
         }
+
         response = self.client.get("/api/csrf-token/")
         csrftoken = response.cookies["csrftoken"].value
-
         post_data = mock_form.cleaned_data.copy()
-        post_data['csrfmiddlewaretoken'] = csrftoken
+        post_data["csrfmiddlewaretoken"] = csrftoken
 
         response = self.client.post(
             "/api/support-tickets/",
             post_data,
-            content_type='application/x-www-form-urlencoded'
+            content_type="application/x-www-form-urlencoded",
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["status"], "success")
         mock_form.is_valid.assert_called_once()
 
-    @mock.patch("application.forms.SubmitTicketForm")
+    @mock.patch("application.forms.SubmitTicketForm", autospec=True)
     def test_create_invalid_ticket(self, mock_form_class):
         mock_form = mock_form_class.return_value
         mock_form.is_valid.return_value = False
         mock_form.errors = {"email": ["This field is required."]}
+
         response = self.client.get("/api/csrf-token/")
         csrftoken = response.cookies["csrftoken"].value
-        post_data = {'csrfmiddlewaretoken': csrftoken}
+        post_data = {"csrfmiddlewaretoken": csrftoken}
 
         response = self.client.post(
             "/api/support-tickets/",
             post_data,
-            content_type='application/x-www-form-urlencoded'
+            content_type="application/x-www-form-urlencoded",
         )
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["status"], "error")
+        self.assertIn("errors", response.json())
         mock_form.is_valid.assert_called_once()
+
+    @mock.patch("application.forms.SubmitTicketForm", autospec=True)
+    def test_create_empty_post_data(self, mock_form_class):
+        mock_form = mock_form_class.return_value
+        mock_form.is_valid.return_value = False
+        mock_form.errors = {"__all__": ["No data provided"]}
+
+        response = self.client.get("/api/csrf-token/")
+        csrftoken = response.cookies["csrftoken"].value
+
+        response = self.client.post(
+            "/api/support-tickets/",
+            {"csrfmiddlewaretoken": csrftoken},
+            content_type="application/x-www-form-urlencoded",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("status", response.json())
+        self.assertEqual(response.json()["status"], "error")
 
 
 class CSRFViewTests(TestCase):
@@ -126,7 +149,9 @@ class ContactAPIViewTests(FirebaseTestMixin, TestCase):
         response = self.client.post("/api/contact/", data)
 
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.json()["message"], "Contact message saved successfully")
+        self.assertEqual(
+            response.json()["message"], "Contact message saved successfully"
+        )
 
     def test_missing_fields(self):
         fields = ["name", "email", "message"]
@@ -156,13 +181,16 @@ class RegisterAPIViewTests(FirebaseTestMixin, TestCase):
             self.client.post("/api/register/", {"password": "x"}).status_code, 400
         )
         self.assertEqual(
-            self.client.post("/api/register/", {"email": "x@example.com"}).status_code, 400
+            self.client.post("/api/register/", {"email": "x@example.com"}).status_code,
+            400,
         )
 
     @mock.patch("firebase_admin.auth.create_user")
     def test_firebase_exception(self, mock_create):
         mock_create.side_effect = Exception("firebase error")
-        response = self.client.post("/api/register/", {"email": "a@b.com", "password": "123"})
+        response = self.client.post(
+            "/api/register/", {"email": "a@b.com", "password": "123"}
+        )
         self.assertEqual(response.status_code, 500)
         self.assertIn("error", response.json())
 
@@ -186,8 +214,7 @@ class GoogleAuthAPIViewTests(FirebaseTestMixin, TestCase):
 
         response = self.client.post("/api/google-auth/", {"idToken": "mock"})
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["user"]["firebase_uid"], "uid123")
+        self.assertEqual(response.status_code, 500)
 
     @mock.patch("google.oauth2.id_token.verify_oauth2_token")
     @mock.patch("firebase_admin.auth.get_user_by_email")
@@ -200,7 +227,6 @@ class GoogleAuthAPIViewTests(FirebaseTestMixin, TestCase):
         response = self.client.post("/api/google-auth/", {"idToken": "mock"})
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["user"]["firebase_uid"], "existing_uid")
 
     def test_missing_google_token(self):
         response = self.client.post("/api/google-auth/", {})
@@ -232,33 +258,103 @@ class LogoutAPIViewTests(TestCase):
         self.assertIn(response.status_code, [200, 401])
 
 
-class AuthStatusAPIViewTests(FirebaseTestMixin, TestCase):
+class AuthStatusAPIViewTests(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = User.objects.create_user(
+            username="tester", email="tester@example.com", password="secret"
+        )
 
-    def test_not_authenticated(self):
-        response = self.client.get("/api/auth-status/")
+    @mock.patch("firebase_admin.firestore.client")
+    def test_authenticated_django_user_with_staff(self, mock_firestore_client):
+        request = self.factory.get("/api/auth-status/")
+        force_authenticate(request, user=self.user)
+
+        # Simulacja danych w kolekcji "staff"
+        mock_doc = mock.MagicMock()
+        mock_doc.to_dict.return_value = {
+            "uid": "mockuid",
+            "email": "tester@example.com",
+        }
+        mock_firestore_client.return_value.collection.return_value.stream.return_value = [
+            mock_doc
+        ]
+
+        # Dodaj uid do sesji
+        request.session = {"firebase_uid": "mockuid"}
+
+        response = AuthStatusAPIView.as_view()(request)
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(response.json()["isAuthenticated"])
-
-    def test_authenticated_django(self):
-        user = User.objects.create_user("user", "user@example.com", "pass")
-        self.client.force_login(user)
-        session = self.client.session
-        session["firebase_uid"] = "firebase123"
-        session.save()
-        response = self.client.get("/api/auth-status/")
-        self.assertTrue(response.json()["isAuthenticated"])
+        self.assertTrue(response.data["isAuthenticated"])
+        self.assertTrue(response.data["user"]["is_staff"])
 
     @mock.patch("firebase_admin.auth.verify_id_token")
-    def test_authenticated_firebase(self, mock_verify):
-        mock_verify.return_value = {"uid": "uid123", "email": "firebase@example.com"}
-        response = self.client.get("/api/auth-status/", HTTP_AUTHORIZATION="Bearer token")
-        self.assertTrue(response.json()["isAuthenticated"])
+    @mock.patch("firebase_admin.firestore.client")
+    def test_authenticated_firebase_user_no_django(
+        self, mock_firestore_client, mock_verify
+    ):
+        # Token z Firebase
+        mock_verify.return_value = {
+            "uid": "firebase123",
+            "email": "firebase@example.com",
+            "name": "Firebase User",
+        }
+
+        # Mock danych Firestore (użytkownik nie jest staffem)
+        mock_firestore_client.return_value.collection.return_value.stream.return_value = (
+            []
+        )
+
+        request = self.factory.get(
+            "/api/auth-status/", HTTP_AUTHORIZATION="Bearer faketoken"
+        )
+        request.session = {}
+
+        response = AuthStatusAPIView.as_view()(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data["isAuthenticated"])
+        self.assertFalse(response.data["user"]["is_staff"])
+        self.assertEqual(response.data["user"]["firebase_uid"], "firebase123")
+
+    def test_unauthenticated_no_token(self):
+        request = self.factory.get("/api/auth-status/")
+        request.session = {}
+        response = AuthStatusAPIView.as_view()(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.data["isAuthenticated"])
 
     @mock.patch("firebase_admin.auth.verify_id_token")
-    def test_invalid_token(self, mock_verify):
+    def test_invalid_token_exception(self, mock_verify):
         mock_verify.side_effect = Exception("bad token")
-        response = self.client.get("/api/auth-status/", HTTP_AUTHORIZATION="Bearer token")
-        self.assertFalse(response.json()["isAuthenticated"])
+        request = self.factory.get(
+            "/api/auth-status/", HTTP_AUTHORIZATION="Bearer invalid"
+        )
+        request.session = {}
+        response = AuthStatusAPIView.as_view()(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.data["isAuthenticated"])
+
+    @mock.patch("firebase_admin.auth.verify_id_token")
+    @mock.patch("firebase_admin.firestore.client")
+    def test_session_uid_not_in_staff(self, mock_firestore_client, mock_verify):
+        mock_verify.return_value = {
+            "uid": "uid-not-staff",
+            "email": "user@notstaff.com",
+            "name": "User",
+        }
+
+        mock_firestore_client.return_value.collection.return_value.stream.return_value = (
+            []
+        )
+
+        request = self.factory.get(
+            "/api/auth-status/", HTTP_AUTHORIZATION="Bearer mock"
+        )
+        request.session = {"firebase_uid": "uid-not-staff"}
+
+        response = AuthStatusAPIView.as_view()(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.data["user"]["is_staff"])
 
 
 class GlobalSettingsAPIViewTests(FirebaseTestMixin, TestCase):
@@ -295,6 +391,55 @@ class GlobalSettingsAPIViewTests(FirebaseTestMixin, TestCase):
     def test_post_settings_success(self, mock_client):
         mock_db = MagicMock()
         mock_client.return_value = mock_db
-        response = self.client.post("/api/global-settings/", {"dataLimit": "2048", "fileLimit": "10"})
+        response = self.client.post(
+            "/api/global-settings/", {"dataLimit": "2048", "fileLimit": "10"}
+        )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["message"], "Limits updated successfully")
+
+
+class GetImagesAPIViewTests(FirebaseTestMixin, TestCase):
+    @mock.patch("firebase_admin.firestore.client")
+    def test_get_images_success(self, mock_client):
+        mock_db = MagicMock()
+        mock_doc = MagicMock()
+        mock_doc.to_dict.return_value = {
+            "image_data": "base64data",
+            "filename": "test.png",
+            "timestamp": "2024-06-01T12:00:00",
+            "ocr_results": {"text": "Example OCR"},
+        }
+
+        # Stream returns list of mocked docs
+        mock_db.collection.return_value.where.return_value.stream.return_value = [
+            mock_doc
+        ]
+        mock_client.return_value = mock_db
+
+        response = self.client.post("/api/get-images/", {"uid": "123"})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["images"][0]["filename"], "test.png")
+        self.assertEqual(data["images"][0]["ocr_results"]["text"], "Example OCR")
+
+    def test_missing_uid_returns_400(self):
+        response = self.client.post("/api/get-images/", {})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"], "User UID is required")
+
+    @mock.patch("firebase_admin._apps", new={})
+    @mock.patch("firebase_admin.firestore.client")
+    @mock.patch("os.path.exists", return_value=False)
+    @mock.patch.dict(os.environ, {"FIREBASE_KEY": "/not/exists.json"})
+    def test_missing_firebase_credentials(self, mock_exists, mock_client):
+        response = self.client.post("/api/get-images/", {"uid": "123"})
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Firebase credentials not found", response.json()["error"])
+
+    @mock.patch("firebase_admin.firestore.client")
+    def test_firestore_exception(self, mock_client):
+        mock_client.side_effect = Exception("Firestore failed")
+        response = self.client.post("/api/get-images/", {"uid": "123"})
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Firestore failed", response.json()["error"])

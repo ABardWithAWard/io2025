@@ -16,5 +16,6 @@ class ApplicationConfig(AppConfig):
             from application.services import setup_firestore_db
 
             setup_firestore_db()
+
         except (OperationalError, ProgrammingError) as e:
             print(f"Error: {e}")
