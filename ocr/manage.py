@@ -8,7 +8,7 @@ import sys
 
 def cleanup_uploaded_files():
     try:
-        upload_dir = os.path.abspath(os.environ['UPLOADED_FILES'])
+        upload_dir = os.path.abspath(os.environ["UPLOADED_FILES"])
         print(f"Cleaning up directory: {upload_dir}")
 
         if os.path.exists(upload_dir):
@@ -25,9 +25,10 @@ def cleanup_uploaded_files():
 # Register cleanup function to run on Django server termination
 atexit.register(cleanup_uploaded_files)
 
+
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ocr.settings')
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ocr.settings")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
@@ -39,5 +40,5 @@ def main():
     execute_from_command_line(sys.argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

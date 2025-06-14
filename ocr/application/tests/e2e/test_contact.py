@@ -9,6 +9,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoAlertPresentException
 
+
 def get_alert_text(driver):
     try:
         WebDriverWait(driver, 5).until(EC.alert_is_present())
@@ -17,6 +18,7 @@ def get_alert_text(driver):
     except NoAlertPresentException:
         return None
 
+
 class FileUploadFrontendTest(StaticLiveServerTestCase):
     @classmethod
     def setUpClass(cls):
@@ -24,11 +26,11 @@ class FileUploadFrontendTest(StaticLiveServerTestCase):
         # Set up Chrome options for headless testing
         chrome_options = Options()
         # chrome_options.add_argument('--headless')
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--disable-dev-shm-usage')
-        chrome_options.add_argument('--disable-gpu')
-        chrome_options.add_argument('--disable-web-security')
-        chrome_options.add_argument('--allow-running-insecure-content')
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--disable-web-security")
+        chrome_options.add_argument("--allow-running-insecure-content")
         cls.driver = webdriver.Chrome(options=chrome_options)
         cls.driver.implicitly_wait(10)
 
@@ -55,7 +57,6 @@ class FileUploadFrontendTest(StaticLiveServerTestCase):
         )
         self.assertTrue(upload_form.is_displayed(), "Contact form should be present")
 
-
         name_input = WebDriverWait(self.driver, 10).until(
             EC.visibility_of_element_located((By.NAME, "name"))
         )
@@ -72,7 +73,9 @@ class FileUploadFrontendTest(StaticLiveServerTestCase):
         self.assertTrue(text_input.is_displayed())
 
         submit_button = WebDriverWait(self.driver, 10).until(
-            EC.visibility_of_element_located((By.XPATH, "//button[contains(text(), 'Submit')]"))
+            EC.visibility_of_element_located(
+                (By.XPATH, "//button[contains(text(), 'Submit')]")
+            )
         )
         self.assertTrue(submit_button.is_displayed())
         self.assertTrue(submit_button.is_enabled())
@@ -112,12 +115,15 @@ class FileUploadFrontendTest(StaticLiveServerTestCase):
         self.input_email("Pozdrawiam@serdecznie.pl")
         self.input_message("Ale ładna dzisiaj pogoda")
 
-        self.driver.find_element(By.XPATH, "//button[contains(text(), 'Submit')]").click()
+        self.driver.find_element(
+            By.XPATH, "//button[contains(text(), 'Submit')]"
+        ).click()
 
         file_input = self.driver.find_element(By.NAME, "name")
-        is_valid = self.driver.execute_script("return arguments[0].checkValidity();", file_input)
+        is_valid = self.driver.execute_script(
+            "return arguments[0].checkValidity();", file_input
+        )
         self.assertFalse(is_valid)
-
 
     def test_contact_form_without_email(self):
         self.driver.get(self.live_server_url + "/contact")
@@ -128,9 +134,13 @@ class FileUploadFrontendTest(StaticLiveServerTestCase):
         self.input_name("Kapuś")
         self.input_message("Ale ładna dzisiaj pogoda")
 
-        self.driver.find_element(By.XPATH, "//button[contains(text(), 'Submit')]").click()
+        self.driver.find_element(
+            By.XPATH, "//button[contains(text(), 'Submit')]"
+        ).click()
         file_input = self.driver.find_element(By.NAME, "email")
-        is_valid = self.driver.execute_script("return arguments[0].checkValidity();", file_input)
+        is_valid = self.driver.execute_script(
+            "return arguments[0].checkValidity();", file_input
+        )
         self.assertFalse(is_valid)
 
     def test_contact_form_without_message(self):
@@ -142,9 +152,13 @@ class FileUploadFrontendTest(StaticLiveServerTestCase):
         self.input_email("Pozdrawiam@serdecznie.pl")
         self.input_name("Kapuś")
 
-        self.driver.find_element(By.XPATH, "//button[contains(text(), 'Submit')]").click()
+        self.driver.find_element(
+            By.XPATH, "//button[contains(text(), 'Submit')]"
+        ).click()
         file_input = self.driver.find_element(By.NAME, "message")
-        is_valid = self.driver.execute_script("return arguments[0].checkValidity();", file_input)
+        is_valid = self.driver.execute_script(
+            "return arguments[0].checkValidity();", file_input
+        )
         self.assertFalse(is_valid)
 
     def test_contact_form_success(self):
@@ -157,7 +171,9 @@ class FileUploadFrontendTest(StaticLiveServerTestCase):
         self.input_email("test@example.com")
         self.input_message("Wiadomość testowa")
 
-        self.driver.find_element(By.XPATH, "//button[contains(text(), 'Submit')]").click()
+        self.driver.find_element(
+            By.XPATH, "//button[contains(text(), 'Submit')]"
+        ).click()
         alert_text = get_alert_text(self.driver)
         self.assertEqual(alert_text, "Message sent successfully!")
         self.driver.switch_to.alert.accept()

@@ -7,6 +7,8 @@ omit =
     */venv/*
     config.py
     config-3.py
+    */asgi.py
+    */wsgi.py
 
 [report]
 exclude_lines =

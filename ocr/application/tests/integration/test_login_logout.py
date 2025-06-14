@@ -6,61 +6,58 @@ import json
 class LoginLogoutAPITestCase(TestCase):
     def setUp(self):
         self.client = Client()
-        self.login = '/api/login/'
-        self.logout = '/api/logout/'
+        self.login = "/api/login/"
+        self.logout = "/api/logout/"
 
     def test_logout_success(self):
         # Mock logged in session
         session = self.client.session
-        session['firebase_uid'] = 'test_firebase_uid'
-        session['user_email'] = 'test@example.com'
+        session["firebase_uid"] = "test_firebase_uid"
+        session["user_email"] = "test@example.com"
         session.save()
 
         response = self.client.post(self.logout)
         # Check if everything went right, check if message is correct
         self.assertEqual(response.status_code, 200)
         response_data = json.loads(response.content)
-        self.assertEqual(response_data['message'], 'Logout successful')
+        self.assertEqual(response_data["message"], "Logout successful")
         # Check if session is cleared
-        self.assertNotIn('firebase_uid', self.client.session)
-        self.assertNotIn('user_email', self.client.session)
+        self.assertNotIn("firebase_uid", self.client.session)
+        self.assertNotIn("user_email", self.client.session)
 
     def test_logout_handles_errors(self):
         # Mock session
         session = self.client.session
-        session['firebase_uid'] = 'test_firebase_uid'
-        session['user_email'] = 'test@example.com'
+        session["firebase_uid"] = "test_firebase_uid"
+        session["user_email"] = "test@example.com"
         session.save()
 
-        with patch('api.views.logout') as mock_logout:
+        with patch("api.views.logout") as mock_logout:
             mock_logout.side_effect = Exception("Logout error")
 
             response = self.client.post(self.logout)
             self.assertEqual(response.status_code, 500)
             response_data = json.loads(response.content)
-            self.assertIn('error', response_data)
-
+            self.assertIn("error", response_data)
 
     # To be fixed!!!
-    @patch('firebase_admin.auth.verify_id_token')
-    @patch('api.views.LoginAPIView._generate_unique_username')
+    @patch("firebase_admin.auth.verify_id_token")
+    @patch("api.views.LoginAPIView._generate_unique_username")
     def test_login_success(self, mock_generate_username, mock_verify_token):
-        mock_generate_username.return_value = 'test_user'
+        mock_generate_username.return_value = "test_user"
         # Mock Firebase token verification
         mock_verify_token.return_value = {
-            'email': 'test@example.com',
-            'uid': 'firebase_uid_123'
+            "email": "test@example.com",
+            "uid": "firebase_uid_123",
         }
 
         # Fake firebase id token
-        login_data = {
-            'idToken': 'fake_firebase_token'
-        }
+        login_data = {"idToken": "fake_firebase_token"}
 
         # Request with json data to login endpoint
-        response = self.client.post(self.login,
-                                    data=json.dumps(login_data),
-                                    content_type='application/json')
+        response = self.client.post(
+            self.login, data=json.dumps(login_data), content_type="application/json"
+        )
 
         if response.status_code != 200:
             print(f"Status Code: {response.status_code}")
@@ -73,58 +70,51 @@ class LoginLogoutAPITestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         response_data = json.loads(response.content)
-        self.assertEqual(response_data['message'], 'Login successful')
-        self.assertIn('user', response_data)
-        self.assertEqual(response_data['user']['email'], 'test@example.com')
-
+        self.assertEqual(response_data["message"], "Login successful")
+        self.assertIn("user", response_data)
+        self.assertEqual(response_data["user"]["email"], "test@example.com")
 
         session = self.client.session
         session.load()
 
-        self.assertEqual(session['firebase_uid'], 'firebase_uid_123')
-        self.assertEqual(session['user_email'], 'test@example.com')
+        self.assertEqual(session["firebase_uid"], "firebase_uid_123")
+        self.assertEqual(session["user_email"], "test@example.com")
 
     def test_login_missing_token(self):
         # Mock login without id token
-        response = self.client.post(self.login,
-                                    data=json.dumps({}),
-                                    content_type='application/json')
+        response = self.client.post(
+            self.login, data=json.dumps({}), content_type="application/json"
+        )
         self.assertEqual(response.status_code, 400)
         response_data = json.loads(response.content)
-        self.assertEqual(response_data['error'], 'ID token is required')
+        self.assertEqual(response_data["error"], "ID token is required")
 
-    @patch('firebase_admin.auth.verify_id_token')
+    @patch("firebase_admin.auth.verify_id_token")
     def test_login_invalid_token(self, mock_verify_token):
         # Mock login with invalid id token
         mock_verify_token.side_effect = Exception("Invalid token")
 
-        login_data = {
-            'idToken': 'invalid_firebase_token'
-        }
+        login_data = {"idToken": "invalid_firebase_token"}
 
-        response = self.client.post(self.login,
-                                    data=json.dumps(login_data),
-                                    content_type='application/json')
+        response = self.client.post(
+            self.login, data=json.dumps(login_data), content_type="application/json"
+        )
 
         self.assertEqual(response.status_code, 500)
         response_data = json.loads(response.content)
-        self.assertIn('error', response_data)
+        self.assertIn("error", response_data)
 
-    @patch('firebase_admin.auth.verify_id_token')
+    @patch("firebase_admin.auth.verify_id_token")
     def test_login_missing_email_in_token(self, mock_verify_token):
         # Mock login without email
-        mock_verify_token.return_value = {
-            'uid': 'firebase_uid_123'
-        }
+        mock_verify_token.return_value = {"uid": "firebase_uid_123"}
 
-        login_data = {
-            'idToken': 'fake_firebase_token'
-        }
+        login_data = {"idToken": "fake_firebase_token"}
 
-        response = self.client.post(self.login,
-                                    data=json.dumps(login_data),
-                                    content_type='application/json')
+        response = self.client.post(
+            self.login, data=json.dumps(login_data), content_type="application/json"
+        )
 
         self.assertEqual(response.status_code, 400)
         response_data = json.loads(response.content)
-        self.assertEqual(response_data['error'], 'Email not found in token')
+        self.assertEqual(response_data["error"], "Email not found in token")
