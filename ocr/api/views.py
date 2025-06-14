@@ -1,4 +1,5 @@
 import os
+from PIL import Image
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from rest_framework import viewsets, status
@@ -20,7 +21,8 @@ from django.conf import settings
 from django.views.generic import TemplateView
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
-from application.services import retrieve_pictures_using_uid
+from application.services import retrieve_pictures_using_uid, prepare_file_hierarchy
+from application.utils import validate_image_brightness
 import base64
 from io import BytesIO
 
@@ -51,6 +53,36 @@ class UploadedFileViewSet(viewsets.ModelViewSet):
     def list_files(self, request):
         files = get_files()
         return Response(files)
+
+
+class FileValidationViewSet(viewsets.ModelViewSet):
+    queryset = UploadedFile.objects.all()
+    serializer_class = UploadedFileSerializer
+    permission_classes = [AllowAny]
+
+    @action(detail=False, methods=["post"])
+    def upload(self, request):
+        if DEBUG_MODE:
+            print("FILES:", request.FILES)
+        form = UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            file_from_request = request.FILES["file"]
+            created_file_path = prepare_file_hierarchy(file_from_request)
+
+            # One of "good", "dark" or "bright"
+            brightness_validation_result = validate_image_brightness(
+                Image.open(created_file_path)
+            )
+            if brightness_validation_result == "good":
+                return Response({"status": "success"})
+            else:
+                return Response(
+                    {"status": "invalid", "type": brightness_validation_result}
+                )
+        return Response(
+            {"status": "error", "errors": form.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 class SupportTicketViewSet(viewsets.ModelViewSet):
