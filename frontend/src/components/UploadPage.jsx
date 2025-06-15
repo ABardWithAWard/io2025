@@ -8,6 +8,8 @@ const UploadPage = () => {
     const [setHasShownPrivacyWarning] = useState(false);
     const [error, setError] = useState('');
     const [showUploadModal, setShowUploadModal] = useState(false);
+    const [showValidationModal, setShowValidationModal] = useState(false);
+    const [validationMessage, setValidationMessage] = useState('');
     const {getCsrfToken, userUid, checkAuthentication, resetAuthState} = useAuth();
     const [fontSize, setFontSize] = useState(12);
     const [language, setLanguage] = useState('english');
@@ -26,7 +28,31 @@ const UploadPage = () => {
         checkAuth();
     }, [checkAuthentication]);
 
-    const handleUploadClick = (event) => {
+    const validateFile = async (file) => {
+        // Send file to validation endpoint to check image quality
+        // Returns validation status and type (dark/bright) if validation fails
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/api/validate/upload/', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include',
+                headers: {
+                    'X-CSRFToken': getCsrfToken()
+                }
+            });
+
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error validating file:', error);
+            return { status: 'error', type: 'validation_error' };
+        }
+    };
+
+    const handleUploadClick = async (event) => {
         // Instead of uploading right away we ensure that form is well filled
         // and then show a modal which actually handles upload logic
         event.preventDefault();
@@ -35,7 +61,27 @@ const UploadPage = () => {
             setError('Please select a file to upload');
             return;
         }
+
+        const file = fileInput.files[0];
+        const validationResult = await validateFile(file);
+
+        if (validationResult.status === 'success') {
+            setShowUploadModal(true);
+        } else if (validationResult.status === 'invalid') {
+            setValidationMessage(`The image appears to be too ${validationResult.type}. Would you like to proceed anyway?`);
+            setShowValidationModal(true);
+        } else {
+            setError('Error validating file');
+        }
+    };
+
+    const handleValidationContinue = () => {
+        setShowValidationModal(false);
         setShowUploadModal(true);
+    };
+
+    const handleValidationCancel = () => {
+        setShowValidationModal(false);
     };
 
     const handlePrivacyContinue = () => {
@@ -258,6 +304,48 @@ const UploadPage = () => {
                         </button>
                     </div>
                 </dialog>
+            )}
+
+            {showValidationModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100vw',
+                    height: '100vh',
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)', // dim effect
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 1000,
+                }}>
+                    <div style={{
+                        backgroundColor: '#fff',
+                        padding: '30px',
+                        borderRadius: '10px',
+                        width: '90%',
+                        maxWidth: '400px',
+                        boxShadow: '0 0 15px rgba(0,0,0,0.3)',
+                        textAlign: 'center',
+                    }}>
+                        <h3>Image Quality Warning</h3>
+                        <p>{validationMessage}</p>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
+                            <button
+                                onClick={handleValidationContinue}
+                                className="btn btn-success"
+                            >
+                                Continue Anyway
+                            </button>
+                            <button
+                                onClick={handleValidationCancel}
+                                className="btn btn-secondary"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {showUploadModal && (
