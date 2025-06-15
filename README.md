@@ -1,11 +1,5 @@
 # System OCR
 
-### Dane do logowania administratora
-```bash
-Email:    admin@example.com
-Password: admin
-```
-
 ## Instrukcje tworzenia wersji lokalnej
 ### 1. Załóż środowisko lokalne
 Aby poznać swoją wersję CUDA należy uruchomić
@@ -157,3 +151,26 @@ model/
 └── setup_datasets.sh
 ```
 A następnie uruchomić z poziomu katalogu model/ skrypt ./setup_datasets.sh.
+
+### 5. Odpalanie testów
+#### Automatycznie:
+```bash
+W root folderze aplikacji uruchamiamy run_tests.ps1
+```
+
+#### Manualnie:
+
+```bash
+Pierwszy terminal:
+    cd frontend
+    npm start
+```
+
+```bash
+Drugi terminal:
+    cd ocr
+    coverage erase
+    coverage run --rcfile=.coveragerc manage.py test
+    coverage html
+    start htmlcov/index.html 
+```

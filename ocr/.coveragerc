@@ -1,0 +1,17 @@
+[run]
+source = .
+relative_files = True
+omit =
+    */migrations/*
+    */tests/*
+    */venv/*
+    config.py
+    config-3.py
+    */asgi.py
+    */wsgi.py
+    */management/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
