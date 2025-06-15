@@ -78,9 +78,7 @@ class FileValidationViewSet(viewsets.ModelViewSet):
             created_file_path = prepare_file_hierarchy(file_from_request)
 
             # One of "good", "dark" or "bright"
-            brightness_validation_result = validate_image_brightness(
-                Image.open(created_file_path)
-            )
+            brightness_validation_result = validate_image_brightness(created_file_path)
             if brightness_validation_result == "good":
                 return Response({"status": "success"})
             else:
