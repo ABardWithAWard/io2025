@@ -51,9 +51,11 @@ class UploadedFileViewSet(viewsets.ModelViewSet):
             user_uid = request.POST.get("userUid")
             line_width = request.POST.get("paragraphWidth")
             font_size = request.POST.get("fontSize")
+            file_format = request.POST.get("format")
 
             json_str = handle_uploaded_file(
                 request.FILES["file"],
+                file_format,
                 line_width,
                 font_size,
                 user_uid,

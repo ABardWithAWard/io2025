@@ -154,6 +154,9 @@ def handle_uploaded_file(file, file_format, line_width, font_size, user_uid=None
                     "text_predictions": result["text_predictions"],
                     "confidence_scores": result["confidence_scores"],
                 },
+                "format": file_format,
+                "paragraphWidth": line_width,
+                "fontSize": font_size,
             }
         )
 
