@@ -23,17 +23,19 @@ easy_model = EasyOCR()
 DEBUG_MODE = False
 POLISH_MODE = False
 
+
 def get_files():
     """Get list of files from the upload directory"""
-    directory = os.environ.get('UPLOADED_FILES')
+    directory = os.environ.get("UPLOADED_FILES")
     try:
         return os.listdir(directory)
     except FileNotFoundError:
-        return ['empty']
+        return ["empty"]
+
 
 def prepare_file_hierarchy(file):
     """Takes uploaded file and returns directory where it is saved and its detected content"""
-    upload_dir = os.path.abspath(os.environ['UPLOADED_FILES'])
+    upload_dir = os.path.abspath(os.environ["UPLOADED_FILES"])
     if DEBUG_MODE:
         print(f"Upload directory: {upload_dir}")
 
@@ -46,7 +48,10 @@ def prepare_file_hierarchy(file):
 
     return full_path
 
-def convert_result_to_json(uploaded_file: UploadedFile, uploaded_file_path: str, ocr_result: dict):
+
+def convert_result_to_json(
+    uploaded_file: UploadedFile, uploaded_file_path: str, ocr_result: dict
+):
     """
     Convert the result of running OCR on an image file to a JSON that goes to frontend.
     This function expects only .jpg (or .jpeg) and .png files. If converting .pdf, preprocess first.
@@ -70,18 +75,23 @@ def convert_result_to_json(uploaded_file: UploadedFile, uploaded_file_path: str,
         img.save(im_file_in_mem, format="PNG")
 
     im_bytes = im_file_in_mem.getvalue()
-    im_b64 = base64.b64encode(im_bytes).decode('utf-8')
+    im_b64 = base64.b64encode(im_bytes).decode("utf-8")
 
     confidence_list = ocr_result["confidence_scores"]
     content_list = ocr_result["text_predictions"]
 
-    json_str = json.dumps({"name": name,
-                           "image": im_b64,
-                           "format": file_format,
-                           "confidence": confidence_list,
-                           "content": content_list})
+    json_str = json.dumps(
+        {
+            "name": name,
+            "image": im_b64,
+            "format": file_format,
+            "confidence": confidence_list,
+            "content": content_list,
+        }
+    )
 
     return json_str
+
 
 def handle_uploaded_file(file, user_uid=None):
     """Takes file uploaded in form and calls helper function to manage file and its contents"""
@@ -102,9 +112,9 @@ def handle_uploaded_file(file, user_uid=None):
 
         # Initialize Firebase if not already initialized
         if not firebase_admin._apps:
-            cred_path = os.environ['FIREBASE_KEY']
+            cred_path = os.environ["FIREBASE_KEY"]
             if not os.path.exists(cred_path):
-                raise Exception('Firebase credentials not found')
+                raise Exception("Firebase credentials not found")
             cred = credentials.Certificate(cred_path)
             firebase_admin.initialize_app(cred)
 
@@ -112,25 +122,28 @@ def handle_uploaded_file(file, user_uid=None):
         db = firestore.client()
 
         # Read and encode the image
-        with open(full_path, 'rb') as image_file:
-            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+        with open(full_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
 
         # Add image to Firestore with userUid and OCR results
-        image_ref = db.collection('images').document()
-        image_ref.set({
-            'image_data': encoded_string,
-            'filename': file.name,
-            'timestamp': firestore.SERVER_TIMESTAMP,
-            'userUid': user_uid,  # This will be null for unauthenticated users
-            'ocr_results': {
-                'text_predictions': result["text_predictions"],
-                'confidence_scores': result["confidence_scores"]
+        image_ref = db.collection("images").document()
+        image_ref.set(
+            {
+                "image_data": encoded_string,
+                "filename": file.name,
+                "timestamp": firestore.SERVER_TIMESTAMP,
+                "userUid": user_uid,  # This will be null for unauthenticated users
+                "ocr_results": {
+                    "text_predictions": result["text_predictions"],
+                    "confidence_scores": result["confidence_scores"],
+                },
             }
-        })
+        )
 
         json_ocr_result = convert_result_to_json(file, full_path, result)
 
         return json_ocr_result
+
 
 def output_processed_as_txt(word_list: List[str], output_path: str, line_width=80):
     """
@@ -152,6 +165,7 @@ def output_processed_as_txt(word_list: List[str], output_path: str, line_width=8
             else:
                 # Otherwise simply write
                 f.writelines(f"{word} ")
+
 
 def output_processed_as_docx(word_list: List[str], output_path: str, font_size=11):
     """
