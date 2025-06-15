@@ -12,7 +12,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
   return (
-    <AuthProvider>
+    <AuthProvider> {/* Provides csrf tokens and authentication data */}
       <Router>
         <div className="App">
           {/* Makes navbar appear in all links supported by routes */}
