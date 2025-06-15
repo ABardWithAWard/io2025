@@ -1,16 +1,14 @@
 // Main page, used for upload form and various modals which can occur during it
 import React, {useEffect, useState} from 'react';
-import {AuthProvider, useAuth} from '../AuthContext';
+import {useAuth} from '../AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const UploadPage = () => {
     const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
-    const [setHasShownPrivacyWarning] = useState(false);
     const [error, setError] = useState('');
-    const [showUploadModal, setShowUploadModal] = useState(false);
     const [showValidationModal, setShowValidationModal] = useState(false);
     const [validationMessage, setValidationMessage] = useState('');
-    const {getCsrfToken, userUid, checkAuthentication, resetAuthState} = useAuth();
+    const {getCsrfToken, checkAuthentication} = useAuth();
     const [fontSize, setFontSize] = useState(12);
     const [language, setLanguage] = useState('english');
     const [exportFormat, setExportFormat] = useState('docx');
@@ -66,7 +64,7 @@ const UploadPage = () => {
         const validationResult = await validateFile(file);
 
         if (validationResult.status === 'success') {
-            setShowUploadModal(true);
+            setShowPrivacyDialog(true);
         } else if (validationResult.status === 'invalid') {
             setValidationMessage(`The image appears to be too ${validationResult.type}. Would you like to proceed anyway?`);
             setShowValidationModal(true);
@@ -77,7 +75,7 @@ const UploadPage = () => {
 
     const handleValidationContinue = () => {
         setShowValidationModal(false);
-        setShowUploadModal(true);
+        setShowPrivacyDialog(true);
     };
 
     const handleValidationCancel = () => {
@@ -86,22 +84,12 @@ const UploadPage = () => {
 
     const handlePrivacyContinue = () => {
         // Handle upload logic if user agrees to privacy modal
-        setHasShownPrivacyWarning(true);
         setShowPrivacyDialog(false);
-        document.getElementById('uploadForm').dispatchEvent(new Event('submit'));
+        handleFileUpload();
     };
 
     const handlePrivacyCancel = () => {
         setShowPrivacyDialog(false);
-    };
-
-    const handleCancelUpload = () => {
-        setShowUploadModal(false);
-    };
-
-    const handleConfirmUpload = async () => {
-        setShowUploadModal(false);
-        await handleFileUpload();
     };
 
     const handleFileUpload = async () => {
@@ -263,47 +251,45 @@ const UploadPage = () => {
             )}
 
             {showPrivacyDialog && (
-                <dialog open style={{
+                <div style={{
                     position: 'fixed',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    padding: '20px',
-                    borderRadius: '8px',
-                    border: '1px solid #ddd',
-                    zIndex: 1000
+                    top: 0,
+                    left: 0,
+                    width: '100vw',
+                    height: '100vh',
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)', // dim effect
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 1000,
                 }}>
-                    <h3>Privacy Warning</h3>
-                    <p>Please do not upload any private or sensitive information.</p>
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                        <button
-                            onClick={handlePrivacyContinue}
-                            style={{
-                                padding: '8px 16px',
-                                backgroundColor: '#0056b3',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Continue
-                        </button>
-                        <button
-                            onClick={handlePrivacyCancel}
-                            style={{
-                                padding: '8px 16px',
-                                backgroundColor: '#6c757d',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Cancel
-                        </button>
+                    <div style={{
+                        backgroundColor: '#fff',
+                        padding: '30px',
+                        borderRadius: '10px',
+                        width: '90%',
+                        maxWidth: '400px',
+                        boxShadow: '0 0 15px rgba(0,0,0,0.3)',
+                        textAlign: 'center',
+                    }}>
+                        <h3>Privacy Warning</h3>
+                        <p>Please do not upload any private or sensitive information.</p>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
+                            <button
+                                onClick={handlePrivacyContinue}
+                                className="btn btn-success"
+                            >
+                                Continue
+                            </button>
+                            <button
+                                onClick={handlePrivacyCancel}
+                                className="btn btn-secondary"
+                            >
+                                Cancel
+                            </button>
+                        </div>
                     </div>
-                </dialog>
+                </div>
             )}
 
             {showValidationModal && (
@@ -339,48 +325,6 @@ const UploadPage = () => {
                             </button>
                             <button
                                 onClick={handleValidationCancel}
-                                className="btn btn-secondary"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {showUploadModal && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    width: '100vw',
-                    height: '100vh',
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)', // dim effect
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    zIndex: 1000,
-                }}>
-                    <div style={{
-                        backgroundColor: '#fff',
-                        padding: '30px',
-                        borderRadius: '10px',
-                        width: '90%',
-                        maxWidth: '400px',
-                        boxShadow: '0 0 15px rgba(0,0,0,0.3)',
-                        textAlign: 'center',
-                    }}>
-                        <h3>Confirm Upload</h3>
-                        <p>Please do not upload any private or sensitive information.</p>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
-                            <button
-                                onClick={handleConfirmUpload}
-                                className="btn btn-success"
-                            >
-                                Continue
-                            </button>
-                            <button
-                                onClick={handleCancelUpload}
                                 className="btn btn-secondary"
                             >
                                 Cancel
