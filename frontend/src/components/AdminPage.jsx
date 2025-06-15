@@ -10,19 +10,14 @@ const AdminPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
-    const {getCsrfToken, fetchCsrfToken} = useAuth();
+    const {getCsrfToken, fetchCsrfToken, checkAuthentication} = useAuth();
 
     useEffect(() => {
         const checkAdminAccess = async () => {
             // Check manually if user is staff, if not redirect back to /
             try {
-                const response = await fetch('/api/auth-status/', {
-                    method: 'GET',
-                    credentials: 'include'
-                });
-                const data = await response.json();
-                
-                if (data.user.is_staff !== true) {
+                const isAuth = await checkAuthentication();
+                if (!isAuth) {
                     navigate('/');
                 } else {
                     await fetchLimits();
@@ -34,7 +29,7 @@ const AdminPage = () => {
         };
 
         checkAdminAccess();
-    }, [fetchCsrfToken, navigate]);
+    }, [checkAuthentication, navigate]);
 
     const fetchLimits = async () => {
         // Fetching limits to display them in form

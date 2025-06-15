@@ -8,7 +8,7 @@ const UploadPage = () => {
     const [error, setError] = useState('');
     const [showValidationModal, setShowValidationModal] = useState(false);
     const [validationMessage, setValidationMessage] = useState('');
-    const {getCsrfToken, checkAuthentication} = useAuth();
+    const {getCsrfToken, checkAuthentication, userUid} = useAuth();
     const [fontSize, setFontSize] = useState(12);
     const [language, setLanguage] = useState('english');
     const [exportFormat, setExportFormat] = useState('docx');
@@ -94,14 +94,7 @@ const UploadPage = () => {
 
     const handleFileUpload = async () => {
         // Reading form and then appending it for backend api call
-
-        const authResponse = await fetch('/api/auth-status/', {
-                method: 'GET',
-                credentials: 'include'
-            });
-        const authData = await authResponse.json(); // We need to get this manually since
-        // user could log in without refreshing page
-
+        const isAuth = await checkAuthentication();
         const formData = new FormData();
         const fileInput = document.querySelector('input[type="file"]');
 
@@ -112,7 +105,7 @@ const UploadPage = () => {
 
         try {
             formData.append('file', fileInput.files[0]);
-            formData.append('userUid', authData.isAuthenticated ? authData.user.firebase_uid : null);
+            formData.append('userUid', isAuth ? userUid : null);
             formData.append('fontSize', fontSize);
             formData.append('language', language);
             formData.append('format', exportFormat);

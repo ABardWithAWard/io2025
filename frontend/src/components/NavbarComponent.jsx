@@ -14,14 +14,13 @@ function NavbarComponent() {
   const [messages, setMessages] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [setIsStaff] = useState(false);
-  const [userEmail, setUserEmail] = useState('');
+  const navigate = useNavigate();
+  const { getCsrfToken, checkAuthentication, refreshCsrfToken, logout, userEmail } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: ''
   });
-  const navigate = useNavigate();
-  const { getCsrfToken, checkAuthentication, refreshCsrfToken, logout } = useAuth();
 
   useEffect(() => {
     // Check authentication status on component mount
@@ -30,21 +29,12 @@ function NavbarComponent() {
 
   const checkAuthStatus = async () => {
     try {
-      const response = await fetch('/api/auth-status/', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      const data = await response.json();
-      
-      if (data.isAuthenticated) {
+      const isAuth = await checkAuthentication();
+      if (isAuth) {
         setIsAuthenticated(true);
-        setUserEmail(data.user.email);
-        setIsStaff(data.user.is_staff || false);
-        // Refresh CSRF token when authenticated
         await refreshCsrfToken();
       } else {
         setIsAuthenticated(false);
-        setUserEmail('');
         setIsStaff(false);
       }
     } catch (error) {
@@ -53,19 +43,12 @@ function NavbarComponent() {
   };
 
   const handleAdminClick = async (e) => {
-    // TODO: Make this function use AuthContext to check if user is staff
     e.preventDefault();
     try {
-      const response = await fetch('/api/auth-status/', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      const data = await response.json();
-      
-      if (data.user.is_staff === true) {
+      const isAuth = await checkAuthentication();
+      if (isAuth) {
         navigate('/admin');
       } else {
-        console.log(data.user.is_staff);
         setShowAdminAccessModal(true);
       }
     } catch (error) {
@@ -78,7 +61,6 @@ function NavbarComponent() {
   const handleModalClose = () => {
     setShowModal(false);
     setMessages([]);
-    setFormData({ email: '', password: '', confirmPassword: '' });
   };
 
   const handleModalShow = () => setShowModal(true);
@@ -86,7 +68,6 @@ function NavbarComponent() {
   const handleTabSelect = (k) => {
     setActiveTab(k);
     setMessages([]);
-    setFormData({ email: '', password: '', confirmPassword: '' });
   };
 
   // Generic input handler for updating form state in React
@@ -103,6 +84,7 @@ function NavbarComponent() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    let formData;
     try {
       const response = await fetch('/api/login/', {
         method: 'POST',
@@ -121,9 +103,6 @@ function NavbarComponent() {
 
       if (response.ok) {
         setIsAuthenticated(true);
-        setUserEmail(data.user.email);
-        // Refresh CSRF token after successful login, as a new session begins
-        await refreshCsrfToken();
         handleModalClose();
         navigate('/'); // After login navigate to base page to avoid silly errors
       } else {
@@ -138,6 +117,7 @@ function NavbarComponent() {
   // Same as login, literally same logic but one additional field
   const handleRegister = async (e) => {
     e.preventDefault();
+    let formData;
 
     if (formData.password !== formData.confirmPassword) {
       setMessages(['Passwords do not match']);
@@ -163,8 +143,6 @@ function NavbarComponent() {
 
       if (response.ok) {
         setIsAuthenticated(true);
-        setUserEmail(data.user.email);
-        await refreshCsrfToken();
         handleModalClose();
         navigate('/');
       } else {
@@ -194,10 +172,8 @@ function NavbarComponent() {
 
       if (res.ok) {
         setIsAuthenticated(true);
-        setUserEmail(data.user.email);
-        await refreshCsrfToken();
         handleModalClose();
-        navigate('/');
+        window.location.href = '/'; // This will cause a full page refresh, fixes bug with e-mail not appearing
       } else {
         setMessages([data.error || 'Google login failed']);
       }
@@ -221,8 +197,6 @@ function NavbarComponent() {
 
       if (response.ok) {
         setIsAuthenticated(false);
-        setUserEmail('');
-        await refreshCsrfToken();
         navigate('/');
       } else {
         setMessages(['Logout failed']);
