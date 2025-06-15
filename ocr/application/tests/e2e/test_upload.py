@@ -21,7 +21,7 @@ class FileUploadFrontendTest(StaticLiveServerTestCase):
         chrome_options.add_argument("--disable-web-security")
         chrome_options.add_argument("--allow-running-insecure-content")
         cls.driver = webdriver.Chrome(options=chrome_options)
-        cls.driver.implicitly_wait(10)
+        cls.driver.implicitly_wait(3)
 
     def setUp(self):
         self.FRONTEND_URL = "http://localhost:3000"

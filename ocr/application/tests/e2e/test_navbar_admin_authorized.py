@@ -33,9 +33,15 @@ class FileUploadFrontendTest(StaticLiveServerTestCase):
                 )
             )
         )
+        email_input = WebDriverWait(cls.driver, 10).until(
+            EC.presence_of_element_located((By.NAME, "email"))
+        )
+        password_input = WebDriverWait(cls.driver, 10).until(
+            EC.presence_of_element_located((By.NAME, "password"))
+        )
 
-        cls.driver.find_element(By.NAME, "email").send_keys("user@example.com")
-        cls.driver.find_element(By.NAME, "password").send_keys("password")
+        email_input.send_keys("user@example.com")
+        password_input.send_keys("password")
 
         login_button = cls.driver.find_element(
             By.XPATH,

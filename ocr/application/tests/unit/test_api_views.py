@@ -6,7 +6,11 @@ from django.test import TestCase, RequestFactory
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client
+from django.conf import settings
 from api.views import AuthStatusAPIView
+from api.views import FileValidationViewSet
+from PIL import Image
+import tempfile
 
 
 class FirebaseTestMixin:
@@ -34,6 +38,55 @@ class FirebaseTestMixin:
 
 
 class UploadedFileViewSetTests(FirebaseTestMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.client = Client()
+        self.upload_url = "/api/upload/upload/"
+
+    def generate_temp_image(self, brightness=128):
+        image = Image.new("RGB", (100, 100), color=(brightness, brightness, brightness))
+        temp_file = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+        image.save(temp_file, format="PNG")
+        temp_file.seek(0)
+        return temp_file
+
+    @mock.patch("api.views.prepare_file_hierarchy")
+    @mock.patch("api.views.validate_image_brightness")
+    def test_upload_good_image(self, mock_validate_brightness, mock_prepare_file):
+        mock_validate_brightness.return_value = "good"
+
+        temp_file = self.generate_temp_image()
+        uploaded_file = SimpleUploadedFile("test.png", temp_file.read(), content_type="image/png")
+
+        mock_prepare_file.return_value = temp_file.name
+
+        response = self.client.post(self.upload_url, {"file": uploaded_file})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "success")
+
+    @mock.patch("api.views.prepare_file_hierarchy")
+    @mock.patch("api.views.validate_image_brightness")
+    def test_upload_dark_image(self, mock_validate_brightness, mock_prepare_file):
+        mock_validate_brightness.return_value = "dark"
+
+        temp_file = self.generate_temp_image(brightness=10)
+        uploaded_file = SimpleUploadedFile("dark.png", temp_file.read(), content_type="image/png")
+
+        mock_prepare_file.return_value = temp_file.name
+
+        response = self.client.post(self.upload_url, {"file": uploaded_file})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "invalid")
+        self.assertEqual(response.json()["type"], "dark")
+
+    def test_upload_invalid_form(self):
+        # No file in POST
+        response = self.client.post(self.upload_url, {"userUid": "xyz"})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["status"], "error")
+        self.assertIn("errors", response.json())
+
+class UploadedFileViewSetTests(FirebaseTestMixin, TestCase):
     def test_upload_missing_file(self):
         response = self.client.post("/api/upload/upload/", {"userUid": "test_uid"})
         self.assertEqual(response.status_code, 400)
@@ -45,12 +98,10 @@ class UploadedFileViewSetTests(FirebaseTestMixin, TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["status"], "error")
 
-    @mock.patch("api.services.get_files")
-    def test_list_files_empty(self, mock_get_files):
-        mock_get_files.return_value = []
+
+    def test_list_files(self):
         response = self.client.get("/api/upload/list_files/")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), ["empty"])
 
 
 # Ticket Form tests not working

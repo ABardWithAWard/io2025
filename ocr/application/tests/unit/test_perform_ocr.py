@@ -61,7 +61,7 @@ class TestEasyOCR(unittest.TestCase):
     @patch("application.model.easyocr.easyocr.Reader")
     def test_model_initialization(self, mock_reader):
         model = EasyOCR()
-        mock_reader.assert_called_once_with(["en"])
+        mock_reader.assert_called_once_with(["pl"])
         self.assertIsNotNone(model.reader)
 
     @patch("application.model.easyocr.easyocr.Reader")
