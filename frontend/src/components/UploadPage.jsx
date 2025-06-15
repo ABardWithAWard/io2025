@@ -150,19 +150,14 @@ const UploadPage = () => {
         );
     }
 
-    if (error) {
-        return (
-            <div className="container mt-4">
-                <div className="alert alert-danger" role="alert">
-                    {error}
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="container mt-4">
             <h2>Upload File</h2>
+            {error && (
+                <div className="alert alert-danger mb-3" role="alert">
+                    {error}
+                </div>
+            )}
             <form onSubmit={handleUploadClick} id="uploadForm">
                 <div className="mb-3">
                     <label htmlFor="file" className="form-label">Select file to upload:</label>
@@ -243,12 +238,6 @@ const UploadPage = () => {
                     <button type="submit" className="btn btn-primary">Upload</button>
                 </div>
             </form>
-
-            {error && (
-                <div className="alert alert-danger mt-3" role="alert">
-                    {error}
-                </div>
-            )}
 
             {showPrivacyDialog && (
                 <div style={{
