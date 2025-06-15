@@ -37,6 +37,7 @@ export const AuthProvider = ({ children }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [idToken, setIdToken] = useState(null);
+    const [isStaff, setIsStaff] = useState(false);
 
     // Reset all auth state
     const resetAuthState = () => {
@@ -46,6 +47,7 @@ export const AuthProvider = ({ children }) => {
         setIdToken(null);
         setError(null);
         setIsLoading(true);
+        setIsStaff(false);
     };
 
     useEffect(() => {
@@ -127,6 +129,7 @@ export const AuthProvider = ({ children }) => {
             });
             const data = await response.json();
             setIsAuthenticated(data.isAuthenticated);
+            setIsStaff(data.user?.is_staff || false);
             // If user is authenticated and firebase_uid is not a null, then set it for
             // image saving purposes
             if (data.isAuthenticated && data.user?.firebase_uid) {
@@ -144,6 +147,7 @@ export const AuthProvider = ({ children }) => {
             console.error('Error checking authentication:', error);
             setUserUid(null);
             setUserEmail(null);
+            setIsStaff(false);
             return false;
         }
     };
@@ -173,7 +177,8 @@ export const AuthProvider = ({ children }) => {
         isLoading,
         error,
         checkAuthentication,
-        refreshCsrfToken
+        refreshCsrfToken,
+        isStaff
     }; // All values which can be used by other components
 
     if (isLoading) {

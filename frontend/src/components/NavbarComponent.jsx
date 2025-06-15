@@ -13,9 +13,8 @@ function NavbarComponent() {
   const [activeTab, setActiveTab] = useState('login');
   const [messages, setMessages] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [setIsStaff] = useState(false);
   const navigate = useNavigate();
-  const { getCsrfToken, checkAuthentication, refreshCsrfToken, logout, userEmail } = useAuth();
+  const { getCsrfToken, checkAuthentication, refreshCsrfToken, logout, userEmail, isStaff } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -35,7 +34,6 @@ function NavbarComponent() {
         await refreshCsrfToken();
       } else {
         setIsAuthenticated(false);
-        setIsStaff(false);
       }
     } catch (error) {
       console.error('Error checking auth status:', error);
@@ -46,7 +44,7 @@ function NavbarComponent() {
     e.preventDefault();
     try {
       const isAuth = await checkAuthentication();
-      if (isAuth) {
+      if (isAuth && isStaff) {
         navigate('/admin');
       } else {
         setShowAdminAccessModal(true);
@@ -238,20 +236,12 @@ function NavbarComponent() {
           <Modal.Title>Admin Access Required</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p>Log in with admin account to access admin panel</p>
+          <p>You need staff privileges to access the admin panel.</p>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowAdminAccessModal(false)}>
             Close
           </Button>
-          {!isAuthenticated && (
-            <Button variant="primary" onClick={() => {
-              setShowAdminAccessModal(false);
-              setShowModal(true);
-            }}>
-              Login
-            </Button>
-          )}
         </Modal.Footer>
       </Modal>
 

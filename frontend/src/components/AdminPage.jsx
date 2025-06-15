@@ -10,18 +10,17 @@ const AdminPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
-    const {getCsrfToken, fetchCsrfToken, checkAuthentication} = useAuth();
+    const {getCsrfToken, checkAuthentication, isStaff} = useAuth();
 
     useEffect(() => {
         const checkAdminAccess = async () => {
-            // Check manually if user is staff, if not redirect back to /
             try {
                 const isAuth = await checkAuthentication();
-                if (!isAuth) {
+                if (!isAuth || !isStaff) {
                     navigate('/');
-                } else {
-                    await fetchLimits();
+                    return;
                 }
+                await fetchLimits();
             } catch (error) {
                 console.error('Error checking auth status:', error);
                 navigate('/');
@@ -29,7 +28,7 @@ const AdminPage = () => {
         };
 
         checkAdminAccess();
-    }, [checkAuthentication, navigate]);
+    }, [checkAuthentication, navigate, isStaff]);
 
     const fetchLimits = async () => {
         // Fetching limits to display them in form
