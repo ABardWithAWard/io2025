@@ -49,8 +49,8 @@ class UploadedFileViewSet(viewsets.ModelViewSet):
         if form.is_valid():
             # Get userUid from form data, it will be null if not provided
             user_uid = request.POST.get("userUid")
-            line_width = request.POST.get["paragraphWidth"]
-            font_size = request.POST.get["fontSize"]
+            line_width = request.POST.get("paragraphWidth")
+            font_size = request.POST.get("fontSize")
 
             json_str = handle_uploaded_file(
                 request.FILES["file"],
