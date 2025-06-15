@@ -371,7 +371,7 @@ const UploadPage = () => {
                         textAlign: 'center',
                     }}>
                         <h3>Confirm Upload</h3>
-                        <p>Are you sure you want to upload this file?</p>
+                        <p>Please do not upload any private or sensitive information.</p>
                         <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
                             <button
                                 onClick={handleConfirmUpload}
