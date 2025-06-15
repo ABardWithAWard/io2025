@@ -9,6 +9,7 @@ omit =
     config-3.py
     */asgi.py
     */wsgi.py
+    */management/*
 
 [report]
 exclude_lines =
