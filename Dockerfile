@@ -37,6 +37,8 @@ RUN if [ ! -f cert.pem ] || [ ! -f key.pem ]; then \
 RUN mkdir -p /app/ocr/application/model/modelMatthew/uploaded_files && \
     chmod 755 /app/ocr/application/model/modelMatthew/uploaded_files
 
+RUN pip install paddle
+
 RUN python ocr/manage.py collectstatic --noinput
 
 EXPOSE 8000

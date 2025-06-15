@@ -7,10 +7,12 @@ import { useAuth } from '../AuthContext';
 const ResultsPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { checkAuthentication } = useAuth();
+    const { checkAuthentication, getCsrfToken } = useAuth();
     const [results, setResults] = useState(null);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [exporting, setExporting] = useState(false);
+    const [exportFormat, setExportFormat] = useState('txt');  // Default to txt
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -43,6 +45,57 @@ const ResultsPage = () => {
     // only zeroes -> false
     // any other values -> true
     const hasConfidenceValues = results?.confidence?.some(conf => conf > 0);
+
+    const handleExport = async () => {
+        if (!location.state?.results) return;
+        
+        setExporting(true);
+        try {
+            const formData = new FormData();
+            formData.append('data', JSON.stringify({
+                content: results.content,
+                format: exportFormat,  // Use the export format state
+                paragraphWidth: results.paragraphWidth || 80,
+                fontSize: results.fontSize || 12,
+                name: 'export'
+            }));
+
+            const response = await fetch('/api/export/upload/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken()
+                },
+                credentials: 'include',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to export file');
+            }
+
+            // Get the filename from the Content-Disposition header
+            const contentDisposition = response.headers.get('Content-Disposition');
+            const filenameMatch = contentDisposition && contentDisposition.match(/filename="(.+)"/);
+            const filename = filenameMatch ? filenameMatch[1] : `export.${exportFormat}`;
+
+            // Create a blob from the response and trigger download
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (err) {
+            setError('Failed to export file');
+            console.error('Export error:', err);
+        } finally {
+            setExporting(false);
+        }
+    };
 
     if (loading) {
         // Spinner could be added here as well
@@ -87,6 +140,26 @@ const ResultsPage = () => {
                             className="card-img-top"
                             style={{ maxHeight: '400px', objectFit: 'contain' }}
                         />
+                        <div className="card-footer">
+                            <div className="d-flex justify-content-center gap-3">
+                                <select 
+                                    className="form-select" 
+                                    style={{ width: 'auto' }}
+                                    value={exportFormat}
+                                    onChange={(e) => setExportFormat(e.target.value)}
+                                >
+                                    <option value="txt">Text (.txt)</option>
+                                    <option value="docx">Word (.docx)</option>
+                                </select>
+                                <button 
+                                    className="btn btn-primary"
+                                    onClick={handleExport}
+                                    disabled={exporting}
+                                >
+                                    {exporting ? 'Exporting...' : 'Export Results'}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div className="col-md-6">
