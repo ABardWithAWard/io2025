@@ -28,6 +28,8 @@ from application.services import (
     output_processed_as_txt,
 )
 from application.utils import validate_image_brightness
+from datetime import datetime
+import json
 
 DEBUG_MODE = False
 
@@ -120,37 +122,63 @@ class FileExportViewSet(viewsets.ModelViewSet):
         :param request: A Django request.
         :return: A Django response to be handled.
         """
-        form = UploadFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            file_from_request = request.FILES["file"]
+        try:
+            # Get data from request
+            data = json.loads(request.POST.get('data', '{}'))
+            content = data.get("content", [])
+            file_format = data.get("format", "txt")
+            line_width = int(data.get("paragraphWidth", 80))
+            font_size = int(data.get("fontSize", 12))
+            filename = data.get("name", "export")
+            
+            if not content:
+                return Response(
+                    {"error": "Content is required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
-            # MATEUSZ
-            # oczekuje, ze file_from_request jest tutaj JSONem
-            word_list = file_from_request["content"]
-            file_name = request.POST.get("name")
-            file_format = request.POST.get("format")
-
+            # Generate filename with timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_filename = f"{filename}_{timestamp}.{file_format}"
+            
+            # Create output directory if it doesn't exist
             output_dir = os.path.abspath(os.environ["UPLOADED_FILES"])
-            output_path = Path(f"{output_dir}/{file_name}.{file_format}")
+            os.makedirs(output_dir, exist_ok=True)
+            
+            # Create full output path
+            output_path = os.path.join(output_dir, output_filename)
 
+            # Generate file based on format
             if file_format == "docx":
-                line_width = file_from_request["paragraphWidth"]
-                try:
-                    output_processed_as_docx(word_list, output_path.name, line_width)
-                    return Response({"status": "success"})
-                except Exception as e:
-                    return Response({"status": "error"})
+                output_processed_as_docx(content, output_path, line_width)
             else:
-                font_size = file_from_request["fontSize"]
-                try:
-                    output_processed_as_txt(word_list, output_path.name, font_size)
-                    return Response({"status": "success"})
-                except Exception as e:
-                    return Response({"status": "error"})
-        return Response(
-            {"status": "error", "errors": form.errors},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+                output_processed_as_txt(content, output_path, font_size)
+
+            # Return the file as a download
+            if os.path.exists(output_path):
+                file_handle = open(output_path, 'rb')
+                response = StreamingHttpResponse(
+                    file_handle,
+                    content_type='application/octet-stream'
+                )
+                response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
+                return response
+            else:
+                return Response(
+                    {"error": "Failed to create output file"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+        except json.JSONDecodeError:
+            return Response(
+                {"error": "Invalid JSON data"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class SupportTicketViewSet(viewsets.ModelViewSet):
@@ -645,6 +673,9 @@ class GetImagesAPIView(APIView):
                         "filename": data.get("filename"),
                         "timestamp": data.get("timestamp"),
                         "ocr_results": data.get("ocr_results", {}),
+                        "paragraphWidth": data.get("paragraphWidth"),
+                        "fontSize": data.get("fontSize"),
+                        "format": data.get("format"),
                     }
                 )
 
