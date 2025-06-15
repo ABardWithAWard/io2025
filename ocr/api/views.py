@@ -1,5 +1,5 @@
 import os
-from PIL import Image
+from pathlib import Path
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from rest_framework import viewsets, status
@@ -21,10 +21,15 @@ from django.conf import settings
 from django.views.generic import TemplateView
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
-from application.services import retrieve_pictures_using_uid, prepare_file_hierarchy
+from application.services import (
+    retrieve_pictures_using_uid,
+    prepare_file_hierarchy,
+    output_processed_as_docx,
+    output_processed_as_txt,
+)
 from application.utils import validate_image_brightness
-import base64
-from io import BytesIO
+from datetime import datetime
+import json
 
 DEBUG_MODE = False
 
@@ -46,7 +51,17 @@ class UploadedFileViewSet(viewsets.ModelViewSet):
         if form.is_valid():
             # Get userUid from form data, it will be null if not provided
             user_uid = request.POST.get("userUid")
-            json_str = handle_uploaded_file(request.FILES["file"], user_uid)
+            line_width = request.POST.get("paragraphWidth")
+            font_size = request.POST.get("fontSize")
+            file_format = request.POST.get("format")
+
+            json_str = handle_uploaded_file(
+                request.FILES["file"],
+                file_format,
+                line_width,
+                font_size,
+                user_uid,
+            )
             return Response({"status": "success", "payload": json_str})
         return Response(
             {"status": "error", "errors": form.errors},
@@ -78,9 +93,7 @@ class FileValidationViewSet(viewsets.ModelViewSet):
             created_file_path = prepare_file_hierarchy(file_from_request)
 
             # One of "good", "dark" or "bright"
-            brightness_validation_result = validate_image_brightness(
-                Image.open(created_file_path)
-            )
+            brightness_validation_result = validate_image_brightness(created_file_path)
             if brightness_validation_result == "good":
                 return Response({"status": "success"})
             else:
@@ -91,6 +104,81 @@ class FileValidationViewSet(viewsets.ModelViewSet):
             {"status": "error", "errors": form.errors},
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+
+class FileExportViewSet(viewsets.ModelViewSet):
+    """
+    Django REST Framework ViewSet for generating output files after processing.
+    """
+
+    queryset = UploadedFile.objects.all()
+    serializer_class = UploadedFileSerializer
+    permission_classes = [AllowAny]
+
+    @action(detail=False, methods=["post"])
+    def upload(self, request):
+        """
+        Handles a POST received after the user presses a button to export and save results into a file on his device.
+        :param request: A Django request.
+        :return: A Django response to be handled.
+        """
+        try:
+            # Get data from request
+            data = json.loads(request.POST.get('data', '{}'))
+            content = data.get("content", [])
+            file_format = data.get("format", "txt")
+            line_width = int(data.get("paragraphWidth", 80))
+            font_size = int(data.get("fontSize", 12))
+            filename = data.get("name", "export")
+            
+            if not content:
+                return Response(
+                    {"error": "Content is required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Generate filename with timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_filename = f"{filename}_{timestamp}.{file_format}"
+            
+            # Create output directory if it doesn't exist
+            output_dir = os.path.abspath(os.environ["UPLOADED_FILES"])
+            os.makedirs(output_dir, exist_ok=True)
+            
+            # Create full output path
+            output_path = os.path.join(output_dir, output_filename)
+
+            # Generate file based on format
+            if file_format == "docx":
+                output_processed_as_docx(content, output_path, line_width)
+            else:
+                output_processed_as_txt(content, output_path, font_size)
+
+            # Return the file as a download
+            if os.path.exists(output_path):
+                file_handle = open(output_path, 'rb')
+                response = StreamingHttpResponse(
+                    file_handle,
+                    content_type='application/octet-stream'
+                )
+                response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
+                return response
+            else:
+                return Response(
+                    {"error": "Failed to create output file"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+        except json.JSONDecodeError:
+            return Response(
+                {"error": "Invalid JSON data"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class SupportTicketViewSet(viewsets.ModelViewSet):
@@ -585,6 +673,9 @@ class GetImagesAPIView(APIView):
                         "filename": data.get("filename"),
                         "timestamp": data.get("timestamp"),
                         "ocr_results": data.get("ocr_results", {}),
+                        "paragraphWidth": data.get("paragraphWidth"),
+                        "fontSize": data.get("fontSize"),
+                        "format": data.get("format"),
                     }
                 )
 

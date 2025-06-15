@@ -14,6 +14,8 @@ from .views import (
     ReactAppView,
     GlobalSettingsAPIView,
     GetImagesAPIView,
+    FileValidationViewSet,
+    FileExportViewSet,
 )
 
 # Create a router and register our viewsets with it
@@ -21,6 +23,8 @@ router = DefaultRouter()
 router.register(r"files", UploadedFileViewSet, basename="list_files")
 router.register(r"support-tickets", SupportTicketViewSet)
 router.register(r"upload", UploadedFileViewSet, basename="upload")
+router.register(r"validate", FileValidationViewSet, basename="validate")
+router.register(r"export", FileExportViewSet, basename="export")
 
 app_name = "application"
 

@@ -106,7 +106,9 @@ const ProfileComponent = () => {
                                     image: imageData.image,
                                     format: imageData.filename.split('.').pop().toLowerCase(),
                                     confidence: imageData.ocr_results.confidence_scores,
-                                    content: imageData.ocr_results.text_predictions
+                                    content: imageData.ocr_results.text_predictions,
+                                    paragraphWidth: imageData.paragraphWidth,
+                                    fontSize: imageData.fontSize,
                                 };
 
                                 return (

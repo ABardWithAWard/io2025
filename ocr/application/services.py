@@ -109,6 +109,18 @@ def retrieve_pictures_using_uid(desired_uid: str) -> List[Image.Image]:
     return user_images_list
 
 
+def clean_utf8_text(text: str) -> str:
+    """
+    Clean text to ensure it only contains valid UTF-8 characters.
+    :param text: Input text string
+    :return: Cleaned text string with only valid UTF-8 characters
+    """
+    # Remove any non-printable characters
+    text = ''.join(char for char in text if char.isprintable())
+    # Encode to UTF-8 and decode back to string, ignoring errors
+    return text.encode('utf-8', errors='ignore').decode('utf-8')
+
+
 def output_processed_as_txt(word_list: List[str], output_path: str, line_width=80):
     """
     Output a list of words (strings) extracted from an image into a .txt file at output_path.
@@ -118,17 +130,19 @@ def output_processed_as_txt(word_list: List[str], output_path: str, line_width=8
     """
     chars_in_current_line = 0
     max_line_width = line_width
-    with open(output_path, "w") as f:
+    with open(output_path, "w", encoding='utf-8') as f:
         for word in word_list:
-            chars_in_current_line += len(word)
+            # Clean the word before writing
+            cleaned_word = clean_utf8_text(word)
+            chars_in_current_line += len(cleaned_word)
             # If limit exceeded after writing this word, write
             if chars_in_current_line > max_line_width:
                 # But write with a newline and reset next line to the beginning
-                f.writelines(f"{word}\n")
+                f.writelines(f"{cleaned_word}\n")
                 chars_in_current_line = 0
             else:
                 # Otherwise simply write
-                f.writelines(f"{word} ")
+                f.writelines(f"{cleaned_word} ")
 
 
 def output_processed_as_docx(word_list: List[str], output_path: str, font_size=11):
@@ -139,9 +153,12 @@ def output_processed_as_docx(word_list: List[str], output_path: str, font_size=1
     :param font_size: The size of the font of the text which will take up the entire width at all times.
     """
     document = Document()
-
+    
+    # Clean all words before joining
+    cleaned_words = [clean_utf8_text(word) for word in word_list]
+    
     # Add_run is the most general "generate text" method. It gives access to a Font obj through .font
-    font = document.add_paragraph().add_run(" ".join(word_list)).font
+    font = document.add_paragraph().add_run(" ".join(cleaned_words)).font
 
     # Through the Font obj we can modify the appearance of the text
     font.name = "Arial"
