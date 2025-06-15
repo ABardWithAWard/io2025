@@ -54,7 +54,7 @@ class TestServices(TestCase):
             uploaded_file = SimpleUploadedFile("test.png", f.read())
 
         result = {"confidence_scores": [0.99], "text_predictions": ["Hello"]}
-        json_output = services.convert_result_to_json(uploaded_file, tmp_path, result)
+        json_output = services.convert_result_to_json(uploaded_file, result)
         data = json.loads(json_output)
         self.assertEqual(data["name"], "test")
         self.assertEqual(data["confidence"], [0.99])

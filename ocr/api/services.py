@@ -25,7 +25,10 @@ POLISH_MODE = False
 
 
 def get_files():
-    """Get list of files from the upload directory"""
+    """
+    Retrieve a list of all files from the configured upload directory.
+    :return: List of filenames in the upload directory, or ["empty"] if directory not found.
+    """
     directory = os.environ.get("UPLOADED_FILES")
     try:
         return os.listdir(directory)
@@ -34,7 +37,11 @@ def get_files():
 
 
 def prepare_file_hierarchy(file):
-    """Takes uploaded file and returns directory where it is saved and its detected content"""
+    """
+    Save an uploaded file to the designated upload directory and return its full path.
+    :param file: The uploaded file object to be saved.
+    :return: The full file system path where the file was saved.
+    """
     upload_dir = os.path.abspath(os.environ["UPLOADED_FILES"])
     if DEBUG_MODE:
         print(f"Upload directory: {upload_dir}")
@@ -50,19 +57,20 @@ def prepare_file_hierarchy(file):
 
 
 def convert_result_to_json(
-    uploaded_file: UploadedFile, uploaded_file_path: str, ocr_result: dict
+    uploaded_file: UploadedFile,
+    line_width: int,
+    font_size: int,
+    uploaded_file_path: str,
+    ocr_result: dict,
 ):
     """
-    Convert the result of running OCR on an image file to a JSON that goes to frontend.
-    This function expects only .jpg (or .jpeg) and .png files. If converting .pdf, preprocess first.
-
-    Args:
-        uploaded_file (DjangoUploadedFile): A Django UploadedFile object, result of request.FILES["file"]
-        uploaded_file_path (str): Absolute path to where the uploaded file was saved by prepare_file_hierarchy
-        ocr_result (dict): Standardized format for OCR results, look to ModelBase
-
-    Returns:
-        str: A JSON-formatted string with name, image (b64), format, confidence (List[int]) and content (List[str]) information.
+    Convert OCR results to JSON format for frontend consumption with base64 encoded image data.
+    :param uploaded_file: Django UploadedFile object from request.FILES["file"].
+    :param line_width: The character length limit for lines in potential .txt output files.
+    :param font_size: The font size for text in potential .docx output files.
+    :param uploaded_file_path: Absolute file system path where the uploaded file was saved.
+    :param ocr_result: Dictionary containing OCR results in standardized ModelBase format.
+    :return: JSON-formatted string containing file name, base64 image data, format, confidence scores, and OCR content.
     """
     name, file_format = uploaded_file.name.split(".")
 
@@ -85,6 +93,8 @@ def convert_result_to_json(
             "name": name,
             "image": im_b64,
             "format": file_format,
+            "paragraphWidth": line_width,
+            "fontSize": font_size,
             "confidence": confidence_list,
             "content": content_list,
         }
@@ -93,8 +103,15 @@ def convert_result_to_json(
     return json_str
 
 
-def handle_uploaded_file(file, user_uid=None):
-    """Takes file uploaded in form and calls helper function to manage file and its contents"""
+def handle_uploaded_file(file, file_format, line_width, font_size, user_uid=None):
+    """
+    Process an uploaded file by saving it, validating brightness, and performing OCR based on language mode.
+    :param file: The uploaded file object to be processed.
+    :param file_format: The desired output format for the processed text.
+    :param line_width: The character length limit for lines in potential .txt output files.
+    :param font_size: The font size for text in potential .docx output files.
+    :param user_uid: Optional user identifier for associating the file with a specific user.
+    """
     full_path = prepare_file_hierarchy(file)
 
     if validate_image_brightness(full_path):
@@ -140,7 +157,9 @@ def handle_uploaded_file(file, user_uid=None):
             }
         )
 
-        json_ocr_result = convert_result_to_json(file, full_path, result)
+        json_ocr_result = convert_result_to_json(
+            file, line_width, font_size, full_path, result
+        )
 
         return json_ocr_result
 

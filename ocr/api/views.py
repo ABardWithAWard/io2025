@@ -1,5 +1,5 @@
 import os
-from PIL import Image
+from pathlib import Path
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from rest_framework import viewsets, status
@@ -21,10 +21,13 @@ from django.conf import settings
 from django.views.generic import TemplateView
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
-from application.services import retrieve_pictures_using_uid, prepare_file_hierarchy
+from application.services import (
+    retrieve_pictures_using_uid,
+    prepare_file_hierarchy,
+    output_processed_as_docx,
+    output_processed_as_txt,
+)
 from application.utils import validate_image_brightness
-import base64
-from io import BytesIO
 
 DEBUG_MODE = False
 
@@ -46,7 +49,15 @@ class UploadedFileViewSet(viewsets.ModelViewSet):
         if form.is_valid():
             # Get userUid from form data, it will be null if not provided
             user_uid = request.POST.get("userUid")
-            json_str = handle_uploaded_file(request.FILES["file"], user_uid)
+            line_width = request.POST.get["paragraphWidth"]
+            font_size = request.POST.get["fontSize"]
+
+            json_str = handle_uploaded_file(
+                request.FILES["file"],
+                line_width,
+                font_size,
+                user_uid,
+            )
             return Response({"status": "success", "payload": json_str})
         return Response(
             {"status": "error", "errors": form.errors},
@@ -85,6 +96,55 @@ class FileValidationViewSet(viewsets.ModelViewSet):
                 return Response(
                     {"status": "invalid", "type": brightness_validation_result}
                 )
+        return Response(
+            {"status": "error", "errors": form.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+class FileExportViewSet(viewsets.ModelViewSet):
+    """
+    Django REST Framework ViewSet for generating output files after processing.
+    """
+
+    queryset = UploadedFile.objects.all()
+    serializer_class = UploadedFileSerializer
+    permission_classes = [AllowAny]
+
+    @action(detail=False, methods=["post"])
+    def upload(self, request):
+        """
+        Handles a POST received after the user presses a button to export and save results into a file on his device.
+        :param request: A Django request.
+        :return: A Django response to be handled.
+        """
+        form = UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            file_from_request = request.FILES["file"]
+
+            # MATEUSZ
+            # oczekuje, ze file_from_request jest tutaj JSONem
+            word_list = file_from_request["content"]
+            file_name = request.POST.get("name")
+            file_format = request.POST.get("format")
+
+            output_dir = os.path.abspath(os.environ["UPLOADED_FILES"])
+            output_path = Path(f"{output_dir}/{file_name}.{file_format}")
+
+            if file_format == "docx":
+                line_width = file_from_request["paragraphWidth"]
+                try:
+                    output_processed_as_docx(word_list, output_path.name, line_width)
+                    return Response({"status": "success"})
+                except Exception as e:
+                    return Response({"status": "error"})
+            else:
+                font_size = file_from_request["fontSize"]
+                try:
+                    output_processed_as_txt(word_list, output_path.name, font_size)
+                    return Response({"status": "success"})
+                except Exception as e:
+                    return Response({"status": "error"})
         return Response(
             {"status": "error", "errors": form.errors},
             status=status.HTTP_400_BAD_REQUEST,
