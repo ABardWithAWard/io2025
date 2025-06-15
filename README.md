@@ -159,16 +159,18 @@ W root folderze aplikacji uruchamiamy run_tests.ps1
 ```
 
 #### Manualnie:
-    Pierwszy terminal:
+
 ```bash
-cd frontend
-npm start
+Pierwszy terminal:
+    cd frontend
+    npm start
 ```
-    Drugi terminal:
+
 ```bash
-cd ocr
-coverage erase
-coverage run --rcfile=.coveragerc manage.py test
-coverage html
-start htmlcov/index.html 
+Drugi terminal:
+    cd ocr
+    coverage erase
+    coverage run --rcfile=.coveragerc manage.py test
+    coverage html
+    start htmlcov/index.html 
 ```
