@@ -18,7 +18,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
+
 RUN pip install --no-cache-dir -r requirements.txt
+
+RUN pip install paddlepaddle
 
 # Copy the entire project
 COPY . .
@@ -36,8 +39,6 @@ RUN if [ ! -f cert.pem ] || [ ! -f key.pem ]; then \
 
 RUN mkdir -p /app/ocr/application/model/modelMatthew/uploaded_files && \
     chmod 755 /app/ocr/application/model/modelMatthew/uploaded_files
-
-RUN pip install paddle
 
 RUN python ocr/manage.py collectstatic --noinput
 
