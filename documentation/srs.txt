@@ -1,0 +1,61 @@
+1. Wstęp
+
+Celem niniejszego dokumentu jest przedstawienie wymagań systemowych dla systemu OCR,
+który ma na celu zarządzanie danymi klientów. Dokument ten będzie służył jako podstawa
+do implementacji, testowania i utrzymania systemu. System powinien być szybki, intuicyjny i
+dostosowany do współczesnych standardów. System powinien być również skalowalny i
+wspierać nowoczesne technologie.
+
+2. Opis systemu
+
+2.1 Charakterystyka użytkowników
+
+System będzie używany przez użytkowników chcących wyekstraktować tekst z obrazków.
+
+System ma umożliwić:
+
+- Logowanie przy pomocy konta google
+- Przeglądanie wysłanych plików
+- Kontakt z administratorami systemu poprzez formularz
+- Ekstrakcje tesktu z przesłanych plików
+- Eksport tekstu odczytanego
+
+3. Wymagania funkcjonalne:
+
+Program ma możliwość odczytania z .jpg, .png, .pdf (jeśli w pdf-ie są same obrazki).
+Program ma mieć user interface w postaci strony internetowej (proof-of-concept offline).
+Program ma mieć możliwość eksportu do co najmniej 2 formatów edytowalnych (txt, rtf).
+Program ma mieć możliwość dostosowania szerokości paragrafu na wyjściu.
+Program ma mieć możliwość wyświetlenia pewności rozpoznania poszczególnych słów.
+Program ma automatycznie dostosować rozdzielczość zdjęcia na wejściu.
+Program ma mieć możliwość włączenia trybu rozpoznawania polskich znaków.
+Program ma przetwarzać posczególne strony w czasie nie większym niż 30 sekund.
+Program ma powiadamiać użytkowników o nieprzesyłaniu wrażliwych danych.
+Program ma powiadamiać o rodzaju problemu z wejściem (zbyt jasne zdjęcie, zbyt ciemne).
+
+4. Wymagania niefunkcjonalne:
+
+Wymagania biznesowe
+
+Chcemy, aby nasz produkt służył studentom chcącym np. przełożyć swoje odręczne notatki na tekst. Grupa docelowa to studenci, ponieważ często produkują odręczne notatki i użycie skanera oraz czynność pobrania aplikacji nie będą im obce.
+
+Wymagania użytkownika
+
+Użytkownicy, którzy posiadają większą wiedzę techniczną będą chcieli mieć wgląd do pewności z którą nasz program rozpoznał ich tekst.
+
+Użytkownicy, którzy są z Polski i w związku z tym tworzą notatki z polskimi znakami diakrytycznymi będą chcieli włączyć tryb aplikacji, w którym zastosowana zostanie sieć rozpoznająca alfabet polski.
+
+Użytkownicy nie będą chcieli klonować repozytorium z GitHuba, lecz mięc dostęp przez (nawet najprostszy) user interface.
+
+Użytkownik będzie chciał mieć możliwość zapisu do różnych formatów edytowalnych, np. txt, rtf.
+
+Użytkownik nie będzie chciał się przejmować formatem wgrywanego skanu.
+
+Ograniczenia
+
+- System ma być dostępny w formie strony internetowej udostępnianej w sieci
+- Brak mechanizmu logowania bez konta google
+- Brak mechanizmu usuwania przesłanych plików z bazy danych
+- Brak informacji na temat kopii zapasowej bazy danych ponad domyślne ustawienia serwisu firebase
+- Brak obsługi języków przesłanych plików za wyjątkiem angielskiego i polskiego
+- Jedynie dwa formaty eksportu tekstu oraz ograniczone możliwości modyfikacji pliku jaki otrzymamy

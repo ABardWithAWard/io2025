@@ -1,0 +1,60 @@
+Zapoznanie się z Django - 13.03.25 (wszyscy)
+Zapoznanie się z PyTorchem - 15.03.25 (wszyscy)
+Zrobienie diagramu wstępnego - 18.03.25 (wszyscy)
+Znaleźć odpowiednie modele - 20.03.25 - K.M.
+Pierwszy commit ze strukturą - 22.03.25 - K.M.
+Modyfikacja strony admin - 25.03.25 - D.F. K.M.
+Pop-up o wrażliwych danych - 27.03.25 - M.W.
+Klasa ModelBase - 29.03.25 - K.M.
+Zmiana znacznika ze statycznego na Django tag - 01.04.25 - D.F.
+Ograniczenie formatów uploadu - 03.04.25 - M.W.
+Formularz kontaktowy - 05.04.25 - K.M.
+Integracja zmodyfikowanego admina - 07.04.25 - D.F.
+Prototyp blocklisty - 09.04.25 - D.F.
+Widok uploadu - 11.04.25 - M.W.
+Widok w panelu admina - 13.04.25 - D.F. K.M.
+Dodanie navbara - 15.04.25 - K.M.
+Uniezależnienie navbara od stron - 17.04.25 - M.W.
+Prototyp timeout - 19.04.25 - D.F.
+Prototyp processingu zdjęcia i interakcji z backend - 21.04.25 - M.W.
+Przegląd codebase'u i refactoring - 23.04.25 (wszyscy)
+Logowanie do Firestore - 25.04.25 - M.W.
+Wizja końcowego frontendu w Figmie - 27.04.25 - D.F.
+Implementacja TrOCR - 29.04.25 - K.M.
+Implementacja preprocessingu dla TrOCR - 01.05.25 - M.W.
+Integracja modeli - 03.05.25 - K.M. M.W.
+Szczegółowy diagram sekwencji - 05.05.25 - K.M.
+Diagram przypadków użycia - 07.05.25 - D.F.
+Diagram czynności - 09.05.25 - D.F.
+Diagram ER Firebase - 11.05.25 - M.W.
+Szkic dokumentu SRS - 13.05.25 (wszyscy)
+Szkielet frontendu w Bootstrap - 15.05.25 - K.M.
+Prototyp frontendu w React - 17.05.25 - M.W.
+Refactoring funkcji handle_uploaded_file wedle SOLID - 19.05.25 - M.W.
+Przegląd codebase'u i refactoring - 21.05.25 (wszyscy)
+Specyfikacja testów - 23.05.25 - D.F. K.M.
+Zaimplementowanie EasyOCR - 25.05.25 - K.M.
+Funkcjonalność cleanup - 27.05.25 - M.W.
+Integracja EasyOCR - 29.05.25 - K.M. D.F.
+Prototyp REST API - 31.05.25 - M.W.
+Wprowadzenie pierwszych testów - 02.06.25 - D.F.
+Refactoring JS w React zgodnie z SOLID - 04.06.25 - M.W.
+Uploadowanie plików w React - 06.06.25 - M.W.
+Formularz zgłoszeniowy w React - 08.06.25 - M.W.
+Zaimplementowanie PaddleOCR - 10.06.25 - K.M.
+Integracja PaddleOCR Eksport do plików .docx i .txt - 12.06.25 - K.M.
+Confidence score na backend - 14.06.25 - K.M.
+Implementacja profilu wraz z historią użytkownika - 16.06.25 - M.W.
+Implementacja wykrywania nieprawidłowego wejścia - 18.06.25 - K.M.
+Omówienie przekazywania JSON na frontend - 20.06.25 - K.M. M.W.
+Przepięcie bazy danych na Firebase - 22.06.25 - D.F M.W.
+Przegląd codebase'u i refactoring - 24.06.25 (wszyscy)
+Demonstracja obecnego stanu testów w Selenium - 26.06.25 - D.F.
+Testowanie w pełnym zakresie - 28.06.25 - D.F.
+Debugging po pełnym testowaniu - 30.06.25 (wszyscy)
+Wyprowadzenie coverage testów - 02.07.25 - D.F.
+Graf zależności REST API - 04.07.25 - M.W.
+Integracja przekazanego JSON na frontend - 06.07.25 - M.W.
+Integracja wykrywania nieprawdiłowego wejścia na frontend - 08.07.25 - M.W.
+Weryfikacja spójności dokumentacji i komentarzy w kodzie - 10.07.25 (wszyscy)
+Debugging i przygotowania do oddania projektu - 11.06.25 (wszyscy)
