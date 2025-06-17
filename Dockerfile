@@ -8,6 +8,9 @@ COPY frontend/.env* ./
 ENV HTTPS=true
 RUN npm run build
 
+
+# Buld stage for python backend
+
 FROM python:3.10-slim
 WORKDIR /app
 
@@ -23,10 +26,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 RUN pip install paddlepaddle
 
-# Copy the entire project
+# Copy the entire project here, not before to cache previous steps
 COPY . .
 
-# Copy environment files if they were not copied
+# Copy environment files if they were not copied, should be implemented differently in docker-compose, but this should suffice
 COPY ocr/.env* ./ocr/
 
 # Copy built frontend from the builder stage
@@ -44,5 +47,4 @@ RUN python ocr/manage.py collectstatic --noinput
 
 EXPOSE 8000
 
-# Start the server
 CMD ["python", "ocr/manage.py", "runserver_plus", "--cert-file", "cert.pem", "--key-file", "key.pem", "0.0.0.0:8000"] 
