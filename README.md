@@ -10,8 +10,8 @@ on both Windows and Linux systems. Depending on the version,
 select the appropriate OCR module version according to the instructions in the rest of the README.
 
 Conda is used here, but you can also use venv:
-```
-bashcd ~/PycharmProjects
+```bash
+cd ~/PycharmProjects
 git clone <repo_link> <target_folder_name>
 cd <target_folder_name>
 
@@ -20,19 +20,19 @@ conda activate django_test
 ```
 
 # For React
-```
+```bash
 conda install -c conda-forge nodejs=22.13
 ```
 
 # PaddleOCR Cuda <12.6
-```
+```bash
 python -m pip install paddlepaddle-gpu==3.0.0 -i https://www.paddlepaddle.org.cn/packages/stable/cu118/
 ```
 # Cuda >=12.6
-```
+```bash
 python -m pip install paddlepaddle-gpu==3.0.0 -i https://www.paddlepaddle.org.cn/packages/stable/cu126/
 ```
-```
+```bash
 pip install -r requirements.txt
 
 cd frontend && npm install && npm run build
@@ -97,8 +97,8 @@ python ocr/manage.py collectstatic --noinput
 python ocr/manage.py migrate
 ```
 
-# make sure you're in the project root directory
-```
+make sure you're in the project root directory
+```bash
 python ocr/manage.py runserver_plus --cert-file cert.pem --key-file key.pem 0.0.0.0:8000
 ```
 2. (dev) Change your project interpreter in PyCharm to django_test:
